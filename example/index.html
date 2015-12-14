@@ -6,8 +6,10 @@
   <script src="../build/0.1/skynet.js"></script>
 </head>
 <body>
-
 <div id="test">
+</div>
+
+<script type="text/template" id="J_tmpl">
   这个页面是用来测试模板的基本功能的。
   <div style="background:#fafafa;"  id="{{*text}}">这个容器的id属性和旁边的值会局部改变,但是是一次性的{{*text}}</div>
   <div style="background:#fafafa;" sk-bind:id="text">这个是用来测试插值的：{{{text + 'qqq'|fff}}}可以放多个{{{name+'zzz122'}}}</div>
@@ -32,14 +34,13 @@
     绑定数组里第一个值
     <input type="text" sk-model="lists[0].text" value="" />
   </div>
-</div>
+</script>
 
 <script type="text/javascript">
 //debug会包括更多的信息，但是只有daily版本有效果
 View.config({
   debug:true
 })
-
   var h = new View({
     el:'test',
     data:{
@@ -54,6 +55,7 @@ View.config({
         text:'22222'
       }]
     },
+    template:document.getElementById('J_tmpl').innerHTML,
     filters:{
       fff:function(value) {
         return value + '===='

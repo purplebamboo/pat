@@ -77,7 +77,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //需要绑定的节点，必须
 	  this.$el = _.query(options.el)
 	  this.$data = options.data
-
+	  this.template = options.template
 	  //保存根view,没有的话就是自己
 	  this.$rootView = options.rootView ? options.rootView : this
 	  //是否需要编译当前根节点（就是当前$el），默认为true。
@@ -102,7 +102,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //如果有模板，需要先放到页面上去（这里后面也可以放到documentFragmment 或者  virtual dom）
 	    this.$el.innerHTML = this.template
 	  }
+
 	  this.$compile(this.$el)
+
+
 	}
 
 
