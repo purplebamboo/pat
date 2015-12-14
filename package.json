@@ -1,0 +1,22 @@
+{
+  "name": "skeleton",
+  "version": "1.0.0",
+  "description": "a light lib to use directive tmplate",
+  "main": "index.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "npm test",
+    "build": "webpack --config webpack.config.js && webpack --config webpack.config.production.js"
+  },
+  "keywords": [
+    "light",
+    "directive"
+  ],
+  "author": "weikang.zhuwk",
+  "license": "MIT",
+  "devDependencies": {
+    "webpack": "^1.12.9"
+  }
+}
