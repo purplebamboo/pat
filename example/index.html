@@ -20,7 +20,7 @@
 
   <div style="background:#666;font-size:20px;">下面的是一个列表的测试</div>
   <div style="background:#999;" sk-for="(key,list) in lists">
-    <span>位置{{key}}==={{list.name}}</span>----<span>{{list.text}}--透传父级的数据text--{{text}}</span>
+    <span>位置{{key}}==={{{list.name}}}</span>----<span>{{{list.text}}}--透传父级的数据text--{{text}}</span>
   </div>
 
   <div style="margin-top:20px;">下面是实现双向绑定的例子</div>
@@ -52,7 +52,7 @@ View.config({
         text:'11111'
       },{
         name:'2',
-        text:'22222'
+        text:'22222<span class="H">x</span>'
       }]
     },
     template:document.getElementById('J_tmpl').innerHTML,

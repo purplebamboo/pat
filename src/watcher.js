@@ -18,9 +18,9 @@ Watcher.prototype.applyFilter = function(value,filterName){
   if (!filterName) return value
 
   //应该从root view拿
-  var filter = this.__view.__filters[filterName]
+  var filter = this.__view.$rootView.__filters[filterName]
   if (filter) {
-    return filter.call(this.__view,value,this.scope)
+    return filter.call(this.__view.$rootView,value,this.scope)
   }
   return value
 }
