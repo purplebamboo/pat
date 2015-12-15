@@ -1247,21 +1247,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	  bindEvent: (function() {
 	    if ('addEventListener' in window) {
 	      return function(el, event, handler) {
-	        return el.addEventListener(event, handler, false);
-	      };
+	        return el.addEventListener(event, handler, false)
+	      }
 	    }
 	    return function(el, event, handler) {
-	      return el.attachEvent('on' + event, handler);
+	      return el.attachEvent('on' + event, handler)
 	    };
 	  })(),
 	  unbindEvent: (function() {
 	    if ('removeEventListener' in window) {
 	      return function(el, event, handler) {
-	        return el.removeEventListener(event, handler, false);
+	        return el.removeEventListener(event, handler, false)
 	      };
 	    }
 	    return function(el, event, handler) {
-	      return el.detachEvent('on' + event, handler);
+	      return el.detachEvent('on' + event, handler)
 	    };
 	  })(),
 	  getInputValue: function(el) {
@@ -1273,12 +1273,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      for (_i = 0, _len = el.length; _i < _len; _i++) {
 	        o = el[_i];
 	        if (o.selected) {
-	          _results.push(o.value);
+	          _results.push(o.value)
 	        }
 	      }
-	      return _results;
+	      return _results
 	    } else {
-	      return el.value;
+	      return el.value
 	    }
 	  }
 	};
@@ -1536,13 +1536,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      //更新mount的index
-	      nextChild._mountIndex = nextIndex;
-	      nextIndex++;
+	      nextChild._mountIndex = nextIndex
+	      nextIndex++
 	    }
 
 	    //对于老的节点里有，新的节点里没有的那些，也全都删除掉
 	    for (name in oldViewMap) {
 	      if (oldViewMap.hasOwnProperty(name) && !(newViewMap && newViewMap.hasOwnProperty(name))) {
+	        prevChild = oldViewMap && oldViewMap[name]
 	        //添加差异对象，类型：REMOVE_NODE
 	        diffQueue.push({
 	          name:name,
@@ -1556,7 +1557,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  },
 	  _patch:function(){
-	    var update, updatedIndex, updatedChild;
+	    var update, updatedIndex, updatedChild
 	    var initialChildren = {}
 	    var deleteChildren = []
 	    var updates = this.diffQueue
