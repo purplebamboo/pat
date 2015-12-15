@@ -25,7 +25,6 @@ module.exports = {
     //为true并且 上一次是是销毁不是绑定
     if (!!value && this.bound == false) {
       //生成新的view
-
       this.childView = new this.view.constructor({
         el:this.el,
         data:this.view.$data,
@@ -39,7 +38,6 @@ module.exports = {
 
     if (!value && this.bound == true){
       _.remove(this.el)
-      //this.childView && this.childView.$destroy();
       this.bound = false
     }
     //子view开始脏检测
@@ -47,8 +45,6 @@ module.exports = {
   },
   unbind:function(){
     this.childView && this.childView.$destroy()
-    //如果不在dom上了，需要恢复原样
-    //!this.bound && _.before(this.el,this.placeholder)
     //_.remove(this.placeholder)
   }
 }

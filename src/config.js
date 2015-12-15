@@ -5,7 +5,8 @@
 exports.defaultOptions = {
   el:'',
   template:'',
-  //是否整个替换掉el节点，默认为true
+  rootCompile:true,
+  //是否整个替换掉el节点
   replace:true,
 }
 

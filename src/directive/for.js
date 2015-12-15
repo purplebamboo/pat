@@ -5,7 +5,7 @@ var parser = require('../parser')
 var parseExpression = parser.parseExpression
 
 //差异更新的几种类型
-var UPATE_TYPES = {
+var UPDATE_TYPES = {
   MOVE_EXISTING: 1,
   REMOVE_NODE: 2,
   INSERT_MARKUP: 3
@@ -37,10 +37,7 @@ module.exports = {
     }
 
     if (!this.alias) {
-      // process.env.NODE_ENV !== 'production' && _.warn(
-      //   'Alias is required in v-for.'
-      // )
-      // return
+      _.error('required a alias in for directive')
     }
 
     this.start = _.createAnchor('v-for-start')
@@ -66,6 +63,7 @@ module.exports = {
         //当然要注意重新赋值,因为如果上一级数据变化了，这里才能知道改变
         _.assign(oldViewMap[index].$data,self.view.$data)
         oldViewMap[index].$digest()
+
       } else {
         //否则需要新建新的view
         data = {}
@@ -111,7 +109,7 @@ module.exports = {
         //添加差异对象，类型：MOVE_EXISTING
         prevChild._mountIndex < lastIndex && diffQueue.push({
           name:name,
-          type: UPATE_TYPES.MOVE_EXISTING,
+          type: UPDATE_TYPES.MOVE_EXISTING,
           fromIndex: prevChild._mountIndex,
           toIndex: nextIndex
         })
@@ -124,7 +122,7 @@ module.exports = {
           //添加差异对象，类型：REMOVE_NODE
           diffQueue.push({
             name:name,
-            type: UPATE_TYPES.REMOVE_NODE,
+            type: UPDATE_TYPES.REMOVE_NODE,
             fromIndex: prevChild._mountIndex,
             toIndex: null
           })
@@ -135,7 +133,7 @@ module.exports = {
         //添加差异对象，类型：INSERT_MARKUP
         diffQueue.push({
           name:name,
-          type: UPATE_TYPES.INSERT_MARKUP,
+          type: UPDATE_TYPES.INSERT_MARKUP,
           fromIndex: null,
           toIndex: nextIndex,
           markup: nextChild.$el //新增的节点，多一个此属性，表示新节点的dom内容
@@ -154,11 +152,10 @@ module.exports = {
         //添加差异对象，类型：REMOVE_NODE
         diffQueue.push({
           name:name,
-          type: UPATE_TYPES.REMOVE_NODE,
+          type: UPDATE_TYPES.REMOVE_NODE,
           fromIndex: prevChild._mountIndex,
           toIndex: null
         })
-        //prevChild.$destroy()
       }
     }
 
@@ -170,7 +167,7 @@ module.exports = {
     var updates = this.diffQueue
     for (var i = 0; i < updates.length; i++) {
       update = updates[i];
-      if (update.type === UPATE_TYPES.MOVE_EXISTING || update.type === UPATE_TYPES.REMOVE_NODE) {
+      if (update.type === UPDATE_TYPES.MOVE_EXISTING || update.type === UPDATE_TYPES.REMOVE_NODE) {
 
         updatedChild = this.oldViewMap[update.name]
         initialChildren[update.name] = updatedChild.$el
@@ -180,7 +177,7 @@ module.exports = {
     }
     //删除所有需要先删除的
     _.each(deleteChildren, function(child) {
-      child.$destroy()
+      child.$destroy(true)
       //_.remove(child.$el)
     })
 
@@ -188,13 +185,13 @@ module.exports = {
     for (var k = 0; k < updates.length; k++) {
       update = updates[k];
       switch (update.type) {
-        case UPATE_TYPES.INSERT_MARKUP:
+        case UPDATE_TYPES.INSERT_MARKUP:
           this._insertChildAt(update.markup, update.toIndex);
           break;
-        case UPATE_TYPES.MOVE_EXISTING:
+        case UPDATE_TYPES.MOVE_EXISTING:
           this._insertChildAt(initialChildren[update.name], update.toIndex);
           break;
-        case UPATE_TYPES.REMOVE_NODE:
+        case UPDATE_TYPES.REMOVE_NODE:
           // 什么都不需要做，因为上面已经帮忙删除掉了
           break;
       }
@@ -241,7 +238,7 @@ module.exports = {
   },
   unbind: function() {
     _.each(this.newViewMap,function(view){
-      view.$destroy()
+      view.$destroy(true)
     })
     //恢复现场，好像觉得没必要？
     //_.before(this.el,this.end)

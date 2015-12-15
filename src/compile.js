@@ -36,7 +36,7 @@ function _bindDir(describe) {
   watcher = view.__watchers[describe.value]
 
   if (watcher) {
-    //使用老的，如果不是一次性的，就不需要加入对应的指令池
+    //使用老的watcher，如果是一次性的，就不需要加入对应的指令池
     if (!describe.oneTime) {
       watcher.__directives.push(dirInstance)
     }
@@ -63,14 +63,14 @@ function _bindDir(describe) {
 
 //解析属性，解析出directive，这个只针对element
 function _compileDirective(el, view) {
-  var attrs, describe, skipChildren, childNodes
+  var attrs, describe, skipChildren, childNodes,blockDirectiveCount
 
   //以下几种情况下，不需要编译当前节点
-  //1. 不是element节点
-  //2. 如果el已经被编译过了，就不需要重复编译了
-  //3. view标识 不需要编译自己的root element的情况
-  if ((_.isElement(el) && el.nodeType === 1) && !el.hasCompiled && (view.__rootCompile || el != view.$el)) {
+  //1. 如果el已经被编译过了，就不需要重复编译了
+  //2. view标识 不需要编译自己的root element的情况
+  if (!el.hasCompiled && (view.__rootCompile || el != view.$el)) {
 
+    blockDirectiveCount = 0
     el.hasCompiled = true
 
     attrs = _.toArray(el.attributes)
@@ -91,13 +91,16 @@ function _compileDirective(el, view) {
 
       dirInstance = _bindDir(describe)
 
-
       //对于有block的directive,需要跳过子节点的解析
       if (dirInstance.block) {
+        blockDirectiveCount ++
         skipChildren = true
       }
-      //todo 两个以上的block类型directive需要报错
     })
+    //两个以上的block类型directive需要报错
+    if (blockDirectiveCount) {
+      _.error('one element can only have one block directive.')
+    }
   }
 
   //有block的情况需要跳过子节点的编译，比如if,for,bind
@@ -112,7 +115,7 @@ function _compileDirective(el, view) {
 
 //解析text情况会很复杂，会支持多个插值，并且多个插值里面都有expression
 function _compileTextNode(el, view) {
-  var tokens, token, text, expObj, placeholder
+  var tokens, token, text, placeholder
 
   tokens = parseText(el.data)
 
@@ -120,8 +123,8 @@ function _compileTextNode(el, view) {
 
     placeholder = _.createAnchor('text-place-holder')
     _.replace(el, placeholder)
-    for (_i = 0, _len = tokens.length; _i < _len; _i++) {
-      token = tokens[_i];
+    for (var i = 0, len = tokens.length; i < len; i++) {
+      token = tokens[i];
       text = document.createTextNode(token.value)
       _.before(text, placeholder)
       //是插值需要特殊处理，绑定directive
@@ -151,9 +154,9 @@ exports.parse = function(el, view) {
   //对于文本节点采用比较特殊的处理
   if (el.nodeType == 3) {
     _compileTextNode(el, view)
-    return
   }
   //编译普通节点
-  _compileDirective(el, view)
-
+  if (el.nodeType == 1) {
+    _compileDirective(el, view)
+  }
 }

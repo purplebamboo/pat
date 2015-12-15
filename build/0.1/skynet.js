@@ -81,8 +81,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //保存根view,没有的话就是自己
 	  this.$rootView = options.rootView ? options.rootView : this
 	  //是否需要编译当前根节点（就是当前$el），默认为true。
-	  this.__rootCompile = options.rootCompile === false ? false : true
-	  //是否替换整个dom,默认为true
+	  this.__rootCompile = options.rootCompile
+	  //有模版时，是否替换整个dom,默认为true
 	  this.__replace = options.replace
 	  //所有观察对象
 	  this.__watchers = {}
@@ -98,12 +98,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	//初始化
 	View.prototype._init = function() {
 
+	  var el = this.$el
+	  var node,child
+
 	  if (this.template) {
-	    //如果有模板，需要先放到页面上去（这里后面也可以放到documentFragmment 或者  virtual dom）
-	    this.$el.innerHTML = this.template
+	    if(this.__replace) this.$el.innerHTML = ''
+
+	    el = document.createDocumentFragment()
+	    node = document.createElement('div')
+	    node.innerHTML = this.template.trim()
+	    while (child = node.firstChild) {
+	      el.appendChild(child)
+	    }
 	  }
 
-	  this.$compile(this.$el)
+	  this.$compile(el)
+
+	  //如果是模板，最后一次性的append到dom里
+	  if (this.template) this.$el.appendChild(el)
+
 	}
 
 
@@ -149,13 +162,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //通知watch销毁，watch会负责销毁对应的directive
 	    watcher.destroy()
 	  })
-	  //直接清空节点，这样是不是不好，考虑过恢复现场，但是貌似细节太多，处理不过来，先直接清空吧
-	  if (this.__replace) {
-	    _.remove(this.$el)
-	  }else{
-	    this.$el.innerHTML = ''
-	  }
 
+
+	  this.$el.innerHTML = ''
 	  this.$el = null
 	  this.$data = null
 	  this.$rootView = null
@@ -525,7 +534,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.defaultOptions = {
 	  el:'',
 	  template:'',
-	  //是否整个替换掉el节点，默认为true
+	  rootCompile:true,
+	  //是否整个替换掉el节点
 	  replace:true,
 	}
 

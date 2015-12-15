@@ -25,8 +25,8 @@ var View = function (options) {
   //保存根view,没有的话就是自己
   this.$rootView = options.rootView ? options.rootView : this
   //是否需要编译当前根节点（就是当前$el），默认为true。
-  this.__rootCompile = options.rootCompile === false ? false : true
-  //是否替换整个dom,默认为true
+  this.__rootCompile = options.rootCompile
+  //有模版时，是否替换整个dom,默认为true
   this.__replace = options.replace
   //所有观察对象
   this.__watchers = {}
@@ -36,18 +36,29 @@ var View = function (options) {
   this._init()
 }
 
-//增加事件机制
-//_.extend(View,Event)
-
 //初始化
 View.prototype._init = function() {
 
+  var el = this.$el
+  var node,child
+
   if (this.template) {
-    //如果有模板，需要先放到页面上去（这里后面也可以放到documentFragmment 或者  virtual dom）
-    this.$el.innerHTML = this.template
+    //看是否需要清空子节点
+    if(this.__replace) this.$el.innerHTML = ''
+
+    el = document.createDocumentFragment()
+    node = document.createElement('div')
+    node.innerHTML = this.template.trim()
+    while (child = node.firstChild) {
+      el.appendChild(child)
+    }
   }
 
-  this.$compile(this.$el)
+  this.$compile(el)
+
+  //如果是模板，最后一次性的append到dom里
+  if (this.template) this.$el.appendChild(el)
+
 }
 
 
@@ -73,6 +84,7 @@ View.prototype.$compile = function(el) {
 View.prototype.$digest = function() {
 
   if (View._isDigesting) {
+    //会不会导致，获取属性获取不到？
     setTimeout(_.bind(arguments.callee,this),0)
     return
   }
@@ -87,14 +99,17 @@ View.prototype.$digest = function() {
 
 }
 
-//摧毁
-View.prototype.$destroy = function() {
+/**
+ * 销毁view
+ * @param  {boolean} destroyRoot 是否销毁绑定的根节点
+ */
+View.prototype.$destroy = function(destroyRoot) {
   _.each(this.__watchers,function(watcher){
     //通知watch销毁，watch会负责销毁对应的directive
     watcher.destroy()
   })
-  //直接清空节点，这样是不是不好，考虑过恢复现场，但是貌似细节太多，处理不过来，先直接清空吧
-  if (this.__replace) {
+
+  if (destroyRoot) {
     _.remove(this.$el)
   }else{
     this.$el.innerHTML = ''
@@ -112,7 +127,7 @@ View.prototype.$destroy = function() {
 
 /**
  * 用来设置基本配置
- * @return {[type]} [description]
+ * @return {object} 配置项
  */
 View.config = function(options){
   _.assign(config,options)
