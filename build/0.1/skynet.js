@@ -1292,15 +1292,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Util.bindEvent(self.el, 'blur', function() {
 	      var val = Util.getInputValue(self.el)
 	      var key = self.describe.value
-
-	      self.setValue(key, val)
-	      self.view.$digest()
+	      if (val != self.curValue) {
+	        self.setValue(key, val)
+	        //需要整个rootview脏检测
+	        self.view.$rootView.$digest()
+	      }
 	    })
 	  },
 	  setValue: function(key, val) {
 	    return new Function('$scope', 'return $scope.' + key + '="' + val + '"')(this.view.$data)
 	  },
 	  update: function(value) {
+	    this.curValue = value
 	    this.el.value = value
 	  },
 	  unbind: function() {
