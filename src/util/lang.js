@@ -25,6 +25,8 @@ exports.bind = function (fn, ctx) {
   }
 }
 
+
+
 exports.htmlspecialchars = function(str) {
 
   if (!exports.isString(str)) return str

@@ -305,11 +305,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    placeholder = _.createAnchor('text-place-holder')
 	    _.replace(el, placeholder)
-
 	    for (_i = 0, _len = tokens.length; _i < _len; _i++) {
 	      token = tokens[_i];
 	      text = document.createTextNode(token.value)
-
 	      _.before(text, placeholder)
 	      //是插值需要特殊处理，绑定directive
 	      if (token.type === parser.TextTemplateParserTypes.binding) {
@@ -325,6 +323,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 	      }
 	    }
+	    _.remove(placeholder)
 	  }
 
 	}
@@ -572,6 +571,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      : fn.call(ctx)
 	  }
 	}
+
+
 
 	exports.htmlspecialchars = function(str) {
 
@@ -904,42 +905,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.parseDirective = function(attr) {
 	  var name = attr.name
 	  var value = attr.value
-	  var match, args, tokens, oneTime, html,directive,obj
+	  var match, args, tokens, directive, obj
 
 
-	  oneTime = html = false
 	  //value里面有插值的情况下，就认为是插值属性节点，普通指令不支持插值写法
 	  if (interpolationRegx.test(value)) {
 
 	    tokens = exports.parseText(value)
-	    //只要有一个是不转义的，所有的都不转义
-	    //只要有一个不是onetime，就整体都是要监听变更
-	    //是否用按位取 逻辑快点？ todo
-	    for (var i = 0; i < tokens.length; i++) {
-	      if (tokens[i].html) {
-	        html = true
-	        break
-	      }
-	    }
-
-	    for (var i = 0; i < tokens.length; i++) {
-	      if (!tokens[i].oneTime) {
-	        oneTime = false
-	        break
-	      }else{
-	        oneTime = true
-	      }
-	    }
 
 	    return {
 	      name: name,
 	      value: value,
 	      directive: 'bind',
 	      args: [name],
-	      oneTime:oneTime,
-	      html:html,
+	      oneTime: false,
+	      html: false,
 	      expression: exports.token2expression(tokens),
-	      isInterpolationRegx:true //标识一下是插值
+	      isInterpolationRegx: true //标识一下是插值
 	    }
 	    //todo 判断如果这个时候还能找到指令需要报错
 	  }
@@ -960,8 +942,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: value,
 	    directive: directive,
 	    args: args || [],
-	    oneTime:false,
-	    html:false,
+	    oneTime: false,
+	    html: false,
 	    expression: exports.parseExpression(value)
 	  }
 	}
@@ -1067,13 +1049,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @return {[type]} [description]
 	 */
 	exports.token2expression = function(tokens) {
-	  var mergedExpression = ''
+	  var mergedExpression = []
 
 	  _.each(tokens, function(token) {
-	    mergedExpression += exports.parseExpression(token.value)
+
+	    if (token.type == TextTemplateParserTypes.text) {
+	      mergedExpression.push('"' + token.value + '"')
+	    } else {
+	      mergedExpression.push('(' + exports.parseExpression(token.value) + ')')
+	    }
 	  })
 
-	  return mergedExpression
+	  return mergedExpression.join('+')
 	}
 
 	exports.INTERPOLATION_REGX = interpolationRegx
@@ -1233,11 +1220,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!name) {
 	      //todo 报错 找不到需要修改的属性
 	    }
-
-	    //默认情况下都是转义的，但是可以使用{{{}}}跳过
-	    skipHtmlEscape = this.describe.html
-	    value = skipHtmlEscape ? value : _.htmlspecialchars(value)
-
+	    //不允许存在破坏节点的特殊字符
+	    value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
 	    this.el.setAttribute(name,value)
 
 	  },
@@ -1674,14 +1658,54 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = {
 	  priority: 3000,
-	  bind:function(options) {
+	  bind:function(args) {
+	    this.placeholder = _.createAnchor('text-statement')
+	    _.replace(this.el,this.placeholder)
 	  },
 	  update:function(value){
-	    //默认情况下都是转义的，但是可以使用{{{}}}跳过
-	    var skipHtmlEscape = this.describe.html
-	    this.el.data = skipHtmlEscape ? value : _.htmlspecialchars(value)
+	    //默认情况下都是转义的，但是可以使用{{{}}}渲染html
+	    var isHtml = this.describe.html
+	    //如果是html需要特殊处理
+	    if (isHtml) {
+	      this._updateHtml(value)
+	    }else{//不是html可以直接简单赋值
+	      this._updateText(value)
+	    }
+	  },
+	  _updateHtml:function(value){
+
+	    if (this.prev && this.prev.length > 0) {
+	      _.each(this.prev,function(child){
+	        _.remove(child)
+	      })
+	    }
+
+	    var wrap,childNodes
+
+	    wrap = document.createElement("div")
+	    wrap.innerHTML = value
+
+	    this.prev = []
+	    childNodes = wrap.childNodes
+
+	    if (childNodes && childNodes.length > 0) {
+	      for (var i = childNodes.length - 1 ; i >= 0; i--) {
+	        this.prev.push(childNodes[i])
+	        _.before(childNodes[i],this.placeholder)
+	      }
+	    }
+	  },
+	  _updateText:function(value){
+
+	    if (this.prev) {
+	      _.remove(this.prev)
+	    }
+	    //因为是textNode所以会自动转义
+	    this.prev = document.createTextNode(value)
+	    _.before(this.prev,this.placeholder)
 	  },
 	  unbind:function(){
+
 	  }
 	}
 

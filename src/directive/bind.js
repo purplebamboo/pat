@@ -18,11 +18,8 @@ module.exports = {
     if (!name) {
       //todo 报错 找不到需要修改的属性
     }
-
-    //默认情况下都是转义的，但是可以使用{{{}}}跳过
-    skipHtmlEscape = this.describe.html
-    value = skipHtmlEscape ? value : _.htmlspecialchars(value)
-
+    //不允许存在破坏节点的特殊字符
+    value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
     this.el.setAttribute(name,value)
 
   },

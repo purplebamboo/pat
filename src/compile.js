@@ -120,11 +120,9 @@ function _compileTextNode(el, view) {
 
     placeholder = _.createAnchor('text-place-holder')
     _.replace(el, placeholder)
-
     for (_i = 0, _len = tokens.length; _i < _len; _i++) {
       token = tokens[_i];
       text = document.createTextNode(token.value)
-
       _.before(text, placeholder)
       //是插值需要特殊处理，绑定directive
       if (token.type === parser.TextTemplateParserTypes.binding) {
@@ -140,6 +138,7 @@ function _compileTextNode(el, view) {
         })
       }
     }
+    _.remove(placeholder)
   }
 
 }

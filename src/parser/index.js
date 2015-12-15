@@ -64,42 +64,23 @@ var interpolationRegx = new RegExp(
 exports.parseDirective = function(attr) {
   var name = attr.name
   var value = attr.value
-  var match, args, tokens, oneTime, html,directive,obj
+  var match, args, tokens, directive, obj
 
 
-  oneTime = html = false
   //value里面有插值的情况下，就认为是插值属性节点，普通指令不支持插值写法
   if (interpolationRegx.test(value)) {
 
     tokens = exports.parseText(value)
-    //只要有一个是不转义的，所有的都不转义
-    //只要有一个不是onetime，就整体都是要监听变更
-    //是否用按位取 逻辑快点？ todo
-    for (var i = 0; i < tokens.length; i++) {
-      if (tokens[i].html) {
-        html = true
-        break
-      }
-    }
-
-    for (var i = 0; i < tokens.length; i++) {
-      if (!tokens[i].oneTime) {
-        oneTime = false
-        break
-      }else{
-        oneTime = true
-      }
-    }
 
     return {
       name: name,
       value: value,
       directive: 'bind',
       args: [name],
-      oneTime:oneTime,
-      html:html,
+      oneTime: false,
+      html: false,
       expression: exports.token2expression(tokens),
-      isInterpolationRegx:true //标识一下是插值
+      isInterpolationRegx: true //标识一下是插值
     }
     //todo 判断如果这个时候还能找到指令需要报错
   }
@@ -120,8 +101,8 @@ exports.parseDirective = function(attr) {
     value: value,
     directive: directive,
     args: args || [],
-    oneTime:false,
-    html:false,
+    oneTime: false,
+    html: false,
     expression: exports.parseExpression(value)
   }
 }
@@ -227,13 +208,18 @@ exports.parseText = function(text) {
  * @return {[type]} [description]
  */
 exports.token2expression = function(tokens) {
-  var mergedExpression = ''
+  var mergedExpression = []
 
   _.each(tokens, function(token) {
-    mergedExpression += exports.parseExpression(token.value)
+
+    if (token.type == TextTemplateParserTypes.text) {
+      mergedExpression.push('"' + token.value + '"')
+    } else {
+      mergedExpression.push('(' + exports.parseExpression(token.value) + ')')
+    }
   })
 
-  return mergedExpression
+  return mergedExpression.join('+')
 }
 
 exports.INTERPOLATION_REGX = interpolationRegx
