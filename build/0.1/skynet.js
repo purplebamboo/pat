@@ -104,8 +104,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  this.$compile(this.$el)
-
-
 	}
 
 
@@ -153,6 +151,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  })
 	  //直接清空节点，这样是不是不好，考虑过恢复现场，但是貌似细节太多，处理不过来，先直接清空吧
 	  if (this.__replace) {
+	    _.remove(this.$el)
+	  }else{
 	    this.$el.innerHTML = ''
 	  }
 
@@ -1521,7 +1521,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            fromIndex: prevChild._mountIndex,
 	            toIndex: null
 	          })
-	          prevChild.$destroy()
+	          //prevChild.$destroy()
 	        }
 
 	        //新增加的节点，也组装差异对象放到队列里
@@ -1551,7 +1551,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          fromIndex: prevChild._mountIndex,
 	          toIndex: null
 	        })
-	        prevChild.$destroy()
+	        //prevChild.$destroy()
 	      }
 	    }
 
@@ -1573,8 +1573,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    //删除所有需要先删除的
 	    _.each(deleteChildren, function(child) {
-	      _.remove(child.$el)
-	        //child.$destroy()
+	      child.$destroy()
+	      //_.remove(child.$el)
 	    })
 
 	    //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入

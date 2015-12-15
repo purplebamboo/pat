@@ -128,7 +128,7 @@ module.exports = {
             fromIndex: prevChild._mountIndex,
             toIndex: null
           })
-          prevChild.$destroy()
+          //prevChild.$destroy()
         }
 
         //新增加的节点，也组装差异对象放到队列里
@@ -158,7 +158,7 @@ module.exports = {
           fromIndex: prevChild._mountIndex,
           toIndex: null
         })
-        prevChild.$destroy()
+        //prevChild.$destroy()
       }
     }
 
@@ -180,8 +180,8 @@ module.exports = {
     }
     //删除所有需要先删除的
     _.each(deleteChildren, function(child) {
-      _.remove(child.$el)
-        //child.$destroy()
+      child.$destroy()
+      //_.remove(child.$el)
     })
 
     //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入

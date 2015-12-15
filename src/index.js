@@ -48,8 +48,6 @@ View.prototype._init = function() {
   }
 
   this.$compile(this.$el)
-
-
 }
 
 
@@ -97,6 +95,8 @@ View.prototype.$destroy = function() {
   })
   //直接清空节点，这样是不是不好，考虑过恢复现场，但是貌似细节太多，处理不过来，先直接清空吧
   if (this.__replace) {
+    _.remove(this.$el)
+  }else{
     this.$el.innerHTML = ''
   }
 
