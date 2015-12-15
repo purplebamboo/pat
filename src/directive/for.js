@@ -143,13 +143,14 @@ module.exports = {
       }
 
       //更新mount的index
-      nextChild._mountIndex = nextIndex;
-      nextIndex++;
+      nextChild._mountIndex = nextIndex
+      nextIndex++
     }
 
     //对于老的节点里有，新的节点里没有的那些，也全都删除掉
     for (name in oldViewMap) {
       if (oldViewMap.hasOwnProperty(name) && !(newViewMap && newViewMap.hasOwnProperty(name))) {
+        prevChild = oldViewMap && oldViewMap[name]
         //添加差异对象，类型：REMOVE_NODE
         diffQueue.push({
           name:name,
@@ -163,7 +164,7 @@ module.exports = {
 
   },
   _patch:function(){
-    var update, updatedIndex, updatedChild;
+    var update, updatedIndex, updatedChild
     var initialChildren = {}
     var deleteChildren = []
     var updates = this.diffQueue

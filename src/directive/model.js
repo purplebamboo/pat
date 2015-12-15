@@ -2,21 +2,21 @@ Util = {
   bindEvent: (function() {
     if ('addEventListener' in window) {
       return function(el, event, handler) {
-        return el.addEventListener(event, handler, false);
-      };
+        return el.addEventListener(event, handler, false)
+      }
     }
     return function(el, event, handler) {
-      return el.attachEvent('on' + event, handler);
+      return el.attachEvent('on' + event, handler)
     };
   })(),
   unbindEvent: (function() {
     if ('removeEventListener' in window) {
       return function(el, event, handler) {
-        return el.removeEventListener(event, handler, false);
+        return el.removeEventListener(event, handler, false)
       };
     }
     return function(el, event, handler) {
-      return el.detachEvent('on' + event, handler);
+      return el.detachEvent('on' + event, handler)
     };
   })(),
   getInputValue: function(el) {
@@ -28,12 +28,12 @@ Util = {
       for (_i = 0, _len = el.length; _i < _len; _i++) {
         o = el[_i];
         if (o.selected) {
-          _results.push(o.value);
+          _results.push(o.value)
         }
       }
-      return _results;
+      return _results
     } else {
-      return el.value;
+      return el.value
     }
   }
 };
