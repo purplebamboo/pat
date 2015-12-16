@@ -19,7 +19,10 @@ module.exports = {
       //todo 报错 找不到需要修改的属性
     }
     //不允许存在破坏节点的特殊字符
-    value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    if (_.isString(value)) {
+      value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    }
+
     this.el.setAttribute(name,value)
 
   },

@@ -32,7 +32,7 @@ Watcher.prototype.getValue = function(){
 
 Watcher.prototype.check = function() {
   this.current = this.getValue()
-  //使用directive自己的判断要不要更新
+
   if (this._check(this.last,this.current)) {
     this.callback && this.callback()
   }
@@ -41,8 +41,9 @@ Watcher.prototype.check = function() {
 
 
 Watcher.prototype._check = function(last,current) {
-  var hasUpdated = false
+  var hasUpdated = false //只要有一个更新了，就认为更新了
   _.each(this.__directives,function(dir){
+    //使用directive自己的判断要不要更新
     if (dir.shoudUpdate(last,current)) {
       dir.update(current)
       hasUpdated = true

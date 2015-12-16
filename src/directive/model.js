@@ -49,8 +49,8 @@ module.exports = {
       var key = self.describe.value
       if (val != self.curValue) {
         self.setValue(key, val)
-        //需要整个rootview脏检测
-        self.view.$rootView.$digest()
+        //需要整个rootview脏检测,使用$apply防止脏检测冲突
+        self.view.$rootView.$apply()
       }
     })
   },
@@ -63,6 +63,5 @@ module.exports = {
   },
   unbind: function() {
     Util.unbindEvent(this.el, 'blur')
-
   }
 }

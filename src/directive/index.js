@@ -30,7 +30,7 @@ var Directive = Class.extend({
   },
   //是否需要更新
   shoudUpdate:function(last,current){
-    return (!(last === undefined) || (last !== current))
+    return last !== current
   },
   destroy:function() {
 
