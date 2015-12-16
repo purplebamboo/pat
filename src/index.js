@@ -76,7 +76,7 @@ View.prototype.$apply = function(fn) {
 
   View._isDigesting = true
 
-  fn.call(this)
+  fn && fn.call(this)
   this.$digest()
 
   View._isDigesting = false

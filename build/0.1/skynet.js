@@ -122,37 +122,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	  compile.parse(el,this)
 	}
 
-
-
 	//开始脏检测，在digest上面再封装一层，可以检测如果当前已有进行中的就延迟执行
-	// View.prototype.$apply = function(fn) {
-	//   // if (this._isDigesting) {
-	//   //   //延迟
-	//   // }else{
-	//   // }
-	//   fn.call(this)
-	//   _.each(this.__watchers,function(watcher){
-	//     watcher.check()
-	//   })
-	// }
-
-	//开始脏检测
-	View.prototype.$digest = function() {
-
+	//外部用户使用这个方法，也就是一个rootview去脏检测，如果有其他rootview在digest，就延迟
+	View.prototype.$apply = function(fn) {
 	  if (View._isDigesting) {
-	    //会不会导致，获取属性获取不到？
 	    setTimeout(_.bind(arguments.callee,this),0)
 	    return
 	  }
 
 	  View._isDigesting = true
 
-	  _.each(this.__watchers,function(watcher){
-	    watcher.check()
-	  })
+	  fn && fn.call(this)
+	  this.$digest()
 
 	  View._isDigesting = false
 
+	}
+
+	//开始脏检测，这个方法只有内部可以使用
+	View.prototype.$digest = function() {
+	  _.each(this.__watchers,function(watcher){
+	    watcher.check()
+	  })
 	}
 
 	/**
@@ -814,7 +805,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  //是否需要更新
 	  shoudUpdate:function(last,current){
-	    return (!(last === undefined) || (last !== current))
+	    return last !== current
 	  },
 	  destroy:function() {
 
@@ -1249,7 +1240,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      //todo 报错 找不到需要修改的属性
 	    }
 	    //不允许存在破坏节点的特殊字符
-	    value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+	    if (_.isString(value)) {
+	      value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+	    }
+
 	    this.el.setAttribute(name,value)
 
 	  },
@@ -1322,8 +1316,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var key = self.describe.value
 	      if (val != self.curValue) {
 	        self.setValue(key, val)
-	        //需要整个rootview脏检测
-	        self.view.$rootView.$digest()
+	        //需要整个rootview脏检测,使用$apply防止脏检测冲突
+	        self.view.$rootView.$apply()
 	      }
 	    })
 	  },
@@ -1336,7 +1330,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  unbind: function() {
 	    Util.unbindEvent(this.el, 'blur')
-
 	  }
 	}
 
@@ -1773,7 +1766,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	Watcher.prototype.check = function() {
 	  this.current = this.getValue()
-	  //使用directive自己的判断要不要更新
+
 	  if (this._check(this.last,this.current)) {
 	    this.callback && this.callback()
 	  }
@@ -1782,8 +1775,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	Watcher.prototype._check = function(last,current) {
-	  var hasUpdated = false
+	  var hasUpdated = false //只要有一个更新了，就认为更新了
 	  _.each(this.__directives,function(dir){
+	    //使用directive自己的判断要不要更新
 	    if (dir.shoudUpdate(last,current)) {
 	      dir.update(current)
 	      hasUpdated = true
