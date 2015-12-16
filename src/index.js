@@ -1,6 +1,5 @@
 var compile = require('./compile.js')
 var config = require('./config.js')
-var Event = require('./event.js')
 
 var _ = require('./util')
 

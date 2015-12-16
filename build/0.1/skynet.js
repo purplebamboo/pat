@@ -56,7 +56,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var compile = __webpack_require__(1)
 	var config = __webpack_require__(4)
-	var Event = __webpack_require__(18)
 
 	var _ = __webpack_require__(2)
 
@@ -92,9 +91,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this._init()
 	}
 
-	//增加事件机制
-	//_.extend(View,Event)
-
 	//初始化
 	View.prototype._init = function() {
 
@@ -102,6 +98,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var node,child
 
 	  if (this.template) {
+	    //看是否需要清空子节点
 	    if(this.__replace) this.$el.innerHTML = ''
 
 	    el = document.createDocumentFragment()
@@ -142,6 +139,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	View.prototype.$digest = function() {
 
 	  if (View._isDigesting) {
+	    //会不会导致，获取属性获取不到？
 	    setTimeout(_.bind(arguments.callee,this),0)
 	    return
 	  }
@@ -156,15 +154,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	}
 
-	//摧毁
-	View.prototype.$destroy = function() {
+	/**
+	 * 销毁view
+	 * @param  {boolean} destroyRoot 是否销毁绑定的根节点
+	 */
+	View.prototype.$destroy = function(destroyRoot) {
 	  _.each(this.__watchers,function(watcher){
 	    //通知watch销毁，watch会负责销毁对应的directive
 	    watcher.destroy()
 	  })
 
+	  if (destroyRoot) {
+	    _.remove(this.$el)
+	  }else{
+	    this.$el.innerHTML = ''
+	  }
 
-	  this.$el.innerHTML = ''
 	  this.$el = null
 	  this.$data = null
 	  this.$rootView = null
@@ -177,7 +182,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	/**
 	 * 用来设置基本配置
-	 * @return {[type]} [description]
+	 * @return {object} 配置项
 	 */
 	View.config = function(options){
 	  _.assign(config,options)
@@ -230,7 +235,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  watcher = view.__watchers[describe.value]
 
 	  if (watcher) {
-	    //使用老的，如果不是一次性的，就不需要加入对应的指令池
+	    //使用老的watcher，如果是一次性的，就不需要加入对应的指令池
 	    if (!describe.oneTime) {
 	      watcher.__directives.push(dirInstance)
 	    }
@@ -257,14 +262,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	//解析属性，解析出directive，这个只针对element
 	function _compileDirective(el, view) {
-	  var attrs, describe, skipChildren, childNodes
+	  var attrs, describe, skipChildren, childNodes,blockDirectiveCount
 
 	  //以下几种情况下，不需要编译当前节点
-	  //1. 不是element节点
-	  //2. 如果el已经被编译过了，就不需要重复编译了
-	  //3. view标识 不需要编译自己的root element的情况
-	  if ((_.isElement(el) && el.nodeType === 1) && !el.hasCompiled && (view.__rootCompile || el != view.$el)) {
+	  //1. 如果el已经被编译过了，就不需要重复编译了
+	  //2. view标识 不需要编译自己的root element的情况
+	  if (!el.hasCompiled && (view.__rootCompile || el != view.$el)) {
 
+	    blockDirectiveCount = 0
 	    el.hasCompiled = true
 
 	    attrs = _.toArray(el.attributes)
@@ -285,13 +290,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      dirInstance = _bindDir(describe)
 
-
 	      //对于有block的directive,需要跳过子节点的解析
 	      if (dirInstance.block) {
+	        blockDirectiveCount ++
 	        skipChildren = true
 	      }
-	      //todo 两个以上的block类型directive需要报错
 	    })
+	    //两个以上的block类型directive需要报错
+	    if (blockDirectiveCount) {
+	      _.error('one element can only have one block directive.')
+	    }
 	  }
 
 	  //有block的情况需要跳过子节点的编译，比如if,for,bind
@@ -306,7 +314,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	//解析text情况会很复杂，会支持多个插值，并且多个插值里面都有expression
 	function _compileTextNode(el, view) {
-	  var tokens, token, text, expObj, placeholder
+	  var tokens, token, text, placeholder
 
 	  tokens = parseText(el.data)
 
@@ -314,8 +322,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    placeholder = _.createAnchor('text-place-holder')
 	    _.replace(el, placeholder)
-	    for (_i = 0, _len = tokens.length; _i < _len; _i++) {
-	      token = tokens[_i];
+	    for (var i = 0, len = tokens.length; i < len; i++) {
+	      token = tokens[i];
 	      text = document.createTextNode(token.value)
 	      _.before(text, placeholder)
 	      //是插值需要特殊处理，绑定directive
@@ -345,11 +353,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //对于文本节点采用比较特殊的处理
 	  if (el.nodeType == 3) {
 	    _compileTextNode(el, view)
-	    return
 	  }
 	  //编译普通节点
-	  _compileDirective(el, view)
-
+	  if (el.nodeType == 1) {
+	    _compileDirective(el, view)
+	  }
 	}
 
 /***/ },
@@ -679,29 +687,32 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
 	var config = __webpack_require__(4)
-	var hasConsole = typeof console !== 'undefined'
+	var _ = __webpack_require__(5)
+	var hasConsole = window.console !== undefined && console.log
 
-	if (true) {
+	//daily环境 debug模式下才会打出日志，包括各种信息。如脏检测时间
+	exports.log = function(msg) {
 
-	  //daily环境 debug模式下才会打出日志，包括各种信息。如脏检测时间
-	  exports.log = function(msg) {
-	    if (hasConsole && config.debug) {
-	      console.log('[info]: ' + msg)
-	    }
+	  if (!hasConsole || !config.debug) return
+	  console.log('[sk-info]:' + msg)
+	}
+
+	//daily环境会打出错误日志，线上环境会忽略掉
+	exports.error = function(e) {
+	  if (!hasConsole) return
+
+	  if (_.isString(e)) console.error('[sk-error]:' + e)
+
+	  if (e instanceof Error) {
+	    console.error('[sk-error]:' + e.stack)
 	  }
 
-	  //daily环境下会报出错误
-	  exports.warn = function(msg,e) {
-	    if (hasConsole && console.error) {
-	      console.error('[error]: ' + msg)
-	      console.error((e || new Error('Warning Stack Trace')).stack)
-	    }
-	  }
+	}
 
-	}else{
-	  exports.log = exports.warn = function(){}
+	//线上版本忽略所有信息
+	if (false) {
+	  exports.log = exports.error = function() {}
 	}
 
 /***/ },
@@ -796,7 +807,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  //是否需要更新
 	  shoudUpdate:function(last,current){
-	    return (!last || (last && last != current))
+	    return (!(last === undefined) || (last !== current))
 	  },
 	  destroy:function() {
 
@@ -1353,7 +1364,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //为true并且 上一次是是销毁不是绑定
 	    if (!!value && this.bound == false) {
 	      //生成新的view
-
 	      this.childView = new this.view.constructor({
 	        el:this.el,
 	        data:this.view.$data,
@@ -1367,7 +1377,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (!value && this.bound == true){
 	      _.remove(this.el)
-	      //this.childView && this.childView.$destroy();
 	      this.bound = false
 	    }
 	    //子view开始脏检测
@@ -1375,8 +1384,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  unbind:function(){
 	    this.childView && this.childView.$destroy()
-	    //如果不在dom上了，需要恢复原样
-	    //!this.bound && _.before(this.el,this.placeholder)
 	    //_.remove(this.placeholder)
 	  }
 	}
@@ -1411,7 +1418,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var parseExpression = parser.parseExpression
 
 	//差异更新的几种类型
-	var UPATE_TYPES = {
+	var UPDATE_TYPES = {
 	  MOVE_EXISTING: 1,
 	  REMOVE_NODE: 2,
 	  INSERT_MARKUP: 3
@@ -1443,10 +1450,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (!this.alias) {
-	      // process.env.NODE_ENV !== 'production' && _.warn(
-	      //   'Alias is required in v-for.'
-	      // )
-	      // return
+	      _.error('required a alias in for directive')
 	    }
 
 	    this.start = _.createAnchor('v-for-start')
@@ -1472,6 +1476,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //当然要注意重新赋值,因为如果上一级数据变化了，这里才能知道改变
 	        _.assign(oldViewMap[index].$data,self.view.$data)
 	        oldViewMap[index].$digest()
+
 	      } else {
 	        //否则需要新建新的view
 	        data = {}
@@ -1517,7 +1522,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //添加差异对象，类型：MOVE_EXISTING
 	        prevChild._mountIndex < lastIndex && diffQueue.push({
 	          name:name,
-	          type: UPATE_TYPES.MOVE_EXISTING,
+	          type: UPDATE_TYPES.MOVE_EXISTING,
 	          fromIndex: prevChild._mountIndex,
 	          toIndex: nextIndex
 	        })
@@ -1530,7 +1535,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          //添加差异对象，类型：REMOVE_NODE
 	          diffQueue.push({
 	            name:name,
-	            type: UPATE_TYPES.REMOVE_NODE,
+	            type: UPDATE_TYPES.REMOVE_NODE,
 	            fromIndex: prevChild._mountIndex,
 	            toIndex: null
 	          })
@@ -1541,7 +1546,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //添加差异对象，类型：INSERT_MARKUP
 	        diffQueue.push({
 	          name:name,
-	          type: UPATE_TYPES.INSERT_MARKUP,
+	          type: UPDATE_TYPES.INSERT_MARKUP,
 	          fromIndex: null,
 	          toIndex: nextIndex,
 	          markup: nextChild.$el //新增的节点，多一个此属性，表示新节点的dom内容
@@ -1560,11 +1565,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //添加差异对象，类型：REMOVE_NODE
 	        diffQueue.push({
 	          name:name,
-	          type: UPATE_TYPES.REMOVE_NODE,
+	          type: UPDATE_TYPES.REMOVE_NODE,
 	          fromIndex: prevChild._mountIndex,
 	          toIndex: null
 	        })
-	        //prevChild.$destroy()
 	      }
 	    }
 
@@ -1576,7 +1580,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var updates = this.diffQueue
 	    for (var i = 0; i < updates.length; i++) {
 	      update = updates[i];
-	      if (update.type === UPATE_TYPES.MOVE_EXISTING || update.type === UPATE_TYPES.REMOVE_NODE) {
+	      if (update.type === UPDATE_TYPES.MOVE_EXISTING || update.type === UPDATE_TYPES.REMOVE_NODE) {
 
 	        updatedChild = this.oldViewMap[update.name]
 	        initialChildren[update.name] = updatedChild.$el
@@ -1586,7 +1590,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    //删除所有需要先删除的
 	    _.each(deleteChildren, function(child) {
-	      child.$destroy()
+	      child.$destroy(true)
 	      //_.remove(child.$el)
 	    })
 
@@ -1594,13 +1598,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var k = 0; k < updates.length; k++) {
 	      update = updates[k];
 	      switch (update.type) {
-	        case UPATE_TYPES.INSERT_MARKUP:
+	        case UPDATE_TYPES.INSERT_MARKUP:
 	          this._insertChildAt(update.markup, update.toIndex);
 	          break;
-	        case UPATE_TYPES.MOVE_EXISTING:
+	        case UPDATE_TYPES.MOVE_EXISTING:
 	          this._insertChildAt(initialChildren[update.name], update.toIndex);
 	          break;
-	        case UPATE_TYPES.REMOVE_NODE:
+	        case UPDATE_TYPES.REMOVE_NODE:
 	          // 什么都不需要做，因为上面已经帮忙删除掉了
 	          break;
 	      }
@@ -1647,7 +1651,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  unbind: function() {
 	    _.each(this.newViewMap,function(view){
-	      view.$destroy()
+	      view.$destroy(true)
 	    })
 	    //恢复现场，好像觉得没必要？
 	    //_.before(this.el,this.end)
@@ -1791,67 +1795,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	module.exports = Watcher
-
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _ = __webpack_require__(2)
-
-	module.exports = _.Class.extend({
-	  //添加监听
-	  on: function(key, listener) {
-	    //this.__events存储所有的处理函数
-	    if (!this.__events) {
-	      this.__events = {}
-	    }
-	    if (!this.__events[key]) {
-	      this.__events[key] = []
-	    }
-	    if (_.indexOf(this.__events, listener) === -1 && typeof listener === 'function') {
-	      this.__events[key].push(listener)
-	    }
-
-	    return this
-	  },
-	  //触发一个事件，也就是通知
-	  fire: function(key) {
-
-	    if (!this.__events || !this.__events[key]) return
-
-	    var args = Array.prototype.slice.call(arguments, 1) || []
-
-	    var listeners = this.__events[key]
-	    var i = 0
-	    var l = listeners.length
-
-	    for (i; i < l; i++) {
-	      listeners[i].apply(this, args)
-	    }
-
-	    return this
-	  },
-	  //取消监听
-	  off: function(key, listener) {
-
-	    if (!key && !listener) {
-	      this.__events = {}
-	    }
-	    //不传监听函数，就去掉当前key下面的所有的监听函数
-	    if (key && !listener) {
-	      delete this.__events[key]
-	    }
-
-	    if (key && listener) {
-	      var listeners = this.__events[key]
-	      var index = _.indexOf(listeners, listener)
-
-	      (index > -1) && listeners.splice(index, 1)
-	    }
-	    return this;
-	  }
-
-	})
 
 /***/ }
 /******/ ])
