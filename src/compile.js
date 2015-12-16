@@ -98,7 +98,7 @@ function _compileDirective(el, view) {
       }
     })
     //两个以上的block类型directive需要报错
-    if (blockDirectiveCount) {
+    if (blockDirectiveCount > 1) {
       _.error('one element can only have one block directive.')
     }
   }
@@ -152,11 +152,17 @@ exports.parse = function(el, view) {
   if (!_.isElement(el)) return
 
   //对于文本节点采用比较特殊的处理
-  if (el.nodeType == 3) {
+  if (el.nodeType == 3 && _.trim(el.data)) {
     _compileTextNode(el, view)
   }
   //编译普通节点
-  if (el.nodeType == 1) {
+  if (el.nodeType == 1 && el.tagName !== 'SCRIPT') {
     _compileDirective(el, view)
+  }
+  //编译documentFragment
+  if (el.nodeType == 11 && el.childNodes) {
+    _.each(_.toArray(el.childNodes),function(child){
+      exports.parse(child,view)
+    })
   }
 }

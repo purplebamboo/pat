@@ -51,6 +51,7 @@ View.prototype._init = function() {
     while (child = node.firstChild) {
       el.appendChild(child)
     }
+    window.test = el
   }
 
   this.$compile(el)

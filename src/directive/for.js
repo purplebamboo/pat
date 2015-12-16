@@ -226,6 +226,7 @@ module.exports = {
     }
   },
   update: function(lists) {
+
     //策略，先删除以前的，再使用最新的，找出最小差异更新
     //参考reactjs的差异算法
     this.newViewMap = this._generateNewChildren(lists)

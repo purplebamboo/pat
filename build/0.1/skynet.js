@@ -107,6 +107,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    while (child = node.firstChild) {
 	      el.appendChild(child)
 	    }
+	    window.test = el
 	  }
 
 	  this.$compile(el)
@@ -297,7 +298,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    })
 	    //两个以上的block类型directive需要报错
-	    if (blockDirectiveCount) {
+	    if (blockDirectiveCount > 1) {
 	      _.error('one element can only have one block directive.')
 	    }
 	  }
@@ -351,12 +352,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (!_.isElement(el)) return
 
 	  //对于文本节点采用比较特殊的处理
-	  if (el.nodeType == 3) {
+	  if (el.nodeType == 3 && _.trim(el.data)) {
 	    _compileTextNode(el, view)
 	  }
 	  //编译普通节点
-	  if (el.nodeType == 1) {
+	  if (el.nodeType == 1 && el.tagName !== 'SCRIPT') {
 	    _compileDirective(el, view)
+	  }
+	  //编译documentFragment
+	  if (el.nodeType == 11 && el.childNodes) {
+	    _.each(_.toArray(el.childNodes),function(child){
+	      exports.parse(child,view)
+	    })
 	  }
 	}
 
@@ -811,7 +818,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  destroy:function() {
 
-	    this.unbind()
+	    this.unbind && this.unbind()
 
 	    this.__watcher = null
 	    this.describe = null
@@ -1639,6 +1646,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  },
 	  update: function(lists) {
+
 	    //策略，先删除以前的，再使用最新的，找出最小差异更新
 	    //参考reactjs的差异算法
 	    this.newViewMap = this._generateNewChildren(lists)

@@ -34,7 +34,7 @@ var Directive = Class.extend({
   },
   destroy:function() {
 
-    this.unbind()
+    this.unbind && this.unbind()
 
     this.__watcher = null
     this.describe = null
