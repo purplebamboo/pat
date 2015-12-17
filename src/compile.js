@@ -167,7 +167,13 @@ function _compileTextNode(el, view) {
 
 exports.parseRoot = function(el,view){
 
-  var attrs = _.toArray(view.attrs) || []
+  var attrs = null
+  if (view.__node) {
+    attrs = _.toArray(view.__node.attrs)
+  }else{
+    attrs = _.toArray(el.attributes)
+  }
+
   //去重,需不需要合并之前的值?
   //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
   _compileDirective(el,view,attrs)

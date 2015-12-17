@@ -47,6 +47,10 @@ Node.prototype.initNormal = function() {
     return _.before(curEl,target)
   }
 
+  this.after = function(target){
+    return _.after(curEl,target)
+  }
+
   this.remove = function(target){
     return _.remove(curEl,target)
   }
@@ -57,15 +61,18 @@ Node.prototype.initNormal = function() {
 }
 //初始化特殊节点Fragment的几个方法
 Node.prototype.initFragment = function() {
-
+  var curEl = this.el
   this.start = _.createAnchor('frag-start')
   this.end = _.createAnchor('frag-end')
-  _.prepend(this.start, this.el)
-  this.el.appendChild(this.end)
+  _.prepend(this.start, curEl)
+  curEl.appendChild(this.end)
 
   //documentFragment直接可以before
   this.before = function(target){
     return _.before(curEl,target)
+  }
+  this.after = function(target){
+    return _.after(curEl,target)
   }
   //documentFragment进行remove时比较麻烦，需要特殊处理不少东西
   //策略是从占位节点开始挨个的删除
@@ -80,9 +87,13 @@ Node.prototype._fragmentRemove = function() {
     _.error('can‘t find a start or end anchor while use fragmentRemove')
     return
   }
+  debugger
   var node = this.start
+  var prevNode
   while(node != this.end){
-    _.remove(node)
+    prevNode = node
+    node = node.nextSibling
+    _.remove(prevNode)
   }
   _.remove(this.end)
 

@@ -22,7 +22,8 @@ var View = function (options) {
   this.$data = options.data
   this.template = options.template
   //可以额外的给当前view的root传递一些属性，这在el是一个documentFragment的时候很有用
-  this.attrs = options.attrs
+  //this.attrs = options.attrs
+  this.__node = options.node
   //保存根view,没有的话就是自己
   this.$rootView = options.rootView ? options.rootView : this
   //是否需要编译当前根节点（就是当前$el），默认为true。
@@ -101,15 +102,15 @@ View.prototype.$destroy = function(destroyRoot) {
     //通知watch销毁，watch会负责销毁对应的directive
     watcher.destroy()
   })
-  //这边需要区分documentfragment的情况，需要特殊处理
-  if (destroyRoot) {
-    _.remove(this.$el)
-    //this.__element.remove()
+
+  //如果有托管的node，就直接调用对应的删除方法
+  if (this.__node) {
+    this.__node.remove()
   }else{
-    this.$el.innerHTML = ''
+    destroyRoot ? _.remove(this.$el) : (this.$el.innerHTML = '')
   }
 
-  this.__element = null
+  this.__node = null
   this.$el = null
   this.$data = null
   this.$rootView = null

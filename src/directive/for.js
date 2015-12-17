@@ -3,6 +3,8 @@
 var _ = require('../util')
 var parser = require('../parser')
 var parseExpression = parser.parseExpression
+var Node = require('../node.js')
+
 
 //差异更新的几种类型
 var UPDATE_TYPES = {
@@ -45,6 +47,8 @@ module.exports = {
     _.replace(this.el, this.end)
     _.before(this.start, this.end)
 
+    this.__node = new Node(this.el)
+
     this.oldViewMap = {}
 
   },
@@ -53,7 +57,7 @@ module.exports = {
     var newViewMap = {}
     var oldViewMap = this.oldViewMap
     var self = this
-    var data
+    var data,newNode
 
     _.each(lists, function(item, index) {
 
@@ -72,10 +76,12 @@ module.exports = {
 
         if(self.iterator) data[self.iterator] = index
 
+        newNode = self.__node.clone()
+
         newViewMap[index] = new self.view.constructor({
-          el: _.clone(self.el),
+          el: newNode.el,
+          node:newNode,
           data: data,
-          attrs:_.toArray(self.el.attributes),
           rootView:self.view.$rootView
         })
       }
@@ -136,7 +142,7 @@ module.exports = {
           type: UPDATE_TYPES.INSERT_MARKUP,
           fromIndex: null,
           toIndex: nextIndex,
-          markup: nextChild.$el //新增的节点，多一个此属性，表示新节点的dom内容
+          markup: nextChild.__node //新增的节点，多一个此属性，表示新节点的dom内容
         })
       }
 
@@ -170,15 +176,14 @@ module.exports = {
       if (update.type === UPDATE_TYPES.MOVE_EXISTING || update.type === UPDATE_TYPES.REMOVE_NODE) {
 
         updatedChild = this.oldViewMap[update.name]
-        initialChildren[update.name] = updatedChild.$el
+        initialChildren[update.name] = updatedChild.__node
         //所有需要修改的节点先删除,对于move的，后面再重新插入到正确的位置即可
         deleteChildren.push(updatedChild)
       }
     }
     //删除所有需要先删除的
     _.each(deleteChildren, function(child) {
-      child.$destroy(true)
-      //_.remove(child.$el)
+      child.$destroy()
     })
 
     //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入
@@ -205,24 +210,38 @@ module.exports = {
 
     var index = -1
     var node = start
-
+    var inFragment = false
     while(node && node !== end){
 
       node = node.nextSibling
-      //不是element就跳过
-      if (!(_.isElement(node) && node.nodeType==1)) continue
-      //这里需要处理，就是如果是documentfragment需要特殊计算index
-      index ++
-      if (toIndex == index) {
-        _.after(element,node)
-        return
+
+      if (_.isElement(node) && node.nodeType==8 && node.data == 'frag-end') {
+        inFragment = false
       }
 
+      if (inFragment) continue
+
+      //遇到特殊的节点，documentFragment,需要特殊计算index
+      if (_.isElement(node) && node.nodeType==8 && node.data == 'frag-start') {
+        inFragment = true
+        continue
+      }
+      //不是element就跳过
+      if (!(_.isElement(node) && node.nodeType==1)) continue
+
+      index ++
+
+      if (toIndex == index) {
+        //_.after(element,node)
+        element.after(node)
+        return
+      }
     }
 
     //证明没找到，不够？那就直接放到最后了
     if (toIndex > index) {
-      _.before(element,end)
+      element.before(end)
+      //_.before(element,end)
     }
   },
   update: function(lists) {
@@ -239,7 +258,7 @@ module.exports = {
   },
   unbind: function() {
     _.each(this.newViewMap,function(view){
-      view.$destroy(true)
+      view.$destroy()
     })
     //恢复现场，好像觉得没必要？
     //_.before(this.el,this.end)

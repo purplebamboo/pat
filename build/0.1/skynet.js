@@ -78,7 +78,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.$data = options.data
 	  this.template = options.template
 	  //可以额外的给当前view的root传递一些属性，这在el是一个documentFragment的时候很有用
-	  this.attrs = options.attrs
+	  //this.attrs = options.attrs
+	  this.__node = options.node
 	  //保存根view,没有的话就是自己
 	  this.$rootView = options.rootView ? options.rootView : this
 	  //是否需要编译当前根节点（就是当前$el），默认为true。
@@ -157,15 +158,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //通知watch销毁，watch会负责销毁对应的directive
 	    watcher.destroy()
 	  })
-	  //这边需要区分documentfragment的情况，需要特殊处理
-	  if (destroyRoot) {
-	    _.remove(this.$el)
-	    //this.__element.remove()
+
+	  //如果有托管的node，就直接调用对应的删除方法
+	  if (this.__node) {
+	    this.__node.remove()
 	  }else{
-	    this.$el.innerHTML = ''
+	    destroyRoot ? _.remove(this.$el) : (this.$el.innerHTML = '')
 	  }
 
-	  this.__element = null
+	  this.__node = null
 	  this.$el = null
 	  this.$data = null
 	  this.$rootView = null
@@ -362,7 +363,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.parseRoot = function(el,view){
 
-	  var attrs = _.toArray(view.attrs) || []
+	  var attrs = null
+	  if (view.__node) {
+	    attrs = _.toArray(view.__node.attrs)
+	  }else{
+	    attrs = _.toArray(el.attributes)
+	  }
+
 	  //去重,需不需要合并之前的值?
 	  //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
 	  _compileDirective(el,view,attrs)
@@ -1374,8 +1381,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _ = __webpack_require__(2)
 	var Node = __webpack_require__(14)
-
-
 	/**
 	 * if 指令，这是一个block会产生自己的scope,自己的view
 	 * @type {Object}
@@ -1404,7 +1409,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.node = this.__node.clone()
 	      this.childView = new this.view.constructor({
 	        el:this.node.el,
-	        attrs:this.node.attrs,
+	        node:this.node,
 	        data:this.view.$data,
 	        rootView:this.view.$rootView
 	      })
@@ -1415,6 +1420,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (!value && this.bound == true){
+
 	      this.node.remove()
 	      //_.remove(this.el)
 	      this.bound = false
@@ -1481,6 +1487,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return _.before(curEl,target)
 	  }
 
+	  this.after = function(target){
+	    return _.after(curEl,target)
+	  }
+
 	  this.remove = function(target){
 	    return _.remove(curEl,target)
 	  }
@@ -1491,15 +1501,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	//初始化特殊节点Fragment的几个方法
 	Node.prototype.initFragment = function() {
-
+	  var curEl = this.el
 	  this.start = _.createAnchor('frag-start')
 	  this.end = _.createAnchor('frag-end')
-	  _.prepend(this.start, this.el)
-	  this.el.appendChild(this.end)
+	  _.prepend(this.start, curEl)
+	  curEl.appendChild(this.end)
 
 	  //documentFragment直接可以before
 	  this.before = function(target){
 	    return _.before(curEl,target)
+	  }
+	  this.after = function(target){
+	    return _.after(curEl,target)
 	  }
 	  //documentFragment进行remove时比较麻烦，需要特殊处理不少东西
 	  //策略是从占位节点开始挨个的删除
@@ -1514,9 +1527,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _.error('can‘t find a start or end anchor while use fragmentRemove')
 	    return
 	  }
+	  debugger
 	  var node = this.start
+	  var prevNode
 	  while(node != this.end){
-	    _.remove(node)
+	    prevNode = node
+	    node = node.nextSibling
+	    _.remove(prevNode)
 	  }
 	  _.remove(this.end)
 
@@ -1560,6 +1577,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _ = __webpack_require__(2)
 	var parser = __webpack_require__(9)
 	var parseExpression = parser.parseExpression
+	var Node = __webpack_require__(14)
+
 
 	//差异更新的几种类型
 	var UPDATE_TYPES = {
@@ -1602,6 +1621,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _.replace(this.el, this.end)
 	    _.before(this.start, this.end)
 
+	    this.__node = new Node(this.el)
+
 	    this.oldViewMap = {}
 
 	  },
@@ -1610,7 +1631,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var newViewMap = {}
 	    var oldViewMap = this.oldViewMap
 	    var self = this
-	    var data
+	    var data,newNode
 
 	    _.each(lists, function(item, index) {
 
@@ -1629,10 +1650,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        if(self.iterator) data[self.iterator] = index
 
+	        newNode = self.__node.clone()
+
 	        newViewMap[index] = new self.view.constructor({
-	          el: _.clone(self.el),
+	          el: newNode.el,
+	          node:newNode,
 	          data: data,
-	          attrs:_.toArray(self.el.attributes),
 	          rootView:self.view.$rootView
 	        })
 	      }
@@ -1693,7 +1716,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          type: UPDATE_TYPES.INSERT_MARKUP,
 	          fromIndex: null,
 	          toIndex: nextIndex,
-	          markup: nextChild.$el //新增的节点，多一个此属性，表示新节点的dom内容
+	          markup: nextChild.__node //新增的节点，多一个此属性，表示新节点的dom内容
 	        })
 	      }
 
@@ -1727,15 +1750,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (update.type === UPDATE_TYPES.MOVE_EXISTING || update.type === UPDATE_TYPES.REMOVE_NODE) {
 
 	        updatedChild = this.oldViewMap[update.name]
-	        initialChildren[update.name] = updatedChild.$el
+	        initialChildren[update.name] = updatedChild.__node
 	        //所有需要修改的节点先删除,对于move的，后面再重新插入到正确的位置即可
 	        deleteChildren.push(updatedChild)
 	      }
 	    }
 	    //删除所有需要先删除的
 	    _.each(deleteChildren, function(child) {
-	      child.$destroy(true)
-	      //_.remove(child.$el)
+	      child.$destroy()
 	    })
 
 	    //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入
@@ -1762,24 +1784,38 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var index = -1
 	    var node = start
-
+	    var inFragment = false
 	    while(node && node !== end){
 
 	      node = node.nextSibling
-	      //不是element就跳过
-	      if (!(_.isElement(node) && node.nodeType==1)) continue
-	      //这里需要处理，就是如果是documentfragment需要特殊计算index
-	      index ++
-	      if (toIndex == index) {
-	        _.after(element,node)
-	        return
+
+	      if (_.isElement(node) && node.nodeType==8 && node.data == 'frag-end') {
+	        inFragment = false
 	      }
 
+	      if (inFragment) continue
+
+	      //遇到特殊的节点，documentFragment,需要特殊计算index
+	      if (_.isElement(node) && node.nodeType==8 && node.data == 'frag-start') {
+	        inFragment = true
+	        continue
+	      }
+	      //不是element就跳过
+	      if (!(_.isElement(node) && node.nodeType==1)) continue
+
+	      index ++
+
+	      if (toIndex == index) {
+	        //_.after(element,node)
+	        element.after(node)
+	        return
+	      }
 	    }
 
 	    //证明没找到，不够？那就直接放到最后了
 	    if (toIndex > index) {
-	      _.before(element,end)
+	      element.before(end)
+	      //_.before(element,end)
 	    }
 	  },
 	  update: function(lists) {
@@ -1796,7 +1832,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  unbind: function() {
 	    _.each(this.newViewMap,function(view){
-	      view.$destroy(true)
+	      view.$destroy()
 	    })
 	    //恢复现场，好像觉得没必要？
 	    //_.before(this.el,this.end)

@@ -1,8 +1,6 @@
 
 var _ = require('../util')
 var Node = require('../node.js')
-
-
 /**
  * if 指令，这是一个block会产生自己的scope,自己的view
  * @type {Object}
@@ -31,7 +29,7 @@ module.exports = {
       this.node = this.__node.clone()
       this.childView = new this.view.constructor({
         el:this.node.el,
-        attrs:this.node.attrs,
+        node:this.node,
         data:this.view.$data,
         rootView:this.view.$rootView
       })
@@ -42,6 +40,7 @@ module.exports = {
     }
 
     if (!value && this.bound == true){
+
       this.node.remove()
       //_.remove(this.el)
       this.bound = false
