@@ -27,9 +27,9 @@ module.exports = {
 
   },
   unbind:function(){
-    var args,id
-    args = this.describe.args || []
-    id = args[0]
+    // var args,id
+    // args = this.describe.args || []
+    // id = args[0]
     //如果是插值
     // if (this.describe.isInterpolationRegx) {
     //   //设置为原始值

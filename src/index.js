@@ -21,6 +21,8 @@ var View = function (options) {
   this.$el = _.query(options.el)
   this.$data = options.data
   this.template = options.template
+  //可以额外的给当前view的root传递一些属性，这在el是一个documentFragment的时候很有用
+  this.attrs = options.attrs
   //保存根view,没有的话就是自己
   this.$rootView = options.rootView ? options.rootView : this
   //是否需要编译当前根节点（就是当前$el），默认为true。
@@ -63,7 +65,7 @@ View.prototype._init = function() {
 
 
 View.prototype.$compile = function(el) {
-  compile.parse(el,this)
+  compile.parseRoot(el,this)
 }
 
 //开始脏检测，在digest上面再封装一层，可以检测如果当前已有进行中的就延迟执行
@@ -101,11 +103,13 @@ View.prototype.$destroy = function(destroyRoot) {
   })
   //这边需要区分documentfragment的情况，需要特殊处理
   if (destroyRoot) {
-    _.remove(this.$el)
+    //_.remove(this.$el)
+    this.__element.remove()
   }else{
     this.$el.innerHTML = ''
   }
 
+  this.__element = null
   this.$el = null
   this.$data = null
   this.$rootView = null

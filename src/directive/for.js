@@ -75,7 +75,7 @@ module.exports = {
         newViewMap[index] = new self.view.constructor({
           el: _.clone(self.el),
           data: data,
-          rootCompile:false,
+          attrs:_.toArray(self.el.attributes),
           rootView:self.view.$rootView
         })
       }
@@ -211,7 +211,7 @@ module.exports = {
       node = node.nextSibling
       //不是element就跳过
       if (!(_.isElement(node) && node.nodeType==1)) continue
-
+      //这里需要处理，就是如果是documentfragment需要特殊计算index
       index ++
       if (toIndex == index) {
         _.after(element,node)

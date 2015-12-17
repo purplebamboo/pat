@@ -1,6 +1,6 @@
 
 var _ = require('../util')
-
+var Node = require('../node.js')
 
 
 /**
@@ -19,27 +19,31 @@ module.exports = {
     this.placeholder = _.createAnchor('if-statement')
     //_.before(this.placeholder,this.el)
     _.replace(this.el,this.placeholder)
-    this.__el = this.el
+
+    this.__node = new Node(this.el)
   },
   update:function(value){
+
     //if 不能使用watch的简单的对比值，而是看结果是true还是false
-    //为true并且 上一次是是销毁不是绑定
+    //为true并且 上一次是销毁不是绑定
     if (!!value && this.bound == false) {
       //生成新的view
-      this.el = _.clone(this.__el)
+      this.node = this.__node.clone()
       this.childView = new this.view.constructor({
-        el:this.el,
+        el:this.node.el,
+        attrs:this.node.attrs,
         data:this.view.$data,
-        rootCompile:false,
         rootView:this.view.$rootView
       })
 
-      _.before(this.el,this.placeholder)
+      this.node.before(this.placeholder)
+      //_.before(this.el,this.placeholder)
       this.bound = true
     }
 
     if (!value && this.bound == true){
-      _.remove(this.el)
+      this.node.remove()
+      //_.remove(this.el)
       this.bound = false
     }
     //子view开始脏检测

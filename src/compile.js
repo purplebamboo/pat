@@ -62,49 +62,67 @@ function _bindDir(describe) {
 }
 
 //解析属性，解析出directive，这个只针对element
-function _compileDirective(el, view) {
-  var attrs, describe, skipChildren, childNodes,blockDirectiveCount
+function _compileDirective(el,view,attributes) {
+  var attrs, describe, skipChildren, childNodes,blockDirectiveCount,isCurViewRoot
 
-  //以下几种情况下，不需要编译当前节点
-  //1. 如果el已经被编译过了，就不需要重复编译了
-  //2. view标识 不需要编译自己的root element的情况
-  if (!el.hasCompiled && (view.__rootCompile || el != view.$el)) {
+  //if (el.hasCompiled) return
 
-    blockDirectiveCount = 0
-    el.hasCompiled = true
+  isCurViewRoot = el === view.$el ? true : false
 
-    attrs = _.toArray(el.attributes)
-    _.each(attrs, function(attr) {
+  blockDirectiveCount = 0
+  //el.hasCompiled = true
+  attributes = attributes || []
 
-      //不是directive就返回
-      if (!Directive.isDirective(attr)) return
+  var describes = [],blockDescribes = []
+  _.each(attributes,function(attr){
 
-      describe = parseDirective(attr)
-      describe.view = view
-      describe.el = el
+    //不是directive就返回
+    if (!Directive.isDirective(attr)) return
 
+    describe = parseDirective(attr)
+    describe.view = view
+    describe.el = el
 
-      //如果不是debug模式，可以把属性删除了.插值的不用管，只需要去掉指令定义
-      if (!config.debug && !describe.isInterpolationRegx && el && el.removeAttribute) {
-        el.removeAttribute(describe.name)
-      }
+    //只有非block的或者是自己rootview的block才需要单独处理，其他block会单独由父view处理掉
+    if (!describe.block) describes.push(describe)
 
-      dirInstance = _bindDir(describe)
+    if (describe.block) blockDescribes.push(describe)
 
-      //对于有block的directive,需要跳过子节点的解析
-      if (dirInstance.block) {
-        blockDirectiveCount ++
-        skipChildren = true
-      }
-    })
-    //两个以上的block类型directive需要报错
-    if (blockDirectiveCount > 1) {
-      _.error('one element can only have one block directive.')
-    }
+  })
+
+  if(blockDescribes.length > 1 ){
+    _.error('one element can only have one block directive.')
   }
 
-  //有block的情况需要跳过子节点的编译，比如if,for,bind
-  if (!skipChildren && el.hasChildNodes()) {
+  //发现有block，并且不是自己的root,交给block的指令就行了
+  //只管第一个block
+  if (!isCurViewRoot && blockDescribes.length) {
+
+    _bindDir(blockDescribes[0])
+    //如果不是debug模式，可以把属性删除了.
+    if (!config.debug && el && el.removeAttribute) {
+      el.removeAttribute(blockDescribes[0].name)
+    }
+    //重置为未处理
+    //el.hasCompiled = false
+    return
+  }
+
+  //否则,将block的合到普通指令里去用
+  //排序，之后去绑定
+  describes.sort(function(a, b) {
+    a = a.priority || 100
+    b = b.priority || 100
+    return a > b ? -1 : a === b ? 0 : 1
+  })
+
+  //describes = blockDescribes.slice(0,1).concat(describes)
+
+  _.each(describes,function(des){
+    _bindDir(des)
+  })
+
+  if (el.hasChildNodes()) {
     childNodes = _.toArray(el.childNodes)
     _.each(childNodes, function(child) {
       exports.parse(child, view)
@@ -147,7 +165,15 @@ function _compileTextNode(el, view) {
 }
 
 
-exports.parse = function(el, view) {
+exports.parseRoot = function(el,view){
+
+  var attrs = _.toArray(view.attrs) || []
+  //去重,需不需要合并之前的值?
+  //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
+  _compileDirective(el,view,attrs)
+}
+
+exports.parse = function(el,view) {
 
   if (!_.isElement(el)) return
 
@@ -155,14 +181,9 @@ exports.parse = function(el, view) {
   if (el.nodeType == 3 && _.trim(el.data)) {
     _compileTextNode(el, view)
   }
+
   //编译普通节点
-  if (el.nodeType == 1 && el.tagName !== 'SCRIPT') {
-    _compileDirective(el, view)
-  }
-  //编译documentFragment
-  if (el.nodeType == 11 && el.childNodes) {
-    _.each(_.toArray(el.childNodes),function(child){
-      exports.parse(child,view)
-    })
+  if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
+    _compileDirective(el, view, _.toArray(el.attributes))
   }
 }

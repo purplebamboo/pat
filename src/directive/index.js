@@ -54,6 +54,7 @@ _.each(directives,function(directive,key){
 
 
 module.exports = {
+  __directives:directives,
   publics:publicDirectives,
   create:function(describe){
     var dirFn = publicDirectives[describe.directive]
@@ -75,6 +76,7 @@ module.exports = {
   },
   //新建一个directive定义
   directive:function(key,options) {
+    directives[key] = options
     this.publicDirectives[key] = Directive.extend(options)
   }
 }

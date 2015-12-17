@@ -44,6 +44,7 @@ exports.trim=function(str){
 }
 
 exports.toArray = function(arg) {
+  if (!arg) return []
   return Array.prototype.slice.call(arg) || []
 }
 

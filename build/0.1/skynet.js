@@ -77,6 +77,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.$el = _.query(options.el)
 	  this.$data = options.data
 	  this.template = options.template
+	  //可以额外的给当前view的root传递一些属性，这在el是一个documentFragment的时候很有用
+	  this.attrs = options.attrs
 	  //保存根view,没有的话就是自己
 	  this.$rootView = options.rootView ? options.rootView : this
 	  //是否需要编译当前根节点（就是当前$el），默认为true。
@@ -119,7 +121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	View.prototype.$compile = function(el) {
-	  compile.parse(el,this)
+	  compile.parseRoot(el,this)
 	}
 
 	//开始脏检测，在digest上面再封装一层，可以检测如果当前已有进行中的就延迟执行
@@ -157,11 +159,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  })
 	  //这边需要区分documentfragment的情况，需要特殊处理
 	  if (destroyRoot) {
-	    _.remove(this.$el)
+	    //_.remove(this.$el)
+	    this.__element.remove()
 	  }else{
 	    this.$el.innerHTML = ''
 	  }
 
+	  this.__element = null
 	  this.$el = null
 	  this.$data = null
 	  this.$rootView = null
@@ -191,7 +195,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(2)
 	var Directive = __webpack_require__(8)
-	var Watcher = __webpack_require__(17)
+	var Watcher = __webpack_require__(18)
 	var parser = __webpack_require__(9)
 	var parseDirective = parser.parseDirective
 	var parseText = parser.parseText
@@ -253,49 +257,67 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	//解析属性，解析出directive，这个只针对element
-	function _compileDirective(el, view) {
-	  var attrs, describe, skipChildren, childNodes,blockDirectiveCount
+	function _compileDirective(el,view,attributes) {
+	  var attrs, describe, skipChildren, childNodes,blockDirectiveCount,isCurViewRoot
 
-	  //以下几种情况下，不需要编译当前节点
-	  //1. 如果el已经被编译过了，就不需要重复编译了
-	  //2. view标识 不需要编译自己的root element的情况
-	  if (!el.hasCompiled && (view.__rootCompile || el != view.$el)) {
+	  //if (el.hasCompiled) return
 
-	    blockDirectiveCount = 0
-	    el.hasCompiled = true
+	  isCurViewRoot = el === view.$el ? true : false
 
-	    attrs = _.toArray(el.attributes)
-	    _.each(attrs, function(attr) {
+	  blockDirectiveCount = 0
+	  //el.hasCompiled = true
+	  attributes = attributes || []
 
-	      //不是directive就返回
-	      if (!Directive.isDirective(attr)) return
+	  var describes = [],blockDescribes = []
+	  _.each(attributes,function(attr){
 
-	      describe = parseDirective(attr)
-	      describe.view = view
-	      describe.el = el
+	    //不是directive就返回
+	    if (!Directive.isDirective(attr)) return
 
+	    describe = parseDirective(attr)
+	    describe.view = view
+	    describe.el = el
 
-	      //如果不是debug模式，可以把属性删除了.插值的不用管，只需要去掉指令定义
-	      if (!config.debug && !describe.isInterpolationRegx && el && el.removeAttribute) {
-	        el.removeAttribute(describe.name)
-	      }
+	    //只有非block的或者是自己rootview的block才需要单独处理，其他block会单独由父view处理掉
+	    if (!describe.block) describes.push(describe)
 
-	      dirInstance = _bindDir(describe)
+	    if (describe.block) blockDescribes.push(describe)
 
-	      //对于有block的directive,需要跳过子节点的解析
-	      if (dirInstance.block) {
-	        blockDirectiveCount ++
-	        skipChildren = true
-	      }
-	    })
-	    //两个以上的block类型directive需要报错
-	    if (blockDirectiveCount > 1) {
-	      _.error('one element can only have one block directive.')
-	    }
+	  })
+
+	  if(blockDescribes.length > 1 ){
+	    _.error('one element can only have one block directive.')
 	  }
 
-	  //有block的情况需要跳过子节点的编译，比如if,for,bind
-	  if (!skipChildren && el.hasChildNodes()) {
+	  //发现有block，并且不是自己的root,交给block的指令就行了
+	  //只管第一个block
+	  if (!isCurViewRoot && blockDescribes.length) {
+
+	    _bindDir(blockDescribes[0])
+	    //如果不是debug模式，可以把属性删除了.
+	    if (!config.debug && el && el.removeAttribute) {
+	      el.removeAttribute(blockDescribes[0].name)
+	    }
+	    //重置为未处理
+	    //el.hasCompiled = false
+	    return
+	  }
+
+	  //否则,将block的合到普通指令里去用
+	  //排序，之后去绑定
+	  describes.sort(function(a, b) {
+	    a = a.priority || 100
+	    b = b.priority || 100
+	    return a > b ? -1 : a === b ? 0 : 1
+	  })
+
+	  //describes = blockDescribes.slice(0,1).concat(describes)
+
+	  _.each(describes,function(des){
+	    _bindDir(des)
+	  })
+
+	  if (el.hasChildNodes()) {
 	    childNodes = _.toArray(el.childNodes)
 	    _.each(childNodes, function(child) {
 	      exports.parse(child, view)
@@ -338,7 +360,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	exports.parse = function(el, view) {
+	exports.parseRoot = function(el,view){
+
+	  var attrs = _.toArray(view.attrs) || []
+	  //去重,需不需要合并之前的值?
+	  //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
+	  _compileDirective(el,view,attrs)
+	}
+
+	exports.parse = function(el,view) {
 
 	  if (!_.isElement(el)) return
 
@@ -346,15 +376,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (el.nodeType == 3 && _.trim(el.data)) {
 	    _compileTextNode(el, view)
 	  }
+
 	  //编译普通节点
-	  if (el.nodeType == 1 && el.tagName !== 'SCRIPT') {
-	    _compileDirective(el, view)
-	  }
-	  //编译documentFragment
-	  if (el.nodeType == 11 && el.childNodes) {
-	    _.each(_.toArray(el.childNodes),function(child){
-	      exports.parse(child,view)
-	    })
+	  if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
+	    _compileDirective(el, view, _.toArray(el.attributes))
 	  }
 	}
 
@@ -607,6 +632,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	exports.toArray = function(arg) {
+	  if (!arg) return []
 	  return Array.prototype.slice.call(arg) || []
 	}
 
@@ -787,9 +813,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  'bind':__webpack_require__(11),
 	  'model':__webpack_require__(12),
 	  'if':__webpack_require__(13),
-	  'unless':__webpack_require__(14),
-	  'for':__webpack_require__(15),
-	  'textTemplate':__webpack_require__(16)
+	  'unless':__webpack_require__(15),
+	  'for':__webpack_require__(16),
+	  'textTemplate':__webpack_require__(17)
 	}
 
 
@@ -829,6 +855,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	module.exports = {
+	  __directives:directives,
 	  publics:publicDirectives,
 	  create:function(describe){
 	    var dirFn = publicDirectives[describe.directive]
@@ -850,6 +877,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  //新建一个directive定义
 	  directive:function(key,options) {
+	    directives[key] = options
 	    this.publicDirectives[key] = Directive.extend(options)
 	  }
 	}
@@ -939,6 +967,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      args: [name],
 	      oneTime: false,
 	      html: false,
+	      block:false,
 	      expression: exports.token2expression(tokens),
 	      isInterpolationRegx: true //标识一下是插值
 	    }
@@ -956,6 +985,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    args = obj[1] ? obj[1].split('|') : []
 	  }
 
+
+	  var dirOptions = __webpack_require__(8).__directives[directive] || {}
+
 	  return {
 	    name: name,
 	    value: value,
@@ -963,6 +995,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    args: args || [],
 	    oneTime: false,
 	    html: false,
+	    block: dirOptions.block,
+	    priority: dirOptions.priority,
 	    expression: exports.parseExpression(value)
 	  }
 	}
@@ -1248,9 +1282,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  },
 	  unbind:function(){
-	    var args,id
-	    args = this.describe.args || []
-	    id = args[0]
+	    // var args,id
+	    // args = this.describe.args || []
+	    // id = args[0]
 	    //如果是插值
 	    // if (this.describe.isInterpolationRegx) {
 	    //   //设置为原始值
@@ -1339,7 +1373,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var _ = __webpack_require__(2)
-
+	var Node = __webpack_require__(14)
 
 
 	/**
@@ -1358,27 +1392,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.placeholder = _.createAnchor('if-statement')
 	    //_.before(this.placeholder,this.el)
 	    _.replace(this.el,this.placeholder)
-	    this.__el = this.el
+
+	    this.__node = new Node(this.el)
 	  },
 	  update:function(value){
+
 	    //if 不能使用watch的简单的对比值，而是看结果是true还是false
-	    //为true并且 上一次是是销毁不是绑定
+	    //为true并且 上一次是销毁不是绑定
 	    if (!!value && this.bound == false) {
 	      //生成新的view
-	      this.el = _.clone(this.__el)
+	      this.node = this.__node.clone()
 	      this.childView = new this.view.constructor({
-	        el:this.el,
+	        el:this.node.el,
+	        attrs:this.node.attrs,
 	        data:this.view.$data,
-	        rootCompile:false,
 	        rootView:this.view.$rootView
 	      })
 
-	      _.before(this.el,this.placeholder)
+	      this.node.before(this.placeholder)
+	      //_.before(this.el,this.placeholder)
 	      this.bound = true
 	    }
 
 	    if (!value && this.bound == true){
-	      _.remove(this.el)
+	      this.node.remove()
+	      //_.remove(this.el)
 	      this.bound = false
 	    }
 	    //子view开始脏检测
@@ -1392,6 +1430,110 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+
+	/**
+	 * 为什么要有这个类？
+	 *
+	 * 我们平时使用时，都是针对一个element节点操作
+	 * 但是当我们使用<template>这种节点时，会针对多个节点同事操作
+	 * 所以我们需要做一层封装，用来决定当前这个节点，怎么删除，怎么添加
+	 */
+
+	var _ = __webpack_require__(2)
+
+	/**
+	 * 支持普通节点，template节点
+	 *
+	 */
+
+	function Node (el) {
+
+	  this.el = el
+
+	  this.attrs = el.attributes
+
+	  //如果是template,需要特殊处理
+	  if (el.tagName && el.tagName.toLowerCase() === 'template') {
+	    //chrome下面可以直接拿content就是个documentFragment,ie下待兼容
+	    this.el = this.el.content
+	  }
+
+	  this.isFrag = el instanceof DocumentFragment
+
+	  if (!this.isFrag) {
+	    this.initNormal()
+	  }else{
+	    this.initFragment()
+	  }
+
+	}
+
+
+	//初始化普通节点的几个方法
+	Node.prototype.initNormal = function() {
+
+	  var curEl = this.el
+
+	  this.before = function(target){
+	    return _.before(curEl,target)
+	  }
+
+	  this.remove = function(target){
+	    return _.remove(curEl,target)
+	  }
+
+	  this.clone = function(){
+	    return new Node(_.clone(curEl))
+	  }
+	}
+	//初始化特殊节点Fragment的几个方法
+	Node.prototype.initFragment = function() {
+
+	  this.start = _.createAnchor('frag-start')
+	  this.end = _.createAnchor('frag-end')
+	  _.prepend(this.start, this.el)
+	  this.el.appendChild(this.end)
+
+	  //documentFragment直接可以before
+	  this.before = function(target){
+	    return _.before(curEl,target)
+	  }
+	  //documentFragment进行remove时比较麻烦，需要特殊处理不少东西
+	  //策略是从占位节点开始挨个的删除
+	  this.remove = this._fragmentRemove
+	  this.clone = this._fragmentClone
+	}
+
+
+	Node.prototype._fragmentRemove = function() {
+
+	  if (!this.start || !this.end) {
+	    _.error('can‘t find a start or end anchor while use fragmentRemove')
+	    return
+	  }
+	  var node = this.start
+	  while(node != this.end){
+	    _.remove(node)
+	  }
+	  _.remove(this.end)
+
+	}
+
+
+	Node.prototype._fragmentClone = function(){
+	  //各种兼容性问题
+	  return new Node(_.clone(this.el))
+	}
+
+
+	module.exports = Node
+
+
+/***/ },
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1410,7 +1552,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1490,7 +1632,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        newViewMap[index] = new self.view.constructor({
 	          el: _.clone(self.el),
 	          data: data,
-	          rootCompile:false,
+	          attrs:_.toArray(self.el.attributes),
 	          rootView:self.view.$rootView
 	        })
 	      }
@@ -1626,7 +1768,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      node = node.nextSibling
 	      //不是element就跳过
 	      if (!(_.isElement(node) && node.nodeType==1)) continue
-
+	      //这里需要处理，就是如果是documentfragment需要特殊计算index
 	      index ++
 	      if (toIndex == index) {
 	        _.after(element,node)
@@ -1665,7 +1807,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1731,7 +1873,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	

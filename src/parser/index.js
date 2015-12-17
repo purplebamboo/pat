@@ -79,6 +79,7 @@ exports.parseDirective = function(attr) {
       args: [name],
       oneTime: false,
       html: false,
+      block:false,
       expression: exports.token2expression(tokens),
       isInterpolationRegx: true //标识一下是插值
     }
@@ -96,6 +97,9 @@ exports.parseDirective = function(attr) {
     args = obj[1] ? obj[1].split('|') : []
   }
 
+
+  var dirOptions = require('../directive').__directives[directive] || {}
+
   return {
     name: name,
     value: value,
@@ -103,6 +107,8 @@ exports.parseDirective = function(attr) {
     args: args || [],
     oneTime: false,
     html: false,
+    block: dirOptions.block,
+    priority: dirOptions.priority,
     expression: exports.parseExpression(value)
   }
 }
