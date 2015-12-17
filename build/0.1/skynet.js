@@ -159,8 +159,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  })
 	  //这边需要区分documentfragment的情况，需要特殊处理
 	  if (destroyRoot) {
-	    //_.remove(this.$el)
-	    this.__element.remove()
+	    _.remove(this.$el)
+	    //this.__element.remove()
 	  }else{
 	    this.$el.innerHTML = ''
 	  }
