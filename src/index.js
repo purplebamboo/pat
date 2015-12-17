@@ -99,7 +99,7 @@ View.prototype.$destroy = function(destroyRoot) {
     //通知watch销毁，watch会负责销毁对应的directive
     watcher.destroy()
   })
-
+  //这边需要区分documentfragment的情况，需要特殊处理
   if (destroyRoot) {
     _.remove(this.$el)
   }else{

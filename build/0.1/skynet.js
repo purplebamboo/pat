@@ -155,7 +155,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //通知watch销毁，watch会负责销毁对应的directive
 	    watcher.destroy()
 	  })
-
+	  //这边需要区分documentfragment的情况，需要特殊处理
 	  if (destroyRoot) {
 	    _.remove(this.$el)
 	  }else{
@@ -1358,12 +1358,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.placeholder = _.createAnchor('if-statement')
 	    //_.before(this.placeholder,this.el)
 	    _.replace(this.el,this.placeholder)
+	    this.__el = this.el
 	  },
 	  update:function(value){
 	    //if 不能使用watch的简单的对比值，而是看结果是true还是false
 	    //为true并且 上一次是是销毁不是绑定
 	    if (!!value && this.bound == false) {
 	      //生成新的view
+	      this.el = _.clone(this.__el)
 	      this.childView = new this.view.constructor({
 	        el:this.el,
 	        data:this.view.$data,

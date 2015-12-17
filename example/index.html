@@ -33,8 +33,10 @@
     </div>
 </div>
 <script type="text/template" id="J_tmpl">
-  <div sk-for="(key,list) in lists"></div>
-  xxxxx
+  <div style="font-size:16px;" sk-if="show">
+    <span>{{text}}</span>
+    我是只有true才会看到的
+  </div>
 </script>
 
 <script type="text/javascript">
@@ -56,7 +58,7 @@ View.config({
         text:'22222<span class="H">x</span>'
       }]
     },
-    //template:document.getElementById('J_tmpl').innerHTML,
+    template:document.getElementById('J_tmpl').innerHTML,
     filters:{
       fff:function(value) {
         return value + '===='
