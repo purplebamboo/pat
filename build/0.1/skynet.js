@@ -1527,7 +1527,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _.error('can‘t find a start or end anchor while use fragmentRemove')
 	    return
 	  }
-	  debugger
+
 	  var node = this.start
 	  var prevNode
 	  while(node != this.end){
