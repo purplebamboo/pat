@@ -1,13 +1,10 @@
 var compile = require('./compile.js')
 var config = require('./config.js')
-
+var Watcher = require('./watcher.js')
+var Directive = require('./directive/index.js')
+var Parser = require('./parser/index.js')
 var _ = require('./util')
 
-//合并数据
-var _mergeOptions = function(options){
-  //todo  各种特殊属性的合并
-  return _.assign({},config.defaultOptions,options)
-}
 
 /**
  * 构造函数
@@ -15,25 +12,26 @@ var _mergeOptions = function(options){
  */
 var View = function (options) {
 
-  options = _mergeOptions(options)
-
   //需要绑定的节点，必须
   this.$el = _.query(options.el)
-  this.$data = options.data
-  this.template = options.template
-  //可以额外的给当前view的root传递一些属性，这在el是一个documentFragment的时候很有用
-  //this.attrs = options.attrs
-  this.__node = options.node
+
+  if (!this.$el || !_.isElement(this.$el) || !(this.$el.nodeType == 11 || this.$el.nodeType == 1)) {
+    _.error('pat need a root el and must be a element or documentFragment')
+  }
+
+  this.$data = options.data || {}
   //保存根view,没有的话就是自己
   this.$rootView = options.rootView ? options.rootView : this
-  //是否需要编译当前根节点（就是当前$el），默认为true。
-  this.__rootCompile = options.rootCompile
-  //有模版时，是否替换整个dom,默认为true
-  this.__replace = options.replace
-  //所有观察对象
+  //模板，可选
+  this.__template = options.template
+  //有的节点会比较特殊，比如是一个documentFragment，这个时候可能会包装一层。
+  this.__node = options.node
+  //所有指令观察对象
   this.__watchers = {}
+  //用户自定义的观察对象
+  this.__userWatchers = {}
   //所有过滤器
-  this.__filters = options.filters || []
+  this.__filters = options.filters || {}
   //初始化
   this._init()
 }
@@ -44,23 +42,21 @@ View.prototype._init = function() {
   var el = this.$el
   var node,child
 
-  if (this.template) {
-    //看是否需要清空子节点
-    if(this.__replace) this.$el.innerHTML = ''
+  if (this.__template) {
 
+    this.$el.innerHTML = ''
     el = document.createDocumentFragment()
     node = document.createElement('div')
-    node.innerHTML = this.template.trim()
+    node.innerHTML = _.trim(this.__template)
     while (child = node.firstChild) {
       el.appendChild(child)
     }
-    window.test = el
   }
 
   this.$compile(el)
 
   //如果是模板，最后一次性的append到dom里
-  if (this.template) this.$el.appendChild(el)
+  if (this.__template) this.$el.appendChild(el)
 
 }
 
@@ -88,7 +84,12 @@ View.prototype.$apply = function(fn) {
 
 //开始脏检测，这个方法只有内部可以使用
 View.prototype.$digest = function() {
-  _.each(this.__watchers,function(watcher){
+  //先检查用户自定义的watcher,这样用户的定义可以先执行完
+  this.__userWatchers && _.each(this.__userWatchers,function(watcher){
+    watcher.check()
+  })
+
+  this.__watchers && _.each(this.__watchers,function(watcher){
     watcher.check()
   })
 }
@@ -110,13 +111,13 @@ View.prototype.$destroy = function(destroyRoot) {
     destroyRoot ? _.remove(this.$el) : (this.$el.innerHTML = '')
   }
 
-  this.__node = null
   this.$el = null
   this.$data = null
   this.$rootView = null
-  this.__rootCompile = null
-  this.__replace = null
+  this.__node = null
+  this.__template = null
   this.__watchers = null
+  this.__userWatchers = null
   this.__filters = null
 }
 
@@ -127,6 +128,38 @@ View.prototype.$destroy = function(destroyRoot) {
  */
 View.config = function(options){
   _.assign(config,options)
+}
+
+/**
+ * 用来添加directive
+ * @param {string} key 指令名称
+ * @param {object} options 指令定义
+ *
+ */
+View.prototype.$directive = Directive.newDirective
+
+/**
+ * 用来添加watch
+ * @param {string} expression 一个表达式
+ * @param {function} callback 检测到值改变的回调
+ */
+View.prototype.$watch = function(expression,callback){
+
+  if (!expression || !callback) {
+    _.error('a watch need a expression and callback')
+  }
+
+  var watcher
+
+  if (this.__userWatchers[expression]) {
+    watcher = this.__userWatchers[expression]
+    watcher.callbacks.push(callback)
+  }else{
+    watcher = new Watcher(this, Parser.parseExpression(expression),callback)
+    watcher.last = watcher.getValue()
+    this.__userWatchers[expression] = watcher
+  }
+
 }
 
 View._isDigesting = false

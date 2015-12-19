@@ -1,5 +1,3 @@
-
-
 var _ = require('../util')
 var parser = require('../parser')
 var parseExpression = parser.parseExpression
@@ -13,17 +11,20 @@ var UPDATE_TYPES = {
   INSERT_MARKUP: 3
 }
 
-
-
 module.exports = {
   block: true,
   priority: 3000,
   shoudUpdate: function(last, current) {
-    //for 任何时候都是需要更新的，哪怕两次的值一样，也是需要更新的，因为你要考虑子view的更新
+
+    var lazy = this.describe.args[0] == 'lazy' ? true : false
+    //如果设置了lazy属性，for指令只有在整个引用变化了才会重新渲染，
+    if (lazy){
+      return  last !== current
+    }
+    //否则 任何时候都是需要更新的，哪怕两次的值一样，也是需要更新的，因为你要考虑子view的更新
     return true
   },
-  bind: function(options) {
-    // support "item in items" syntax
+  bind: function(args) {
     // for 语句比较特殊，不使用系统生成的expression
     var inMatch = this.describe.value.match(/(.*) in (.*)/)
     if (inMatch) {
@@ -42,8 +43,8 @@ module.exports = {
       _.error('required a alias in for directive')
     }
 
-    this.start = _.createAnchor('v-for-start')
-    this.end = _.createAnchor('v-for-end')
+    this.start = _.createAnchor('for-start')
+    this.end = _.createAnchor('for-end')
     _.replace(this.el, this.end)
     _.before(this.start, this.end)
 
@@ -260,10 +261,5 @@ module.exports = {
     _.each(this.newViewMap,function(view){
       view.$destroy()
     })
-    //恢复现场，好像觉得没必要？
-    //_.before(this.el,this.end)
-    //循环的el会由子view销毁掉
-    //_.remove(this.start)
-    //_.remove(this.end)
   }
 }

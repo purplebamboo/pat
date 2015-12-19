@@ -31,20 +31,18 @@ module.exports = {
       })
     }
 
-    var wrap,childNodes
+    var wrap,firstChild
 
     wrap = document.createElement("div")
     wrap.innerHTML = value
 
     this.prev = []
-    childNodes = wrap.childNodes
 
-    if (childNodes && childNodes.length > 0) {
-      for (var i = childNodes.length - 1 ; i >= 0; i--) {
-        this.prev.push(childNodes[i])
-        _.before(childNodes[i],this.placeholder)
-      }
+    while(firstChild = wrap.firstChild){
+      this.prev.push(firstChild)
+      _.before(firstChild,this.placeholder)
     }
+
   },
   _updateText:function(value){
 

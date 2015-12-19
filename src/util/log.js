@@ -10,12 +10,12 @@ exports.log = function(msg) {
 }
 
 //daily环境会打出错误日志，线上环境会忽略掉
-exports.error = function(e) {
+exports.error = function(str,e) {
   if (!hasConsole) return
 
-  if (_.isString(e)) console.error('[sk-error]:' + e)
+  str && console.error('[sk-error]:' + str)
 
-  if (e instanceof Error) {
+  if (e && e instanceof Error) {
     console.error('[sk-error]:' + e.stack)
   }
 

@@ -3,7 +3,10 @@
 var config = require('../config')
 var _ = require('./lang.js')
 
+
 exports.query = function (id) {
+
+  if (!id) return null
 
   if (_.isElement(id)) {
     return id
@@ -108,22 +111,6 @@ exports.replace = function (target, el) {
     parent.replaceChild(el, target)
   }
 }
-
-/**
- * Get and remove an attribute from a node.
- *
- * @param {Node} node
- * @param {String} attr
- */
-
-exports.attr = function (node, attr) {
-  var val = node.getAttribute(attr)
-  if (val !== null) {
-    node.removeAttribute(attr)
-  }
-  return val
-}
-
 
 
 /**

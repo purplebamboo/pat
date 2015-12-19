@@ -16,7 +16,7 @@ var directives = {
   'for':require('./for.js'),
   'textTemplate':require('./textTemplate.js')
 }
-
+var noop = function(){}
 
 uid = 0
 
@@ -32,10 +32,12 @@ var Directive = Class.extend({
   shoudUpdate:function(last,current){
     return last !== current
   },
+  bind:noop,
+  unbind:noop,
+  update:noop,
   destroy:function() {
 
-    this.unbind && this.unbind()
-
+    this.unbind()
     this.__watcher = null
     this.describe = null
     this.el = null
@@ -66,6 +68,8 @@ module.exports = {
 
     name = attr.name
     value = attr.value
+    //没有值的话直接忽略
+    if (!value) return false
 
     if (INTERPOLATION_REGX.test(value)) return true
 
@@ -74,8 +78,8 @@ module.exports = {
 
     return false
   },
-  //新建一个directive定义
-  directive:function(key,options) {
+  //新加入一个directive定义
+  newDirective:function(key,options) {
     directives[key] = options
     this.publicDirectives[key] = Directive.extend(options)
   }

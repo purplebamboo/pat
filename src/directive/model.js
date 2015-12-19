@@ -41,7 +41,7 @@ Util = {
 
 module.exports = {
   priority: 3000,
-  bind:function(options) {
+  bind:function(args) {
     //添加事件监听
     var self = this
     Util.bindEvent(self.el, 'blur', function() {

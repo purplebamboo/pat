@@ -21,9 +21,7 @@ var wsRE = /\s/g
 var newlineRE = /\n/g
 var saveRE = /[\{,]\s*[\w\$_]+\s*:|('[^']*'|"[^"]*")|new |typeof |void /g
 var restoreRE = /"(\d+)"/g
-var pathTestRE = /^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*|\['.*?'\]|\[".*?"\]|\[\d+\]|\[[A-Za-z_$][\w$]*\])*$/
 var pathReplaceRE = /[^\w$\.]([A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*|\['.*?'\]|\[".*?"\])*)/g
-var booleanLiteralRE = /^(true|false)$/
 
 /**
  * Save / Rewrite / Restore
@@ -103,9 +101,9 @@ function restore (str, i) {
 
 exports.compileExpFns =function(exp, needSet) {
   if (improperKeywordsRE.test(exp)) {
-    // process.env.NODE_ENV !== 'production' && _.warn(
-    //   'Avoid using reserved keywords in expression: ' + exp
-    // )
+    _.error(
+      'please avoid using reserved keywords in expression: ' + exp
+    )
   }
   // reset state
   saved.length = 0

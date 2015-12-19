@@ -4,8 +4,8 @@
  * 为什么要有这个类？
  *
  * 我们平时使用时，都是针对一个element节点操作
- * 但是当我们使用<template>这种节点时，会针对多个节点同事操作
- * 所以我们需要做一层封装，用来决定当前这个节点，怎么删除，怎么添加
+ * 但是当我们使用<template>这种节点时，会针对多个节点同时操作
+ * 所以我们需要做一层封装，用来决定当前这个特殊节点，怎么删除，怎么添加
  */
 
 var _ = require('./util')
@@ -24,7 +24,11 @@ function Node (el) {
   //如果是template,需要特殊处理
   if (el.tagName && el.tagName.toLowerCase() === 'template') {
     //chrome下面可以直接拿content就是个documentFragment,ie下待兼容
-    this.el = this.el.content
+    if (this.el.content) {
+      this.el = this.el.content
+    }else{
+      this.el = nodeToFrag(this.el)
+    }
   }
 
   this.isFrag = el instanceof DocumentFragment
@@ -99,10 +103,18 @@ Node.prototype._fragmentRemove = function() {
 
 }
 
-
 Node.prototype._fragmentClone = function(){
   //各种兼容性问题
   return new Node(_.clone(this.el))
+}
+
+function nodeToFrag(el){
+  var frag = document.createDocumentFragment()
+  var child
+  while (child = el.firstChild) {
+    frag.appendChild(child)
+  }
+  return frag
 }
 
 

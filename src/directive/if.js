@@ -12,7 +12,7 @@ module.exports = {
     //if 任何时候都是需要更新的，哪怕两次的值一样，也是需要更新的，因为你要考虑子view的更新
     return true
   },
-  bind:function(options) {
+  bind:function(args) {
     this.bound = false
     this.placeholder = _.createAnchor('if-statement')
     //_.before(this.placeholder,this.el)

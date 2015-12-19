@@ -3,105 +3,136 @@
 <head>
   <meta charset="utf-8"/>
   <title>测试页面</title>
-  <script src="../build/0.1/skynet.js"></script>
+  <script src="../build/0.1/pat.js"></script>
+  <link rel="stylesheet" type="text/css" href="./css/example.css">
+
 </head>
 <body>
-<div id="test">
-这个页面是用来测试模板的基本功能的。
-    <div style="background:#fafafa;"  id="object({{*text}})">这个容器的id属性和旁边的值会局部改变,但是是一次性的{{*text}}</div>
-    <div style="background:#fafafa;" sk-bind:id="text">这个是用来测试插值的：{{{text + 'qqq'|fff}}}可以放多个{{{name+'zzz122'}}}</div>
 
-    <div style="font-size:16px;" sk-if="show">我是只有true才会看到的</div>
-
-    <div style="font-size:16px;" sk-unless="show">我是只有false才会看到的</div>
-
-    <div style="background:#666;font-size:20px;">下面的是一个列表的测试</div>
-    <div style="background:#999;" sk-for="(key,list) in lists" id="{{list.text}}">
-      <span>位置{{key}}==={{{list.name}}}</span>----<span>{{{list.text}}}--透传父级的数据text--{{text}}</span>
+<div id="test1">
+  <h2>基本的双向绑定</h2>
+  <div class="line head">"{{变量}}"（插值）渲染文本，"{{{变量}}}}"渲染html，"{{{*变量}}}}"一次渲染。</div>
+  <div id="test1-container">
+    <div class="line">使用两个大括弧，来渲染一个文本，会转义:{{text}}</div>
+    <div class="line" >使用三个大括弧，这样不会被转义:{{{text}}}</div>
+    <div class="line" id="object({{*text}})">使用“*”设置一次性的绑定，不会响应数据的变化:{{*text}}</div>
+    <div class="line" >
+      双向绑定，修改数据，自动更新
+      <input type="text" t-model="text" value="" />
     </div>
-
-     <div style="background:#666;font-size:20px;">另一个列表的测试，不同的是这个是支持template的</div>
-    <template sk-for="(key,list) in lists">
-      <div>位置{{key}}==={{{list.name}}}</div>
-    </template>
-
-
-    <div style="margin-top:20px;">下面是实现双向绑定的例子</div>
-
-    <div>
-      绑定文本text
-      <input type="text" sk-model="text" value="" />
-    </div>
-
-    <div>
-      绑定数组里第一个值
-      <input type="text" sk-model="lists[0].text" value="" />
-    </div>
+  </div>
 </div>
-<script type="text/template" id="J_tmpl">
-这个页面是用来测试模板的基本功能的。
-    <div style="background:#fafafa;"  id="object({{*text}})">这个容器的id属性和旁边的值会局部改变,但是是一次性的{{*text}}</div>
-    <div style="background:#fafafa;" sk-bind:id="text">这个是用来测试插值的：{{{text + 'qqq'|fff}}}可以放多个{{{name+'zzz122'}}}</div>
-
-    <div style="font-size:16px;" sk-if="show">我是只有true才会看到的</div>
-
-    <div style="font-size:16px;" sk-unless="show">我是只有false才会看到的</div>
-
-    <div style="background:#666;font-size:20px;">下面的是一个列表的测试</div>
-    <div style="background:#999;" sk-for="(key,list) in lists" id="{{list.text}}">
-      <span>位置{{key}}==={{{list.name}}}</span>----<span>{{{list.text}}}--透传父级的数据text--{{text}}</span>
-    </div>
-
-     <div style="background:#666;font-size:20px;">另一个列表的测试，不同的是这个是支持template的</div>
-    <template sk-for="(key,list) in lists">
-      <div>位置{{key}}==={{{list.text}}}</div>
-    </template>
 
 
-    <div style="margin-top:20px;">下面是实现双向绑定的例子</div>
+<div id="test2">
 
-    <div>
-      绑定文本text
-      <input type="text" sk-model="text" value="" />
-    </div>
 
-    <div>
-      绑定数组里第一个值
-      <input type="text" sk-model="lists[0].text" value="" />
-    </div>
 
+</div>
+
+<!--支持传入模板-->
+<script type="javascript/template" id="J_tmpl">
+
+<h2>复杂的例子</h2>
+<div class="line head">
+  使用t-bind指令，用来修改元素的属性值。t-bind:需要绑定的属性名="表达式"
+</div>
+<div class="container1 line ">
+  <div class="line" t-bind:id="text">绑定了id属性为text的值</div>
+</div>
+
+<div class="line head">
+  使用filter来处理数据，在插值或者指令的表达式后面加上 | 就可以应用当前view上的filter
+</div>
+<div class="container2 line">
+  <div class="line">这个是用来测试插值的：{{{text + 'qqq'|fff}}}可以放多个{{{name+'zzz122'}}}</div>
+</div>
+
+<div class="line head">
+  支持 t-if 还有t-unless条件选择表达式
+</div>
+
+<div class="container3 line">
+  <div class="line" t-if="text==1">我是只有text==1 时才会看到的</div>
+  <div class="line" t-unless="text==1">我是只有text!=1才会看到的</div>
+</div>
+
+
+<div class="line head">
+  支持 t-for="scope in lists"循环表达式,支持数组和对象，支持获取key或者index：t-for="(key,scope) in lists"
+</div>
+<div class="container4 line">
+  <div class="line" t-for="(key,list) in lists" id="{{list.text}}">
+    <div>key:{{key}}-name:{{{list.name}}}-text:{{{list.text}}}-父级的数据text:{{text}}</div>
+  </div>
+</div>
+
+<div class="line head">
+  另外if,for都支持写在template节点上,template渲染后不会在dom中,只作为承载指令用<br>另外for支持lazy参数，eg `t-for:lazy="(key,list) in lists"`,这样只有遍历的结果集整个引用变了才会去更新
+</div>
+
+<div class="container5 line">
+  <template t-for:lazy="(key,list) in lists" id="{{list.text}}">
+    <div class="line">key:{{key}}-name:{{{list.name}}}-text:{{{list.text}}}-父级的数据text:{{text}} <img src="{{list.img}}"/> </div>
+  </template>
+</div>
+
+
+<div class="line head">
+  下面是一些绑定后的输入框，可以用于测试上面的例子
+</div>
+<div class="line">
+  绑定文本text
+  <input type="text" t-model="text" value="" />
+</div>
+<div class="line">
+  数组第一个元素name的值
+  <input type="text" t-model="lists[0].name" value="" />
+</div>
 </script>
+
 
 <script type="text/javascript">
 //debug会包括更多的信息，但是只有daily版本有效果
-View.config({
+Pat.config({
   debug:false
 })
-  var h = new View({
-    el:'test',
-    data:{
-      text:'hello world',
-      name:'purplebambo<span class="H">x</span>&asdads',
-      show:true,
-      lists:[{
-        name:'1',
-        text:'11111'
-      },{
-        name:'2',
-        text:'22222<span class="H">x</span>'
-      }]
-    },
-    template:document.getElementById('J_tmpl').innerHTML,
-    filters:{
-      fff:function(value) {
-        return value + '===='
-      }
-    }
-    //template:'<span>{{text}}</span>'
-  })
+var h = new Pat({
+  el:'test1-container',
+  data:{
+    text:'hello <span>world</span>'
+  }
+})
+  //可以自己修改数据查看
   // h.$data.text = 'hahaha'
   // h.$digest()
 
+var p2 = new Pat({
+  el:'test2',
+  data:{
+    text:'hello <span class="H">world</span>',
+    name:'purplebambo',
+    lists:[{
+      name:'1',
+      text:'11111',
+      img:'http://g.search2.alicdn.com/img/i2/143370115796235424/TB28clreFXXXXcfXXXXXXXXXXXX_!!48404337-0-saturn_solar.jpg_40x40'
+    },{
+      name:'2',
+      text:'22222',
+      img:'http://g.search2.alicdn.com/img/i2/143370115796235424/TB28clreFXXXXcfXXXXXXXXXXXX_!!48404337-0-saturn_solar.jpg_40x40'
+    }]
+  },
+  template:document.getElementById('J_tmpl').innerHTML,
+  filters:{
+    fff:function(value) {
+      return value + '-我是filter带的值'
+    }
+  }
+})
+
+p2.$watch('text',function(old,cur){
+  console.log(old+"===="+cur)
+})
 </script>
 </body>
 </html>

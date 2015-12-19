@@ -5,7 +5,7 @@ module.exports = function(config) {
   config.set({
 
     // base path that will be used to resolve all patterns (eg. files, exclude)
-    basePath: '',
+    basePath: '../',
 
 
     // frameworks to use
@@ -15,10 +15,10 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'lib/jquery.js',
-      'lib/jasmine-jquery.js',
-      '../build/0.1/skynet.js',
-      'js/*.js'
+      'build/0.1/pat.js',
+      'test/lib/jquery.js',
+      'test/lib/jasmine-jquery.js',
+      'test/js/*.js'
     ],
 
 
@@ -69,7 +69,7 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: true,
+    singleRun: false,
 
     // Concurrency level
     // how many browser should be started simultanous

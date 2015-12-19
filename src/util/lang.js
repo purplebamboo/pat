@@ -111,7 +111,12 @@ exports.hasKey = function(object,key){
 
 
 
-//辅组函数，获取数组里某个元素的索引 index
+/**
+ * find the index a value in array
+ * @param  {array} array the array
+ * @param  {string} key   key
+ * @return {number}    index number
+ */
 exports.indexOf = function(array,key){
   if (array === null) return -1
   var i = 0, length = array.length

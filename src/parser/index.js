@@ -57,7 +57,11 @@ var interpolationRegx = new RegExp(
  *   directive:'bind',
  *   name:'sk-bind',
  *   value:'test.text',
- *   args:[]
+ *   args:[], //参数数组
+ *   oneTime:false, //是否是一次性指令，不会响应数据变化
+ *   html:false, //是否支持html格式，也就是不会被转义
+ *   block:false, //是否是block类型的指令
+ *   isInterpolationRegx: true //是否是插值
  *
  * }
  */
@@ -69,6 +73,11 @@ exports.parseDirective = function(attr) {
 
   //value里面有插值的情况下，就认为是插值属性节点，普通指令不支持插值写法
   if (interpolationRegx.test(value)) {
+
+    //如果这个时候还能找到指令需要报错提示，指令不能包括插值，这种情况下优先处理插值
+    if (dirRegx.test(name)) {
+      _.error('{{}} can not use in a directive,otherwise the directive will not compiled.')
+    }
 
     tokens = exports.parseText(value)
 
@@ -83,14 +92,11 @@ exports.parseDirective = function(attr) {
       expression: exports.token2expression(tokens),
       isInterpolationRegx: true //标识一下是插值
     }
-    //todo 判断如果这个时候还能找到指令需要报错
   }
 
-  //普通指令解析
-  //普通指令全部转义
-  //普通指令全部不是onetime
   directive = name.match(dirRegx)[1]
-
+  //普通指令解析
+  //普通指令全部转义，全部不是onetime
   if (argRegx.test(directive)) {
     obj = directive.split(':')
     directive = obj[0]
@@ -129,17 +135,20 @@ exports.parseDirective = function(attr) {
  */
 exports.parseExpression = function(text) {
 
-  //要不要放开expression?? 还需要思考，可能带来比较多的问题
-  //只支持很简单的逻辑符，加减等，不支持＝，--，++，
 
-  // if (/(--)|(++)|(=[^=]?)/.test(text)) {
-  //   //todo 给出错误提示
-  // }
+  var match,expression,filterName,body
 
-  var match = text.match(expressionRegx)
-  var expression = _.trim(match[1])
-  var filterName = _.trim(match[2])
-  var body
+  match = text.match(expressionRegx)
+
+  if (!match) {
+    _.error('can not find a expression')
+
+    return ''
+  }
+
+  expression = _.trim(match[1])
+  filterName = _.trim(match[2])
+
   body = expParser.compileExpFns(expression)
 
   if (filterName) {

@@ -9,24 +9,10 @@ var config = require('./config')
 
 /**
  * 绑定directive
- * @param  {[type]} describe 描述信息
- * @return {[type]}          [description]
- *
- *
- * eg.
- *
- *{
- *  view:xx,
- *  expression:xx,
- *  directive:xx,
- *  el:xx,
- *  html:xx,
- *  oneTime:xx
- *}
- *
+ * @param  {object} describe 描述信息
  */
 function _bindDir(describe) {
-  var dirInstance, watcher, view
+  var dirInstance, watcher, view, value
 
   view = describe.view
   dirInstance = Directive.create(describe)
@@ -43,8 +29,7 @@ function _bindDir(describe) {
 
   }else{
     //新建一个watch
-    watcher = new Watcher(view.$data, describe.expression)
-    watcher.__view = view
+    watcher = new Watcher(view, describe.expression)
     //看是不是一次性的，新的watch需要加入view的watch池子
     if (!describe.oneTime) {
       watcher.__directives.push(dirInstance)
@@ -55,8 +40,12 @@ function _bindDir(describe) {
   dirInstance.__watcher = watcher
   //执行绑定
   dirInstance.bind(describe.args)
+  //todo... 这边获取值可以缓存住,优化
+  value = watcher.getValue()
+  //赋值
+  watcher.last = value
   //首次自动调用update
-  dirInstance.update(watcher.getValue())
+  dirInstance.update(value)
 
   return dirInstance
 }
@@ -83,10 +72,7 @@ function _compileDirective(el,view,attributes) {
     describe.view = view
     describe.el = el
 
-    //只有非block的或者是自己rootview的block才需要单独处理，其他block会单独由父view处理掉
-    if (!describe.block) describes.push(describe)
-
-    if (describe.block) blockDescribes.push(describe)
+    describe.block ? blockDescribes.push(describe) : describes.push(describe)
 
   })
 
@@ -94,29 +80,33 @@ function _compileDirective(el,view,attributes) {
     _.error('one element can only have one block directive.')
   }
 
-  //发现有block，并且不是自己的root,交给block的指令就行了
-  //只管第一个block
-  if (!isCurViewRoot && blockDescribes.length) {
+  /**
+   * 策略是：
+   * 1. 如果有block并且不是在当前的root上，那么就可以交给子集的block指令去解析，它会负责创建新的view
+   * 2. 如果有block并且是在当前的root上，那么证明block的解析已经由父级view完成，那么只需要解析剩余的其他指令就可以了
+   * 3. 没有block那么就正常解析普通就行。
+   */
 
+  if (!isCurViewRoot && blockDescribes.length) {
+    //只管第一个block
     _bindDir(blockDescribes[0])
     //如果不是debug模式，可以把属性删除了.
     if (!config.debug && el && el.removeAttribute) {
-      el.removeAttribute(blockDescribes[0].name)
+      _.each(blockDescribes,function(bd){
+         el.removeAttribute(bd.name)
+      })
     }
     //重置为未处理
     //el.hasCompiled = false
     return
   }
 
-  //否则,将block的合到普通指令里去用
   //排序，之后去绑定
   describes.sort(function(a, b) {
     a = a.priority || 100
     b = b.priority || 100
     return a > b ? -1 : a === b ? 0 : 1
   })
-
-  //describes = blockDescribes.slice(0,1).concat(describes)
 
   _.each(describes,function(des){
     _bindDir(des)
@@ -165,6 +155,7 @@ function _compileTextNode(el, view) {
 }
 
 
+
 exports.parseRoot = function(el,view){
 
   var attrs = null
@@ -178,6 +169,8 @@ exports.parseRoot = function(el,view){
   //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
   _compileDirective(el,view,attrs)
 }
+
+
 
 exports.parse = function(el,view) {
 
