@@ -14,8 +14,8 @@ module.exports = {
   //输出的文件名 合并以后的js会命名为dst.js
   output: {
     path: BUILD_PATH,
-    filename: '0.1/skynet.js',
-    library: 'View',
+    filename: '0.1/pat.js',
+    library: 'Pat',
     libraryTarget: 'umd'
   },
   //添加我们的插件 会自动生成一个html文件

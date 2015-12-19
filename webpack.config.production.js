@@ -12,8 +12,8 @@ module.exports = {
   entry: APP_PATH,
   output: {
     path: BUILD_PATH,
-    filename: '0.1/skynet-min.js',
-    library: 'View',
+    filename: '0.1/pat-min.js',
+    library: 'Pat',
     libraryTarget: 'umd'
   },
   plugins: [

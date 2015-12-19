@@ -1,5 +1,5 @@
 {
-  "name": "skeleton",
+  "name": "pat",
   "version": "1.0.0",
   "description": "a light lib to use directive tmplate",
   "main": "index.js",
@@ -7,7 +7,7 @@
     "example": "example"
   },
   "scripts": {
-    "test": "npm test",
+    "test": "./node_modules/karma/bin/karma start ./test/karma.conf.js",
     "build": "webpack --config webpack.config.js && webpack --config webpack.config.production.js"
   },
   "keywords": [
@@ -17,6 +17,16 @@
   "author": "weikang.zhuwk",
   "license": "MIT",
   "devDependencies": {
+    "jasmine-core": "~2.4.1",
+    "karma": "~0.13.15",
+    "karma-chrome-launcher": "~0.2.2",
+    "karma-firefox-launcher": "^0.1.7",
+    "karma-ie-launcher": "^0.2.0",
+    "karma-jasmine": "~0.3.6",
+    "karma-safari-launcher": "^0.1.1",
     "webpack": "^1.12.9"
+  },
+  "dependencies": {
+    "karma-coverage": "~0.5.3"
   }
 }
