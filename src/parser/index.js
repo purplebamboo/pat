@@ -75,7 +75,7 @@ exports.parseDirective = function(attr) {
   if (interpolationRegx.test(value)) {
 
     //如果这个时候还能找到指令需要报错提示，指令不能包括插值，这种情况下优先处理插值
-    if (dirRegx.test(name)) {
+    if (process.env.NODE_ENV != 'production' && dirRegx.test(name)) {
       _.error('{{}} can not use in a directive,otherwise the directive will not compiled.')
     }
 
@@ -141,8 +141,7 @@ exports.parseExpression = function(text) {
   match = text.match(expressionRegx)
 
   if (!match) {
-    _.error('can not find a expression')
-
+    if (process.env.NODE_ENV != 'production') _.error('can not find a expression')
     return ''
   }
 

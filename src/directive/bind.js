@@ -13,7 +13,7 @@ module.exports = {
     name = args[0]
 
     if (!name) {
-      _.error('can not find the attribute name,check your code。must be t-bind:attributeName="exp"。')
+      if (process.env.NODE_ENV != 'production') _.error('can not find the attribute name,check your code。must be t-bind:attributeName="exp"。')
       return
     }
     //不允许存在破坏节点的特殊字符

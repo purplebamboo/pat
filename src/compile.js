@@ -76,7 +76,7 @@ function _compileDirective(el,view,attributes) {
 
   })
 
-  if(blockDescribes.length > 1 ){
+  if (process.env.NODE_ENV != 'production' && blockDescribes.length > 1 ){
     _.error('one element can only have one block directive.')
   }
 

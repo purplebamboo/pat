@@ -101,7 +101,7 @@ function restore (str, i) {
 
 exports.compileExpFns =function(exp, needSet) {
   if (improperKeywordsRE.test(exp)) {
-    _.error(
+    if (process.env.NODE_ENV != 'production') _.error(
       'please avoid using reserved keywords in expression: ' + exp
     )
   }

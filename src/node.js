@@ -88,7 +88,7 @@ Node.prototype.initFragment = function() {
 Node.prototype._fragmentRemove = function() {
 
   if (!this.start || !this.end) {
-    _.error('can‘t find a start or end anchor while use fragmentRemove')
+    if (process.env.NODE_ENV != 'production') _.error('can‘t find a start or end anchor while use fragmentRemove')
     return
   }
 

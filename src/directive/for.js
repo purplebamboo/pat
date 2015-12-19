@@ -39,7 +39,7 @@ module.exports = {
       this.__watcher.expression = parseExpression(inMatch[2])
     }
 
-    if (!this.alias) {
+    if (process.env.NODE_ENV != 'production' && !this.alias) {
       _.error('required a alias in for directive')
     }
 

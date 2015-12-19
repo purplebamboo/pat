@@ -61,6 +61,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Parser = __webpack_require__(9)
 	var _ = __webpack_require__(2)
 
+	var VID = 0
+
+	function vid(){
+	  return VID++
+	}
+
 
 	/**
 	 * 构造函数
@@ -71,7 +77,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //需要绑定的节点，必须
 	  this.$el = _.query(options.el)
 
-	  if (!this.$el || !_.isElement(this.$el) || !(this.$el.nodeType == 11 || this.$el.nodeType == 1)) {
+	  if (("development") != 'production' && (!this.$el || !_.isElement(this.$el) || !(this.$el.nodeType == 11 || this.$el.nodeType == 1))) {
 	    _.error('pat need a root el and must be a element or documentFragment')
 	  }
 
@@ -88,8 +94,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.__userWatchers = {}
 	  //所有过滤器
 	  this.__filters = options.filters || {}
+	  //唯一标识
+	  this.__vid = vid()
+
+	  //记录初始化时间，debug模式下才会打出来
+	  if (("development") != 'production' && this.$rootView == this) {
+	    _.time('view[' + this.__vid + ']-init:')
+	  }
+
 	  //初始化
 	  this._init()
+
+	  if (("development") != 'production' && this.$rootView == this) {
+	    _.timeEnd('view[' + this.__vid + ']-init:')
+	  }
 	}
 
 	//初始化
@@ -130,9 +148,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  View._isDigesting = true
+	  //记录脏检测时间，debug模式下才会打出来
+	  if (("development") != 'production' && this.$rootView == this) {
+	    _.time('view[' + this.__vid + ']-digest:')
+	  }
 
 	  fn && fn.call(this)
 	  this.$digest()
+
+	  if (("development") != 'production' && this.$rootView == this) {
+	    _.timeEnd('view[' + this.__vid + ']-digest:')
+	  }
 
 	  View._isDigesting = false
 
@@ -201,7 +227,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	View.prototype.$watch = function(expression,callback){
 
-	  if (!expression || !callback) {
+	  if (("development") != 'production' && (!expression || !callback)) {
 	    _.error('a watch need a expression and callback')
 	  }
 
@@ -305,7 +331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  })
 
-	  if(blockDescribes.length > 1 ){
+	  if (("development") != 'production' && blockDescribes.length > 1 ){
 	    _.error('one element can only have one block directive.')
 	  }
 
@@ -726,28 +752,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _ = __webpack_require__(5)
 	var hasConsole = window.console !== undefined && console.log
 
-	//daily环境 debug模式下才会打出日志，包括各种信息。如脏检测时间
-	exports.log = function(msg) {
 
-	  if (!hasConsole || !config.debug) return
-	  console.log('[sk-info]:' + msg)
-	}
+	if (true){
 
-	//daily环境会打出错误日志，线上环境会忽略掉
-	exports.error = function(str,e) {
-	  if (!hasConsole) return
 
-	  str && console.error('[sk-error]:' + str)
-
-	  if (e && e instanceof Error) {
-	    console.error('[sk-error]:' + e.stack)
+	  //daily环境 debug模式下才会打出日志，包括各种信息。如脏检测时间
+	  exports.log = function(msg) {
+	    if (!hasConsole || !config.debug) return
+	    console.log('[sk-info]:' + msg)
 	  }
 
-	}
 
-	//线上版本忽略所有信息
-	if (false) {
-	  exports.log = exports.error = function() {}
+	  exports.time = function(key){
+	    this.timeHash = this.timeHash || {}
+	    this.timeHash[key] = new Date().getTime()
+	  }
+
+	  exports.timeEnd = function(key){
+	    if (!this.timeHash[key]) return
+	    var duration = new Date().getTime() - this.timeHash[key]
+	    exports.log(key+duration+'ms')
+	  }
+
+
+	  //daily环境会打出错误日志，线上环境会忽略掉
+	  exports.error = function(str,e) {
+	    if (!hasConsole) return
+
+	    str && console.error('[sk-error]:' + str)
+
+	    if (e && e instanceof Error) {
+	      console.error('[sk-error]:' + e.stack)
+	    }
+	  }
+
 	}
 
 /***/ },
@@ -978,7 +1016,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (interpolationRegx.test(value)) {
 
 	    //如果这个时候还能找到指令需要报错提示，指令不能包括插值，这种情况下优先处理插值
-	    if (dirRegx.test(name)) {
+	    if (("development") != 'production' && dirRegx.test(name)) {
 	      _.error('{{}} can not use in a directive,otherwise the directive will not compiled.')
 	    }
 
@@ -1044,8 +1082,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  match = text.match(expressionRegx)
 
 	  if (!match) {
-	    _.error('can not find a expression')
-
+	    if (true) _.error('can not find a expression')
 	    return ''
 	  }
 
@@ -1251,7 +1288,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.compileExpFns =function(exp, needSet) {
 	  if (improperKeywordsRE.test(exp)) {
-	    _.error(
+	    if (true) _.error(
 	      'please avoid using reserved keywords in expression: ' + exp
 	    )
 	  }
@@ -1290,7 +1327,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    name = args[0]
 
 	    if (!name) {
-	      _.error('can not find the attribute name,check your code。must be t-bind:attributeName="exp"。')
+	      if (true) _.error('can not find the attribute name,check your code。must be t-bind:attributeName="exp"。')
 	      return
 	    }
 	    //不允许存在破坏节点的特殊字符
@@ -1530,7 +1567,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Node.prototype._fragmentRemove = function() {
 
 	  if (!this.start || !this.end) {
-	    _.error('can‘t find a start or end anchor while use fragmentRemove')
+	    if (true) _.error('can‘t find a start or end anchor while use fragmentRemove')
 	    return
 	  }
 
@@ -1627,7 +1664,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.__watcher.expression = parseExpression(inMatch[2])
 	    }
 
-	    if (!this.alias) {
+	    if (("development") != 'production' && !this.alias) {
 	      _.error('required a alias in for directive')
 	    }
 
@@ -1955,7 +1992,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  try{
 	    return new Function('_scope','_that', 'return ' + this.expression)(this.scope,this)
 	  }catch(e){
-	    _.error('error when watcher get the value,please check your expression: "' + this.expression + '"' ,e)
+	    if (true) _.error('error when watcher get the value,please check your expression: "' + this.expression + '"' ,e)
 	  }
 
 	}

@@ -5,6 +5,12 @@ var Directive = require('./directive/index.js')
 var Parser = require('./parser/index.js')
 var _ = require('./util')
 
+var VID = 0
+
+function vid(){
+  return VID++
+}
+
 
 /**
  * 构造函数
@@ -15,7 +21,7 @@ var View = function (options) {
   //需要绑定的节点，必须
   this.$el = _.query(options.el)
 
-  if (!this.$el || !_.isElement(this.$el) || !(this.$el.nodeType == 11 || this.$el.nodeType == 1)) {
+  if (process.env.NODE_ENV != 'production' && (!this.$el || !_.isElement(this.$el) || !(this.$el.nodeType == 11 || this.$el.nodeType == 1))) {
     _.error('pat need a root el and must be a element or documentFragment')
   }
 
@@ -32,8 +38,20 @@ var View = function (options) {
   this.__userWatchers = {}
   //所有过滤器
   this.__filters = options.filters || {}
+  //唯一标识
+  this.__vid = vid()
+
+  //记录初始化时间，debug模式下才会打出来
+  if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
+    _.time('view[' + this.__vid + ']-init:')
+  }
+
   //初始化
   this._init()
+
+  if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
+    _.timeEnd('view[' + this.__vid + ']-init:')
+  }
 }
 
 //初始化
@@ -74,9 +92,17 @@ View.prototype.$apply = function(fn) {
   }
 
   View._isDigesting = true
+  //记录脏检测时间，debug模式下才会打出来
+  if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
+    _.time('view[' + this.__vid + ']-digest:')
+  }
 
   fn && fn.call(this)
   this.$digest()
+
+  if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
+    _.timeEnd('view[' + this.__vid + ']-digest:')
+  }
 
   View._isDigesting = false
 
@@ -145,7 +171,7 @@ View.prototype.$directive = Directive.newDirective
  */
 View.prototype.$watch = function(expression,callback){
 
-  if (!expression || !callback) {
+  if (process.env.NODE_ENV != 'production' && (!expression || !callback)) {
     _.error('a watch need a expression and callback')
   }
 
