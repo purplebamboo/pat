@@ -36,7 +36,7 @@ Util = {
       return el.value
     }
   }
-};
+}
 
 
 module.exports = {
@@ -49,6 +49,8 @@ module.exports = {
       var key = self.describe.value
 
       if (val != self.curValue) {
+        //这边其实有个坑，如果这个t-modle是在一个for循环语句里，这里修改的只会是当前的scope里面的属性值
+        //这样从父级脏检测的话，父级老的值会把当前的值冲掉。就会是没有改变。这个还没想好怎么做
         self.setValue(key, val)
         //需要整个rootview脏检测,使用$apply防止脏检测冲突
         self.view.$rootView.$apply()
