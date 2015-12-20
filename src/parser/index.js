@@ -148,7 +148,7 @@ exports.parseExpression = function(text) {
   expression = _.trim(match[1])
   filterName = _.trim(match[2])
 
-  body = expParser.compileExpFns(expression)
+  body = _.trim(expParser.compileExpFns(expression))
 
   if (filterName) {
     body = '_that.applyFilter(' + body + ',"' + filterName + '")'

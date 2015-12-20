@@ -54,12 +54,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var compile = __webpack_require__(1)
-	var config = __webpack_require__(4)
+	var config = __webpack_require__(1)
+	var Compile = __webpack_require__(2)
 	var Watcher = __webpack_require__(18)
 	var Directive = __webpack_require__(8)
 	var Parser = __webpack_require__(9)
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 
 	var VID = 0
 
@@ -136,7 +136,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	View.prototype.$compile = function(el) {
-	  compile.parseRoot(el,this)
+	  Compile.parseRoot(el,this)
 	}
 
 	//开始脏检测，在digest上面再封装一层，可以检测如果当前已有进行中的就延迟执行
@@ -247,20 +247,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	View._isDigesting = false
 
 
+	//暴露基本对象接口
+	View.Parser = Parser
+	View.Directive = Directive
+	View.Compile = Compile
+	View.Watcher = Watcher
+
+
+
 	module.exports = View
 
 /***/ },
 /* 1 */
+/***/ function(module, exports) {
+
+	
+
+
+
+	exports.prefix = 't'
+	exports.delimiters = ['{{','}}']
+	exports.unsafeDelimiters = ['{{{','}}}']
+
+	exports.debug = false
+
+/***/ },
+/* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 	var Directive = __webpack_require__(8)
 	var Watcher = __webpack_require__(18)
 	var parser = __webpack_require__(9)
 	var parseDirective = parser.parseDirective
 	var parseText = parser.parseText
 	var parseExpression = parser.parseExpression
-	var config = __webpack_require__(4)
+	var config = __webpack_require__(1)
 
 	/**
 	 * 绑定directive
@@ -443,7 +465,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 2 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -452,7 +474,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	var _ = {}
-	var dom = __webpack_require__(3)
+	var dom = __webpack_require__(4)
 	var lang = __webpack_require__(5)
 	var log = __webpack_require__(6)
 
@@ -471,12 +493,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	var config = __webpack_require__(4)
+	var config = __webpack_require__(1)
 	var _ = __webpack_require__(5)
 
 
@@ -599,20 +621,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.clone = function (node) {
 	  return node.cloneNode(true)
 	}
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	
-
-
-
-	exports.prefix = 't'
-	exports.delimiters = ['{{','}}']
-	exports.unsafeDelimiters = ['{{{','}}}']
-
-	exports.debug = false
 
 /***/ },
 /* 5 */
@@ -748,7 +756,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var config = __webpack_require__(4)
+	var config = __webpack_require__(1)
 	var _ = __webpack_require__(5)
 	var hasConsole = window.console !== undefined && console.log
 
@@ -850,7 +858,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 	var Class = _.Class
 	var parser = __webpack_require__(9)
 
@@ -939,8 +947,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var config = __webpack_require__(4)
-	var _ = __webpack_require__(2)
+	var config = __webpack_require__(1)
+	var _ = __webpack_require__(3)
 	var expParser = __webpack_require__(10)
 
 	var prefix = config.prefix
@@ -1089,7 +1097,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  expression = _.trim(match[1])
 	  filterName = _.trim(match[2])
 
-	  body = expParser.compileExpFns(expression)
+	  body = _.trim(expParser.compileExpFns(expression))
 
 	  if (filterName) {
 	    body = '_that.applyFilter(' + body + ',"' + filterName + '")'
@@ -1185,7 +1193,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 
 	var allowedKeywords =
 	  'Math,Date,this,true,false,null,undefined,Infinity,NaN,' +
@@ -1317,7 +1325,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 支持参数
 	 */
 
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 
 	module.exports = {
 	  priority: 3000,
@@ -1394,6 +1402,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Util.bindEvent(self.el, 'blur', function() {
 	      var val = Util.getInputValue(self.el)
 	      var key = self.describe.value
+
 	      if (val != self.curValue) {
 	        self.setValue(key, val)
 	        //需要整个rootview脏检测,使用$apply防止脏检测冲突
@@ -1418,7 +1427,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 	var Node = __webpack_require__(14)
 	/**
 	 * if 指令，这是一个block会产生自己的scope,自己的view
@@ -1487,7 +1496,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 所以我们需要做一层封装，用来决定当前这个特殊节点，怎么删除，怎么添加
 	 */
 
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 
 	/**
 	 * 支持普通节点，template节点
@@ -1605,7 +1614,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 
 	var _if = __webpack_require__(13)
 
@@ -1623,7 +1632,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
 	var parseExpression = parser.parseExpression
 	var Node = __webpack_require__(14)
@@ -1898,7 +1907,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 
 
 
@@ -1958,7 +1967,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var _ = __webpack_require__(2)
+	var _ = __webpack_require__(3)
 
 
 	//观察者

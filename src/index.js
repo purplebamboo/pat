@@ -1,5 +1,5 @@
-var compile = require('./compile.js')
 var config = require('./config.js')
+var Compile = require('./compile.js')
 var Watcher = require('./watcher.js')
 var Directive = require('./directive/index.js')
 var Parser = require('./parser/index.js')
@@ -80,7 +80,7 @@ View.prototype._init = function() {
 
 
 View.prototype.$compile = function(el) {
-  compile.parseRoot(el,this)
+  Compile.parseRoot(el,this)
 }
 
 //开始脏检测，在digest上面再封装一层，可以检测如果当前已有进行中的就延迟执行
@@ -189,6 +189,14 @@ View.prototype.$watch = function(expression,callback){
 }
 
 View._isDigesting = false
+
+
+//暴露基本对象接口
+View.Parser = Parser
+View.Directive = Directive
+View.Compile = Compile
+View.Watcher = Watcher
+
 
 
 module.exports = View

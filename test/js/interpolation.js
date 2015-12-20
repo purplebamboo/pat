@@ -1,5 +1,5 @@
 //测试插值{{}}
-describe("[pat:][test interpolation]", function() {
+describe("[pat:interpolation.js]", function() {
 
   var data,el,pat
 

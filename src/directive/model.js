@@ -47,6 +47,7 @@ module.exports = {
     Util.bindEvent(self.el, 'blur', function() {
       var val = Util.getInputValue(self.el)
       var key = self.describe.value
+
       if (val != self.curValue) {
         self.setValue(key, val)
         //需要整个rootview脏检测,使用$apply防止脏检测冲突
