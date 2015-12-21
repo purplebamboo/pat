@@ -11,6 +11,8 @@ var UPDATE_TYPES = {
   INSERT_MARKUP: 3
 }
 
+var KEY_ID = 0
+
 module.exports = {
   block: true,
   priority: 3000,
@@ -53,21 +55,31 @@ module.exports = {
     this.oldViewMap = {}
 
   },
+  _generateKey: function() {
+    return 'key' + KEY_ID++
+  },
   _generateNewChildren: function(lists) {
 
     var newViewMap = {}
     var oldViewMap = this.oldViewMap
     var self = this
-    var data,newNode
+    var data,newNode,name
+    var curKey = '__pat_key__'+self.uid
+    var isListsArray = _.isArray(lists)
 
-    _.each(lists, function(item, index) {
+    _.each(lists, function(item, key) {
 
-      if (oldViewMap[index] && oldViewMap[index].$data[self.alias] === item) {
-        newViewMap[index] = oldViewMap[index]
+      name = item[curKey] || key
+
+      if (oldViewMap[name] && oldViewMap[name].$data[self.alias] === item) {
+        newViewMap[name] = oldViewMap[name]
         //发现可以复用，就直接更新view就行
-        //当然要注意重新赋值,因为如果上一级数据变化了，这里才能知道改变
-        _.assign(oldViewMap[index].$data,self.view.$data)
-        oldViewMap[index].$digest()
+        //当然要注意重新assign父级数据,如果上一级数据变化了，这里才能脏检测到改变
+        _.assign(oldViewMap[name].$data,self.view.$data)
+        //key需要重新赋值
+        if(self.iterator) oldViewMap[name].$data[self.iterator] = key
+
+        oldViewMap[name].$digest()
 
       } else {
         //否则需要新建新的view
@@ -75,11 +87,17 @@ module.exports = {
         data[self.alias] = item
         _.assign(data,self.view.$data)
 
-        if(self.iterator) data[self.iterator] = index
+        if(self.iterator) data[self.iterator] = key
 
         newNode = self.__node.clone()
+        //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
+        //有点hacky,但是没办法，为了达到最小的更新，需要注入一个唯一的健值。
+        if (isListsArray) {
+          name = self._generateKey()
+          item[curKey] = name
+        }
 
-        newViewMap[index] = new self.view.constructor({
+        newViewMap[name] = new self.view.constructor({
           el: newNode.el,
           node:newNode,
           data: data,
@@ -234,7 +252,7 @@ module.exports = {
 
       if (toIndex == index) {
         //_.after(element,node)
-        element.after(node)
+        element.before(node)
         return
       }
     }
