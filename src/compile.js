@@ -14,6 +14,12 @@ var config = require('./config')
 function _bindDir(describe) {
   var dirInstance, watcher, view, value
 
+  //如果不是debug模式，可以把属性删除了.
+  if (!config.debug && describe.el && describe.el.removeAttribute) {
+    describe.el.removeAttribute(describe.name)
+  }
+
+
   view = describe.view
   dirInstance = Directive.create(describe)
 
@@ -90,12 +96,7 @@ function _compileDirective(el,view,attributes) {
   if (!isCurViewRoot && blockDescribes.length) {
     //只管第一个block
     _bindDir(blockDescribes[0])
-    //如果不是debug模式，可以把属性删除了.
-    if (!config.debug && el && el.removeAttribute) {
-      _.each(blockDescribes,function(bd){
-         el.removeAttribute(bd.name)
-      })
-    }
+
     //重置为未处理
     //el.hasCompiled = false
     return
