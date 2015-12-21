@@ -80,7 +80,7 @@ exports.after = function (el, target) {
  */
 
 exports.remove = function (el) {
-  el.parentNode.removeChild(el)
+  el.parentNode && el.parentNode.removeChild(el)
 }
 
 /**
