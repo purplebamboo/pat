@@ -22,7 +22,11 @@ module.exports = {
       value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
     }
 
-    this.el.setAttribute(name,value)
+    if (value === false || value === null) {
+      this.el.removeAttribute(name)
+    }else{
+      this.el.setAttribute(name,value)
+    }
 
   }
 }
