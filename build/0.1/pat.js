@@ -1345,10 +1345,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
 	    }
 
-	    if (value === false || value === null) {
-	      this.el.removeAttribute(name)
-	    }else{
+	    if (value != null && value !== false) {
 	      this.el.setAttribute(name,value)
+	    }else{
+	      this.el.removeAttribute(name)
 	    }
 
 	  }
