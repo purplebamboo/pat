@@ -27,7 +27,6 @@ Watcher.prototype.applyFilter = function(value,filterName){
 }
 
 Watcher.prototype.getValue = function(){
-
   if (!this.expression) return ''
   //取值很容易出错，需要给出错误提示
   try{

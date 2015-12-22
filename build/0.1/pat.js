@@ -1086,19 +1086,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.parseExpression = function(text) {
 
 
-	  var match,expression,filterName,body
+	  var filterName,body,filterTagIndex
 
-	  match = text.match(expressionRegx)
 
-	  if (!match) {
-	    if (true) _.error('can not find a expression')
-	    return ''
+
+	  filterTagIndex = text.lastIndexOf('|')
+	  if (filterTagIndex != -1 && text.charAt(filterTagIndex-1) !== '|') {
+	    filterName = _.trim(text.substr(filterTagIndex+1))
+	    text = text.substr(0,filterTagIndex)
 	  }
 
-	  expression = _.trim(match[1])
-	  filterName = _.trim(match[2])
-
-	  body = _.trim(expParser.compileExpFns(expression))
+	  body = _.trim(expParser.compileExpFns(text))
 
 	  if (filterName) {
 	    body = '_that.applyFilter(' + body + ',"' + filterName + '")'
@@ -2020,7 +2018,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	Watcher.prototype.getValue = function(){
-
 	  if (!this.expression) return ''
 	  //取值很容易出错，需要给出错误提示
 	  try{
