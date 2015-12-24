@@ -22,6 +22,13 @@ module.exports = {
       value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
     }
 
+    if (_.indexOf(['value','checked','selected'],name) !== -1 && name in this.el){
+      this.el[name] = name === 'value'
+        ? (value || '') // IE9 will set input.value to "null" for null...
+        : value
+      return
+    }
+
     if (value != null && value !== false) {
       this.el.setAttribute(name,value)
     }else{

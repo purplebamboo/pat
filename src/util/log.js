@@ -9,7 +9,7 @@ if (process.env.NODE_ENV != 'production'){
   //daily环境 debug模式下才会打出日志，包括各种信息。如脏检测时间
   exports.log = function(msg) {
     if (!hasConsole || !config.debug) return
-    console.log('[sk-info]:' + msg)
+    console.log('[pat-info]:' + msg)
   }
 
 
@@ -29,10 +29,10 @@ if (process.env.NODE_ENV != 'production'){
   exports.error = function(str,e) {
     if (!hasConsole) return
 
-    str && console.error('[sk-error]:' + str)
+    str && console.error('[pat-error]:' + str)
 
     if (e && e instanceof Error) {
-      console.error('[sk-error]:' + e.stack)
+      console.error('[pat-error]:' + e.stack)
     }
   }
 

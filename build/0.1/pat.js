@@ -768,7 +768,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //daily环境 debug模式下才会打出日志，包括各种信息。如脏检测时间
 	  exports.log = function(msg) {
 	    if (!hasConsole || !config.debug) return
-	    console.log('[sk-info]:' + msg)
+	    console.log('[pat-info]:' + msg)
 	  }
 
 
@@ -788,10 +788,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  exports.error = function(str,e) {
 	    if (!hasConsole) return
 
-	    str && console.error('[sk-error]:' + str)
+	    str && console.error('[pat-error]:' + str)
 
 	    if (e && e instanceof Error) {
-	      console.error('[sk-error]:' + e.stack)
+	      console.error('[pat-error]:' + e.stack)
 	    }
 	  }
 
@@ -1341,6 +1341,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //todo 一些防止xss的处理
 	    if (_.isString(value)) {
 	      value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+	    }
+
+	    if (_.indexOf(['value','checked','selected'],name) !== -1 && name in this.el){
+	      this.el[name] = name === 'value'
+	        ? (value || '') // IE9 will set input.value to "null" for null...
+	        : value
+	      return
 	    }
 
 	    if (value != null && value !== false) {
