@@ -120,6 +120,6 @@ exports.hasKey = function(object,key){
 exports.indexOf = function(array,key){
   if (array === null) return -1
   var i = 0, length = array.length
-  for (; i < length; i++) if (array[i] === item) return i
+  for (; i < length; i++) if (array[i] === key) return i
   return -1
 }
