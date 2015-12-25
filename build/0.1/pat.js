@@ -2030,7 +2030,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  try{
 	    return new Function('_scope','_that', 'return ' + this.expression)(this.scope,this)
 	  }catch(e){
-	    if (true) _.error('error when watcher get the value,please check your expression: "' + this.expression + '"' ,e)
+	    if (true) _.log('error when watcher get the value,please check your expression: "' + this.expression + '"' ,e)
 	  }
 
 	}

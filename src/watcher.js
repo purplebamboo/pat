@@ -32,7 +32,7 @@ Watcher.prototype.getValue = function(){
   try{
     return new Function('_scope','_that', 'return ' + this.expression)(this.scope,this)
   }catch(e){
-    if (process.env.NODE_ENV != 'production') _.error('error when watcher get the value,please check your expression: "' + this.expression + '"' ,e)
+    if (process.env.NODE_ENV != 'production') _.log('error when watcher get the value,please check your expression: "' + this.expression + '"' ,e)
   }
 
 }
