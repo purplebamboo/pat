@@ -32,10 +32,10 @@ module.exports = {
     if (inMatch) {
       var itMatch = inMatch[1].match(/\((.*),(.*)\)/)
       if (itMatch) {
-        this.iterator = itMatch[1].trim()
-        this.alias = itMatch[2].trim()
+        this.iterator = _.trim(itMatch[1])
+        this.alias = _.trim(itMatch[2])
       } else {
-        this.alias = inMatch[1].trim()
+        this.alias = _.trim(inMatch[1])
       }
       //修改观察者对应的expression
       this.__watcher.expression = parseExpression(inMatch[2])

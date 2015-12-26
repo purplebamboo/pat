@@ -1,3 +1,7 @@
+
+
+
+var polyfill = require('./polyfill.js')
 var config = require('./config.js')
 var Compile = require('./compile.js')
 var Watcher = require('./watcher.js')
@@ -6,6 +10,7 @@ var Parser = require('./parser/index.js')
 var _ = require('./util')
 
 var VID = 0
+
 
 function vid(){
   return VID++
@@ -65,7 +70,7 @@ View.prototype._init = function() {
     this.$el.innerHTML = ''
     el = document.createDocumentFragment()
     node = document.createElement('div')
-    node.innerHTML = _.trim(this.__template)
+    node.innerHTML = polyfill.checkTmpl(this.__template)
     while (child = node.firstChild) {
       el.appendChild(child)
     }

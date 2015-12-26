@@ -74,9 +74,9 @@ exports.parseDirective = function(attr) {
   //value里面有插值的情况下，就认为是插值属性节点，普通指令不支持插值写法
   if (interpolationRegx.test(value)) {
 
-    //如果这个时候还能找到指令需要报错提示，指令不能包括插值，这种情况下优先处理插值
+    //如果这个时候还能找到指令需要提示，指令不能包括插值，这种情况下优先处理插值
     if (process.env.NODE_ENV != 'production' && dirRegx.test(name)) {
-      _.error('{{}} can not use in a directive,otherwise the directive will not compiled.')
+      _.log('{{}} can not use in a directive,otherwise the directive will not compiled.')
     }
 
     tokens = exports.parseText(value)

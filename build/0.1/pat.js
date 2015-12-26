@@ -54,14 +54,19 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var config = __webpack_require__(1)
-	var Compile = __webpack_require__(2)
-	var Watcher = __webpack_require__(18)
-	var Directive = __webpack_require__(8)
-	var Parser = __webpack_require__(9)
-	var _ = __webpack_require__(3)
+	
+
+
+	var polyfill = __webpack_require__(1)
+	var config = __webpack_require__(4)
+	var Compile = __webpack_require__(8)
+	var Watcher = __webpack_require__(19)
+	var Directive = __webpack_require__(9)
+	var Parser = __webpack_require__(10)
+	var _ = __webpack_require__(2)
 
 	var VID = 0
+
 
 	function vid(){
 	  return VID++
@@ -121,7 +126,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.$el.innerHTML = ''
 	    el = document.createDocumentFragment()
 	    node = document.createElement('div')
-	    node.innerHTML = _.trim(this.__template)
+	    node.innerHTML = polyfill.checkTmpl(this.__template)
 	    while (child = node.firstChild) {
 	      el.appendChild(child)
 	    }
@@ -259,214 +264,45 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 1 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	
 
 
+	var _ = __webpack_require__(2)
+	//需要针对ie8做出若干的兼容
 
-	exports.prefix = 't'
-	exports.delimiters = ['{{','}}']
-	exports.unsafeDelimiters = ['{{{','}}}']
 
-	exports.debug = false
+
+	//对于不支持template标签的，需要创建标签定义
+	_supportTemplate = (function _supportTemplate(){
+	  var a = document.createElement('div')
+	  a.innerHTML = '<template>test</template>'
+	  return !!a.firstChild.innerHTML
+	})()
+
+	if (!_supportTemplate) {
+	  document.createElement('template')
+	}
+
+
+	//为了兼容低版本的浏览器，需要对模板做一些特殊的处理。
+	//ie8以下使用innerHTML添加的自定义标签，无法去获取。http://www.cnblogs.com/ecma/archive/2012/02/01/2335047.html
+	//当然对于不使用模板的不会有问题，会当作正常的标签。
+	//所以我们需要针对模板中的template标签做特殊处理。
+	exports.checkTmpl = function(tmpl){
+
+	  if (!_supportTemplate) {
+	    tmpl = tmpl.replace(/<template[\s]+/g,'<div _pat_tmpl="true" ').replace(/<\/template>/g,'</div>')
+	  }
+
+	  return _.trim(tmpl)
+	}
+
+
 
 /***/ },
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _ = __webpack_require__(3)
-	var Directive = __webpack_require__(8)
-	var Watcher = __webpack_require__(18)
-	var parser = __webpack_require__(9)
-	var parseDirective = parser.parseDirective
-	var parseText = parser.parseText
-	var parseExpression = parser.parseExpression
-	var config = __webpack_require__(1)
-
-	/**
-	 * 绑定directive
-	 * @param  {object} describe 描述信息
-	 */
-	function _bindDir(describe) {
-	  var dirInstance, watcher, view, value
-
-	  //如果不是debug模式，可以把属性删除了.
-	  if (!config.debug && describe.el && describe.el.removeAttribute) {
-	    describe.el.removeAttribute(describe.name)
-	  }
-
-
-	  view = describe.view
-	  dirInstance = Directive.create(describe)
-
-
-	  //先去watch池子里找,value可以作为key
-	  watcher = view.__watchers[describe.value]
-
-	  if (watcher) {
-	    //使用老的watcher，如果是一次性的，就不需要加入对应的指令池
-	    if (!describe.oneTime) {
-	      watcher.__directives.push(dirInstance)
-	    }
-
-	  }else{
-	    //新建一个watch
-	    watcher = new Watcher(view, describe.expression)
-	    //看是不是一次性的，新的watch需要加入view的watch池子
-	    if (!describe.oneTime) {
-	      watcher.__directives.push(dirInstance)
-	      view.__watchers[describe.value] = watcher
-	    }
-	  }
-
-	  dirInstance.__watcher = watcher
-	  //执行绑定
-	  dirInstance.bind(describe.args)
-	  //todo... 这边获取值可以缓存住,优化
-	  value = watcher.getValue()
-	  //赋值
-	  watcher.last = value
-	  //首次自动调用update
-	  dirInstance.update(value)
-
-	  return dirInstance
-	}
-
-	//解析属性，解析出directive，这个只针对element
-	function _compileDirective(el,view,attributes) {
-	  var attrs, describe, skipChildren, childNodes,blockDirectiveCount,isCurViewRoot
-
-	  //if (el.hasCompiled) return
-
-	  isCurViewRoot = el === view.$el ? true : false
-
-	  blockDirectiveCount = 0
-	  //el.hasCompiled = true
-	  attributes = attributes || []
-
-	  var describes = [],blockDescribes = []
-	  _.each(attributes,function(attr){
-
-	    //不是directive就返回
-	    if (!Directive.isDirective(attr)) return
-
-	    describe = parseDirective(attr)
-	    describe.view = view
-	    describe.el = el
-
-	    describe.block ? blockDescribes.push(describe) : describes.push(describe)
-
-	  })
-
-	  if (("development") != 'production' && blockDescribes.length > 1 ){
-	    _.error('one element can only have one block directive.')
-	  }
-
-	  /**
-	   * 策略是：
-	   * 1. 如果有block并且不是在当前的root上，那么就可以交给子集的block指令去解析，它会负责创建新的view
-	   * 2. 如果有block并且是在当前的root上，那么证明block的解析已经由父级view完成，那么只需要解析剩余的其他指令就可以了
-	   * 3. 没有block那么就正常解析普通就行。
-	   */
-
-	  if (!isCurViewRoot && blockDescribes.length) {
-	    //只管第一个block
-	    _bindDir(blockDescribes[0])
-
-	    //重置为未处理
-	    //el.hasCompiled = false
-	    return
-	  }
-
-	  //排序，之后去绑定
-	  describes.sort(function(a, b) {
-	    a = a.priority || 100
-	    b = b.priority || 100
-	    return a > b ? -1 : a === b ? 0 : 1
-	  })
-
-	  _.each(describes,function(des){
-	    _bindDir(des)
-	  })
-
-	  if (el.hasChildNodes()) {
-	    childNodes = _.toArray(el.childNodes)
-	    _.each(childNodes, function(child) {
-	      exports.parse(child, view)
-	    })
-	  }
-	}
-
-
-	//解析text情况会很复杂，会支持多个插值，并且多个插值里面都有expression
-	function _compileTextNode(el, view) {
-	  var tokens, token, text, placeholder
-
-	  tokens = parseText(el.data)
-
-	  if (!(tokens.length === 1 && tokens[0].type === parser.TextTemplateParserTypes.text)) {
-
-	    placeholder = _.createAnchor('text-place-holder')
-	    _.replace(el, placeholder)
-	    for (var i = 0, len = tokens.length; i < len; i++) {
-	      token = tokens[i];
-	      text = document.createTextNode(token.value)
-	      _.before(text, placeholder)
-	      //是插值需要特殊处理，绑定directive
-	      if (token.type === parser.TextTemplateParserTypes.binding) {
-	        _bindDir({
-	          name:'',
-	          value:token.value,
-	          view: view,
-	          expression: parseExpression(token.value),
-	          oneTime: token.oneTime,
-	          html:token.html,
-	          directive: 'textTemplate',
-	          el: text
-	        })
-	      }
-	    }
-	    _.remove(placeholder)
-	  }
-
-	}
-
-
-
-	exports.parseRoot = function(el,view){
-
-	  var attrs = null
-	  if (view.__node) {
-	    attrs = _.toArray(view.__node.attrs)
-	  }else{
-	    attrs = _.toArray(el.attributes)
-	  }
-
-	  //去重,需不需要合并之前的值?
-	  //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
-	  _compileDirective(el,view,attrs)
-	}
-
-
-
-	exports.parse = function(el,view) {
-
-	  if (!_.isElement(el)) return
-
-	  //对于文本节点采用比较特殊的处理
-	  if (el.nodeType == 3 && _.trim(el.data)) {
-	    _compileTextNode(el, view)
-	  }
-
-	  //编译普通节点
-	  if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
-	    _compileDirective(el, view, _.toArray(el.attributes))
-	  }
-	}
-
-/***/ },
-/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -475,12 +311,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	var _ = {}
-	var dom = __webpack_require__(4)
+	var dom = __webpack_require__(3)
 	var lang = __webpack_require__(5)
 	var log = __webpack_require__(6)
 
 	var assign = lang.assign
 	//mix in
+
 	assign(_,lang)
 	assign(_,dom)
 	assign(_,log)
@@ -494,12 +331,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 4 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	var config = __webpack_require__(1)
+	var config = __webpack_require__(4)
 	var _ = __webpack_require__(5)
 
 
@@ -624,6 +461,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	
+
+
+
+	exports.prefix = 't'
+	exports.delimiters = ['{{','}}']
+	exports.unsafeDelimiters = ['{{{','}}}']
+
+	exports.debug = false
+
+/***/ },
 /* 5 */
 /***/ function(module, exports) {
 
@@ -673,8 +524,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	exports.toArray = function(arg) {
-	  if (!arg) return []
-	  return Array.prototype.slice.call(arg) || []
+	  if (!arg || !arg.length) return []
+	  var array = []
+	  for (var i = 0,l=arg.length;i<l;i++) {
+	    array.push(arg[i])
+	  }
+
+	  return array
 	}
 
 	exports.isArray = function(unknow) {
@@ -757,7 +613,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var config = __webpack_require__(1)
+	var config = __webpack_require__(4)
 	var _ = __webpack_require__(5)
 	var hasConsole = window.console !== undefined && console.log
 
@@ -857,23 +713,217 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var _ = __webpack_require__(2)
+	var Directive = __webpack_require__(9)
+	var Watcher = __webpack_require__(19)
+	var parser = __webpack_require__(10)
+	var parseDirective = parser.parseDirective
+	var parseText = parser.parseText
+	var parseExpression = parser.parseExpression
+	var config = __webpack_require__(4)
+
+	/**
+	 * 绑定directive
+	 * @param  {object} describe 描述信息
+	 */
+	function _bindDir(describe) {
+	  var dirInstance, watcher, view, value
+
+	  //如果不是debug模式，可以把属性删除了.
+	  if (!config.debug && describe.el && describe.el.removeAttribute) {
+	    describe.el.removeAttribute(describe.name)
+	  }
+
+
+	  view = describe.view
+	  dirInstance = Directive.create(describe)
+
+
+	  //先去watch池子里找,value可以作为key
+	  watcher = view.__watchers[describe.value]
+
+	  if (watcher) {
+	    //使用老的watcher，如果是一次性的，就不需要加入对应的指令池
+	    if (!describe.oneTime) {
+	      watcher.__directives.push(dirInstance)
+	    }
+
+	  }else{
+	    //新建一个watch
+	    watcher = new Watcher(view, describe.expression)
+	    //看是不是一次性的，新的watch需要加入view的watch池子
+	    if (!describe.oneTime) {
+	      watcher.__directives.push(dirInstance)
+	      view.__watchers[describe.value] = watcher
+	    }
+	  }
+
+	  dirInstance.__watcher = watcher
+	  //执行绑定
+	  dirInstance.bind(describe.args)
+	  //todo... 这边获取值可以缓存住,优化
+	  value = watcher.getValue()
+	  //赋值
+	  watcher.last = value
+	  //首次自动调用update
+	  dirInstance.update(value)
+
+	  return dirInstance
+	}
+
+	//解析属性，解析出directive，这个只针对element
+	function _compileDirective(el,view,attributes) {
+	  var attrs, describe, skipChildren, childNodes,blockDirectiveCount,isCurViewRoot
+
+	  //if (el.hasCompiled) return
+
+	  isCurViewRoot = el === view.$el ? true : false
+
+	  blockDirectiveCount = 0
+	  //el.hasCompiled = true
+	  attributes = attributes || []
+
+	  var describes = [],blockDescribes = []
+	  _.each(attributes,function(attr){
+
+	    //不是directive就返回
+	    if (!Directive.isDirective(attr)) return
+
+	    describe = parseDirective(attr)
+	    describe.view = view
+	    describe.el = el
+
+	    describe.block ? blockDescribes.push(describe) : describes.push(describe)
+
+	  })
+
+	  if (("development") != 'production' && blockDescribes.length > 1 ){
+	    _.log('one element can only have one block directive.')
+	  }
+
+	  /**
+	   * 策略是：
+	   * 1. 如果有block并且不是在当前的root上，那么就可以交给子集的block指令去解析，它会负责创建新的view
+	   * 2. 如果有block并且是在当前的root上，那么证明block的解析已经由父级view完成，那么只需要解析剩余的其他指令就可以了
+	   * 3. 没有block那么就正常解析普通就行。
+	   */
+
+	  if (!isCurViewRoot && blockDescribes.length) {
+	    //只管第一个block
+	    _bindDir(blockDescribes[0])
+
+	    //重置为未处理
+	    //el.hasCompiled = false
+	    return
+	  }
+
+	  //排序，之后去绑定
+	  describes.sort(function(a, b) {
+	    a = a.priority || 100
+	    b = b.priority || 100
+	    return a > b ? -1 : a === b ? 0 : 1
+	  })
+
+	  _.each(describes,function(des){
+	    _bindDir(des)
+	  })
+
+	  if (el.hasChildNodes()) {
+	    childNodes = _.toArray(el.childNodes)
+	    _.each(childNodes, function(child) {
+	      exports.parse(child, view)
+	    })
+	  }
+	}
+
+
+	//解析text情况会很复杂，会支持多个插值，并且多个插值里面都有expression
+	function _compileTextNode(el, view) {
+	  var tokens, token, text, placeholder
+
+	  tokens = parseText(el.data)
+
+	  if (!(tokens.length === 1 && tokens[0].type === parser.TextTemplateParserTypes.text)) {
+
+	    placeholder = _.createAnchor('text-place-holder')
+	    _.replace(el, placeholder)
+	    for (var i = 0, len = tokens.length; i < len; i++) {
+	      token = tokens[i];
+	      text = document.createTextNode(token.value)
+	      _.before(text, placeholder)
+	      //是插值需要特殊处理，绑定directive
+	      if (token.type === parser.TextTemplateParserTypes.binding) {
+	        _bindDir({
+	          name:'',
+	          value:token.value,
+	          view: view,
+	          expression: parseExpression(token.value),
+	          oneTime: token.oneTime,
+	          html:token.html,
+	          directive: 'textTemplate',
+	          el: text
+	        })
+	      }
+	    }
+	    _.remove(placeholder)
+	  }
+
+	}
+
+
+
+	exports.parseRoot = function(el,view){
+
+	  var attrs = null
+	  if (view.__node) {
+	    attrs = _.toArray(view.__node.attrs)
+	  }else{
+	    attrs = _.toArray(el.attributes)
+	  }
+
+	  //去重,需不需要合并之前的值?
+	  //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
+	  _compileDirective(el,view,attrs)
+	}
+
+
+
+	exports.parse = function(el,view) {
+
+	  if (!_.isElement(el)) return
+
+	  //对于文本节点采用比较特殊的处理
+	  if (el.nodeType == 3 && _.trim(el.data)) {
+	    _compileTextNode(el, view)
+	  }
+
+	  //编译普通节点
+	  if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
+	    _compileDirective(el, view, _.toArray(el.attributes))
+	  }
+	}
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
 	
 
-	var _ = __webpack_require__(3)
+	var _ = __webpack_require__(2)
 	var Class = _.Class
-	var parser = __webpack_require__(9)
+	var parser = __webpack_require__(10)
 
 	DIR_REGX = parser.DIR_REGX
 	INTERPOLATION_REGX = parser.INTERPOLATION_REGX
 
 	//基础指令定义
 	var directives = {
-	  'bind':__webpack_require__(11),
-	  'model':__webpack_require__(12),
-	  'if':__webpack_require__(13),
-	  'unless':__webpack_require__(15),
-	  'for':__webpack_require__(16),
-	  'textTemplate':__webpack_require__(17)
+	  'bind':__webpack_require__(12),
+	  'model':__webpack_require__(13),
+	  'if':__webpack_require__(14),
+	  'unless':__webpack_require__(16),
+	  'for':__webpack_require__(17),
+	  'textTemplate':__webpack_require__(18)
 	}
 	var noop = function(){}
 
@@ -945,12 +995,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var config = __webpack_require__(1)
-	var _ = __webpack_require__(3)
-	var expParser = __webpack_require__(10)
+	var config = __webpack_require__(4)
+	var _ = __webpack_require__(2)
+	var expParser = __webpack_require__(11)
 
 	var prefix = config.prefix
 
@@ -1024,9 +1074,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //value里面有插值的情况下，就认为是插值属性节点，普通指令不支持插值写法
 	  if (interpolationRegx.test(value)) {
 
-	    //如果这个时候还能找到指令需要报错提示，指令不能包括插值，这种情况下优先处理插值
+	    //如果这个时候还能找到指令需要提示，指令不能包括插值，这种情况下优先处理插值
 	    if (("development") != 'production' && dirRegx.test(name)) {
-	      _.error('{{}} can not use in a directive,otherwise the directive will not compiled.')
+	      _.log('{{}} can not use in a directive,otherwise the directive will not compiled.')
 	    }
 
 	    tokens = exports.parseText(value)
@@ -1054,7 +1104,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 
-	  var dirOptions = __webpack_require__(8).__directives[directive] || {}
+	  var dirOptions = __webpack_require__(9).__directives[directive] || {}
 
 	  return {
 	    name: name,
@@ -1189,10 +1239,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.TextTemplateParserTypes = TextTemplateParserTypes
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _ = __webpack_require__(3)
+	var _ = __webpack_require__(2)
 
 	var allowedKeywords =
 	  'Math,Date,this,true,false,null,undefined,Infinity,NaN,' +
@@ -1316,7 +1366,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1324,7 +1374,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 支持参数
 	 */
 
-	var _ = __webpack_require__(3)
+	var _ = __webpack_require__(2)
 
 	module.exports = {
 	  priority: 3000,
@@ -1360,7 +1410,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports) {
 
 	Util = {
@@ -1435,12 +1485,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var _ = __webpack_require__(3)
-	var Node = __webpack_require__(14)
+	var _ = __webpack_require__(2)
+	var Node = __webpack_require__(15)
 	/**
 	 * if 指令，这是一个block会产生自己的scope,自己的view
 	 * @type {Object}
@@ -1495,7 +1545,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1508,7 +1558,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 所以我们需要做一层封装，用来决定当前这个特殊节点，怎么删除，怎么添加
 	 */
 
-	var _ = __webpack_require__(3)
+	var _ = __webpack_require__(2)
 
 	/**
 	 * 支持普通节点，template节点
@@ -1523,7 +1573,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  //如果是template,需要特殊处理
 	  if (el.tagName && el.tagName.toLowerCase() === 'template') {
-	    //chrome下面可以直接拿content就是个documentFragment,ie下待兼容
+	    //chrome下面可以直接拿content就是个documentFragment,不支持的需要兼容
 	    if (this.el.content) {
 	      this.el = this.el.content
 	    }else{
@@ -1531,7 +1581,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }
 
-	  this.isFrag = el instanceof DocumentFragment
+	  //如果是特殊的经过转换的template兼容写法
+	  if (el.getAttribute && el.getAttribute('_pat_tmpl') === 'true') {
+	    this.el = nodeToFrag(this.el)
+	  }
+
+
+	  this.isFrag = el.nodeType === 11
 
 	  if (!this.isFrag) {
 	    this.initNormal()
@@ -1622,13 +1678,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var _ = __webpack_require__(3)
+	var _ = __webpack_require__(2)
 
-	var _if = __webpack_require__(13)
+	var _if = __webpack_require__(14)
 
 	/**
 	 * unless 指令
@@ -1641,13 +1697,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _ = __webpack_require__(3)
-	var parser = __webpack_require__(9)
+	var _ = __webpack_require__(2)
+	var parser = __webpack_require__(10)
 	var parseExpression = parser.parseExpression
-	var Node = __webpack_require__(14)
+	var Node = __webpack_require__(15)
 
 
 	//差异更新的几种类型
@@ -1678,10 +1734,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (inMatch) {
 	      var itMatch = inMatch[1].match(/\((.*),(.*)\)/)
 	      if (itMatch) {
-	        this.iterator = itMatch[1].trim()
-	        this.alias = itMatch[2].trim()
+	        this.iterator = _.trim(itMatch[1])
+	        this.alias = _.trim(itMatch[2])
 	      } else {
-	        this.alias = inMatch[1].trim()
+	        this.alias = _.trim(inMatch[1])
 	      }
 	      //修改观察者对应的expression
 	      this.__watcher.expression = parseExpression(inMatch[2])
@@ -1929,7 +1985,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1937,7 +1993,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	var _ = __webpack_require__(3)
+	var _ = __webpack_require__(2)
 
 
 
@@ -1984,7 +2040,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      _.remove(this.prev)
 	    }
 	    //因为是textNode所以会自动转义
-	    this.prev = document.createTextNode(value)
+	    this.prev = document.createTextNode(value || '')
 	    _.before(this.prev,this.placeholder)
 	  },
 	  unbind:function(){
@@ -1993,11 +2049,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var _ = __webpack_require__(3)
+	var _ = __webpack_require__(2)
 
 
 	//观察者

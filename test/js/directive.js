@@ -133,6 +133,9 @@ describe("[pat:directive.js]", function() {
 
     })
 
+
+
+
     it("use t-for with template",function(){
       el.innerHTML = '<template t-for="item in lists" id="{{item.name}}">{{text}}--{{{*item.text}}}</template>'
 
@@ -146,6 +149,54 @@ describe("[pat:directive.js]", function() {
       //测试一次性是否有效
       setValue('lists[0].text','hahaha')
       expect($(el).find('.1').html()).toBe('world')
+
+    })
+
+    it("test t-for with change item",function(){
+      el.innerHTML = '<template class="container4" t-for="(key,item) in lists"><div id="{{key}}">{{item.name}}|{{item.text}}</div></template>'
+
+      pat = new Pat({
+        el:el,
+        data:{
+          lists:[{
+            name:'1',
+            text:'11111'
+          },{
+            name:'2',
+            text:'22222'
+          },{
+            name:'3',
+            text:'333'
+          },{
+            name:'4',
+            text:'444444444'
+          }]
+        }
+      })
+
+      expect($(el).children().length).toBe(4)
+
+      pat.$data.lists.push({
+        name:'5',
+        text:'5555555'
+      })
+      pat.$digest()
+
+      expect($(el).children().length).toBe(5)
+
+      expect($($(el).children()[4]).attr('id')).toBe('4')
+
+      expect($($(el).children()[4]).html()).toEqual('5|5555555')
+
+      pat.$data.lists.splice(1,1,{
+        name:'hahaha'
+      })
+      pat.$digest()
+      expect($(el).children().length).toBe(5)
+      expect($($(el).children()[1]).attr('id')).toBe('1')
+      expect($($(el).children()[1]).html()).toEqual('hahaha|')
+      expect($($(el).children()[0]).html()).toEqual('1|11111')
+      expect($($(el).children()[2]).html()).toEqual('3|333')
 
     })
 

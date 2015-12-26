@@ -24,7 +24,7 @@ describe("[pat:parse.js]", function() {
       expect(Parser.parseExpression('hello | test')).toEqual('_that.applyFilter(_scope.hello,"test")')
 
       //不规范的filter
-      expect(Parser.parseExpression('hello | {{ttt')).toEqual('_scope.hello')
+      expect(Parser.parseExpression('hello | {{ttt')).toEqual('_that.applyFilter(_scope.hello,"{{ttt")')
 
     })
 

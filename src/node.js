@@ -23,7 +23,7 @@ function Node (el) {
 
   //如果是template,需要特殊处理
   if (el.tagName && el.tagName.toLowerCase() === 'template') {
-    //chrome下面可以直接拿content就是个documentFragment,ie下待兼容
+    //chrome下面可以直接拿content就是个documentFragment,不支持的需要兼容
     if (this.el.content) {
       this.el = this.el.content
     }else{
@@ -31,7 +31,13 @@ function Node (el) {
     }
   }
 
-  this.isFrag = el instanceof DocumentFragment
+  //如果是特殊的经过转换的template兼容写法
+  if (el.getAttribute && el.getAttribute('_pat_tmpl') === 'true') {
+    this.el = nodeToFrag(this.el)
+  }
+
+
+  this.isFrag = el.nodeType === 11
 
   if (!this.isFrag) {
     this.initNormal()

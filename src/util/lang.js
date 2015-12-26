@@ -44,8 +44,13 @@ exports.trim=function(str){
 }
 
 exports.toArray = function(arg) {
-  if (!arg) return []
-  return Array.prototype.slice.call(arg) || []
+  if (!arg || !arg.length) return []
+  var array = []
+  for (var i = 0,l=arg.length;i<l;i++) {
+    array.push(arg[i])
+  }
+
+  return array
 }
 
 exports.isArray = function(unknow) {
