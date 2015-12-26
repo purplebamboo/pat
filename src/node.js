@@ -37,7 +37,7 @@ function Node (el) {
   }
 
 
-  this.isFrag = el.nodeType === 11
+  this.isFrag = this.el.nodeType === 11
 
   if (!this.isFrag) {
     this.initNormal()
@@ -72,8 +72,8 @@ Node.prototype.initNormal = function() {
 //初始化特殊节点Fragment的几个方法
 Node.prototype.initFragment = function() {
   var curEl = this.el
-  this.start = _.createAnchor('frag-start')
-  this.end = _.createAnchor('frag-end')
+  this.start = _.createAnchor('frag-start',true)
+  this.end = _.createAnchor('frag-end',true)
   _.prepend(this.start, curEl)
   curEl.appendChild(this.end)
 
@@ -110,7 +110,7 @@ Node.prototype._fragmentRemove = function() {
 }
 
 Node.prototype._fragmentClone = function(){
-  //各种兼容性问题
+  //各种兼容性问题，待做
   return new Node(_.clone(this.el))
 }
 

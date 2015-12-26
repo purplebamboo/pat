@@ -44,7 +44,7 @@ var View = function (options) {
   //所有过滤器
   this.__filters = options.filters || {}
   //唯一标识
-  this.__vid = vid()
+  this.__vid = options.vid || vid()
 
   //记录初始化时间，debug模式下才会打出来
   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
@@ -150,6 +150,7 @@ View.prototype.$destroy = function(destroyRoot) {
   this.__watchers = null
   this.__userWatchers = null
   this.__filters = null
+  this._destroyed = true
 }
 
 

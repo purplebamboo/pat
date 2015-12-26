@@ -51,27 +51,32 @@ module.exports = {
     _.before(this.start, this.end)
 
     this.__node = new Node(this.el)
+    //检测当前循环的是不是template,这个时候的处理需要比较复杂的运算
+    this.__isFrag = this.__node.isFrag
+
 
     this.oldViewMap = {}
+    this.oldViewLists = []
 
   },
   _generateKey: function() {
     return 'key' + KEY_ID++
   },
-  _generateNewChildren: function(lists) {
+  _generateNewChildren: function(newLists) {
 
-    var newViewMap = {}
+    var newViewMap = this.newViewMap = {}
+    var newViewLists = this.newViewLists = []
     var oldViewMap = this.oldViewMap
     var self = this
     var data,newNode,name
     var curKey = '__pat_key__'+self.uid
-    var isListsArray = _.isArray(lists)
+    //var isListsArray = _.isArray(newLists)
 
-    _.each(lists, function(item, key) {
+    _.each(newLists, function(item, key) {
 
-      name = item[curKey] || key
+      name = item[curKey]
 
-      if (oldViewMap[name] && oldViewMap[name].$data[self.alias] === item) {
+      if (name && oldViewMap[name] && oldViewMap[name].$data[self.alias] === item) {
         newViewMap[name] = oldViewMap[name]
         //发现可以复用，就直接更新view就行
         //当然要注意重新assign父级数据,如果上一级数据变化了，这里才能脏检测到改变
@@ -92,22 +97,20 @@ module.exports = {
         newNode = self.__node.clone()
         //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
         //有点hacky,但是没办法，为了达到最小的更新，需要注入一个唯一的健值。
-        if (isListsArray) {
-          name = self._generateKey()
-          item[curKey] = name
-        }
+        name = self._generateKey()
+        item[curKey] = name
 
         newViewMap[name] = new self.view.constructor({
           el: newNode.el,
           node:newNode,
           data: data,
+          vid:name,
           rootView:self.view.$rootView
         })
       }
+      newViewLists.push(newViewMap[name])
 
     })
-
-    return newViewMap
 
   },
   _diff: function() {
@@ -117,17 +120,17 @@ module.exports = {
     var prevChild, nextChild
     var oldViewMap = this.oldViewMap
     var newViewMap = this.newViewMap
+    var newViewLists = this.newViewLists
 
     var diffQueue = this.diffQueue = []
+    var name
 
-    for (name in newViewMap) {
+    for (var i = 0,l=newViewLists.length;i<l;i++) {
 
-      if (!newViewMap.hasOwnProperty(name)) {
-        continue
-      }
+      name = newViewLists[i].__vid
 
       prevChild = oldViewMap && oldViewMap[name];
-      nextChild = newViewMap[name];
+      nextChild = newViewLists[i];
 
       //相同的话，说明是使用的同一个view,所以我们需要做移动的操作
       if (prevChild === nextChild) {
@@ -205,15 +208,19 @@ module.exports = {
       child.$destroy()
     })
 
+    //保存一个复用的老的view队列
+    var oldNodeLists = this._generateOldReuseLists()
+
     //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入
+    var insertFn = this.__isFrag ? this._insertFragAt : this._insertChildAt
     for (var k = 0; k < updates.length; k++) {
       update = updates[k];
       switch (update.type) {
         case UPDATE_TYPES.INSERT_MARKUP:
-          this._insertChildAt(update.markup, update.toIndex);
+          insertFn.call(this,update.markup, update.toIndex,oldNodeLists);
           break;
         case UPDATE_TYPES.MOVE_EXISTING:
-          this._insertChildAt(initialChildren[update.name], update.toIndex);
+          insertFn.call(this,initialChildren[update.name], update.toIndex,oldNodeLists);
           break;
         case UPDATE_TYPES.REMOVE_NODE:
           // 什么都不需要做，因为上面已经帮忙删除掉了
@@ -222,62 +229,100 @@ module.exports = {
     }
 
   },
+  _generateOldReuseLists:function(){
+
+    var oldViewLists = this.oldViewLists
+    var oldViewMap = this.oldViewMap
+    var lists = []
+    _.each(oldViewLists,function(oldView){
+      if (oldView && oldView._destroyed !== true) {
+        lists.push(oldView.__node)
+      }
+    })
+
+    return lists
+
+  },
   //用于把一个node插入到指定位置，通过之前的占位节点去找
-  _insertChildAt:function(element,toIndex){
+  _insertChildAt:function(newNode,toIndex,oldNodeLists){
     var start = this.start
     var end = this.end
 
     var index = -1
-    var node = start
+    var el = start
+    var nextNode = oldNodeLists.shift()
+
+    while(el && el !== end){
+
+      el = el.nextSibling
+
+      if (nextNode && el === nextNode.el) {
+        index ++
+        nextNode = oldNodeLists.shift()
+      }
+
+      if (toIndex == index) {
+        newNode.before(el)
+        break
+      }
+    }
+    //没找到,那就直接放到最后了
+    if (toIndex > index) {
+      newNode.before(end)
+    }
+  },
+  //用于把一个frag插入到指定位置，相对比较复杂一点
+  _insertFragAt:function(newNode,toIndex,oldNodeLists){
+    var start = this.start
+    var end = this.end
+
+    var index = -1
+    var el = start
+    var nextNode = oldNodeLists.shift()
     var inFragment = false
-    while(node && node !== end){
 
-      node = node.nextSibling
+    while(el && el !== end){
 
-      if (_.isElement(node) && node.nodeType==8 && node.data == 'frag-end') {
+      el = el.nextSibling
+
+      if (nextNode && el === nextNode.end) {
         inFragment = false
       }
 
       if (inFragment) continue
 
-      //遇到特殊的节点，documentFragment,需要特殊计算index
-      if (_.isElement(node) && node.nodeType==8 && node.data == 'frag-start') {
-        inFragment = true
-        continue
+      if (nextNode && el === nextNode.start) {
+        index ++
+        nextNode = oldNodeLists.shift()
       }
-      //不是element就跳过
-      if (!(_.isElement(node) && node.nodeType==1)) continue
-
-      index ++
 
       if (toIndex == index) {
-        //_.after(element,node)
-        element.before(node)
-        return
+        newNode.before(el)
+        break
       }
     }
-
-    //证明没找到，不够？那就直接放到最后了
+    //没找到,那就直接放到最后了
     if (toIndex > index) {
-      element.before(end)
-      //_.before(element,end)
+      newNode.before(end)
     }
   },
-  update: function(lists) {
-
+  update: function(newLists) {
     //策略，先删除以前的，再使用最新的，找出最小差异更新
     //参考reactjs的差异算法
-    this.newViewMap = this._generateNewChildren(lists)
+    this._generateNewChildren(newLists)
 
     this._diff()
     this._patch()
 
     this.oldViewMap = this.newViewMap
+    this.oldViewLists = this.newViewLists
 
   },
   unbind: function() {
-    _.each(this.newViewMap,function(view){
+    _.each(this.oldViewMap,function(view){
       view.$destroy()
     })
+    this.oldViewMap = null
+    this.oldViewLists = null
   }
 }

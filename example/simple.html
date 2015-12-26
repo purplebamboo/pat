@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>测试页面</title>
+  <script src="../build/0.1/pat.js"></script>
+  <link rel="stylesheet" type="text/css" href="./css/example.css">
+
+</head>
+<body>
+
+
+
+<div id="test">
+
+
+
+</div>
+
+<!--支持传入模板-->
+<script type="javascript/template" id="J_tmpl">
+<div class="container4 line">
+  {{text}}
+</div>
+</script>
+
+
+<script type="text/javascript">
+//debug会包括更多的信息，但是只有daily版本有效果
+Pat.config({
+  debug:false
+})
+
+var p2 = new Pat({
+  el:'test',
+  data:{
+    text:'hello <span class="H">world</span>',
+    key:10,
+    key2:100,
+    lists:[{
+      name:'1',
+      text:'11111'
+    },{
+      name:'2',
+      text:'22222'
+    }]
+  },
+  template:document.getElementById('J_tmpl').innerHTML,
+  filters:{
+    fff:function(value) {
+      return value + '-我是filter带的值'
+    }
+  }
+})
+</script>
+</body>
+</html>
