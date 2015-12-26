@@ -42,7 +42,7 @@ describe("[pat:interpolation.js]", function() {
 
     setValue('text',"hello <span>world</span>")
 
-    expect($(el).find('#test').html()).toEqual('hello <span>world</span>')
+    expect($(el).find('#test').html().toLowerCase()).toEqual('hello <span>world</span>')
     expect($(el).find('#test').children(1)[0].tagName).toEqual('SPAN')
   })
 

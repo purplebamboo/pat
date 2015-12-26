@@ -31,8 +31,8 @@ describe("[pat:directive.js]", function() {
           }
         }
       })
-      expect($(el).find('#test')).toHaveClass('pat')
-      expect($(el).find('#test2')).toHaveClass('pat-test')
+      expect($(el).find('#test').attr('class')).toEqual('pat')
+      expect($(el).find('#test2').attr('class')).toEqual('pat-test')
       expect($(el).find('#test2').attr('t')).toBe('&lt;span&gt;11&lt;/span&gt;')
 
     })
@@ -69,13 +69,14 @@ describe("[pat:directive.js]", function() {
     })
 
     it("use t-if and unless with template",function(){
-      el.innerHTML = '<template t-if="status < 1">{{text}}--{{{sp}}}</template><template t-unless="status < 1">{{text}}</template>'
 
       pat = new Pat({
         el:el,
-        data:data
+        data:data,
+        template:'<template t-if="status < 1">{{text}}--{{{sp}}}</template><template t-unless="status < 1">{{text}}</template>'
       })
-      expect($(el).html()).toBe('hello world')
+
+      expect($.trim($(el).html())).toEqual('hello world')
       setValue('status',0)
       expect($(el).find('span').html()).toBe('11')
 
@@ -93,10 +94,10 @@ describe("[pat:directive.js]", function() {
         text:'text',
         lists:[{
           name:'hello',
-          text:'<span class="1">world</span>'
+          text:'<span class="t1">world</span>'
         },{
           name:'hi',
-          text:'<span class="2">earth</span>'
+          text:'<span class="t2">earth</span>'
         }]
       }
 
@@ -115,10 +116,10 @@ describe("[pat:directive.js]", function() {
 
       expect($($(el).children()[0]).attr('id')).toBe('hello')
       expect($($(el).children()[1]).find('span').html()).toBe('earth')
-      expect($($(el).children()[1]).html()).toEqual('text--<span class="2">earth</span>')
+      expect($($(el).children()[1]).find('.t2').html().toLowerCase()).toEqual('earth')
 
       setValue('text','hahaha')
-      expect($($(el).children()[1]).html()).toEqual('hahaha--<span class="2">earth</span>')
+      expect($($(el).children()[1]).html().toLowerCase()).toMatch('hahaha--<span')
 
 
       pat.$data.lists[0].name = 'hahaha'
@@ -137,23 +138,22 @@ describe("[pat:directive.js]", function() {
 
 
     it("use t-for with template",function(){
-      el.innerHTML = '<template t-for="item in lists" id="{{item.name}}">{{text}}--{{{*item.text}}}</template>'
 
       pat = new Pat({
         el:el,
-        data:data
+        data:data,
+        template:'<template t-for="item in lists" id="{{item.name}}">{{text}}--{{{*item.text}}}</template>'
       })
 
-      expect($(el).find('.1').html()).toBe('world')
-      expect($(el).find('.2').html()).toBe('earth')
+      expect($(el).find('.t1').html()).toBe('world')
+      expect($(el).find('.t2').html()).toBe('earth')
       //测试一次性是否有效
       setValue('lists[0].text','hahaha')
-      expect($(el).find('.1').html()).toBe('world')
+      expect($(el).find('.t1').html()).toBe('world')
 
     })
 
     it("test t-for with change item",function(){
-      el.innerHTML = '<template class="container4" t-for="(key,item) in lists"><div id="{{key}}">{{item.name}}|{{item.text}}</div></template>'
 
       pat = new Pat({
         el:el,
@@ -171,7 +171,8 @@ describe("[pat:directive.js]", function() {
             name:'4',
             text:'444444444'
           }]
-        }
+        },
+        template:'<template class="container4" t-for="(key,item) in lists"><div id="{{key}}">{{item.name}}|{{item.text}}</div></template>'
       })
 
       expect($(el).children().length).toBe(4)
@@ -208,15 +209,15 @@ describe("[pat:directive.js]", function() {
         data:data
       })
 
-      expect($($(el).children()[1]).html()).toEqual('text--<span class="2">earth</span>')
+      expect($($(el).children()[1]).html().toLowerCase()).toMatch('text--<span class=')
 
       setValue('text','hahaha')
       //不会变化
-      expect($($(el).children()[1]).html()).toEqual('text--<span class="2">earth</span>')
+      expect($($(el).children()[1]).html().toLowerCase()).toMatch('text--<span class=')
 
       setValue('lists',[{name:'new',text:'item'}])
       //全部改变数组，才会变化
-      expect($(el).html()).toEqual('<div id="new">hahaha--item</div>')
+      expect($(el).find('#new').html().toLowerCase()).toEqual('hahaha--item')
 
     })
   })
