@@ -2086,7 +2086,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      _.remove(this.prev)
 	    }
 	    //因为是textNode所以会自动转义
-	    this.prev = document.createTextNode(value || '')
+	    if (value === undefined || value === null) {
+	      value = ''
+	    }
+
+	    this.prev = document.createTextNode(value)
 	    _.before(this.prev,this.placeholder)
 	  },
 	  unbind:function(){
