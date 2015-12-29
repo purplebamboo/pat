@@ -97,6 +97,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.__watchers = {}
 	  //用户自定义的观察对象
 	  this.__userWatchers = {}
+	  //指令updateHook
+	  this.__beforeUpdate = options.beforeUpdate || null
+	  this.__afterUpdate = options.afterUpdate || null
 	  //所有过滤器
 	  this.__filters = options.filters || {}
 	  //唯一标识
@@ -2159,10 +2162,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	Watcher.prototype._check = function(last,current) {
+	  var self = this
+
 	  _.each(this.__directives,function(dir){
 	    //directive自己判断要不要更新
 	    if (dir.shoudUpdate(last,current)) {
+	      //调用父级view的hook
+	      self.__view.$rootView.__beforeUpdate && self.__view.$rootView.__beforeUpdate(dir,last,current)
+
 	      dir.update && dir.update(current)
+
+	      self.__view.$rootView.__afterUpdate && self.__view.$rootView.__afterUpdate(dir,last,current)
+
 	    }
 	  })
 

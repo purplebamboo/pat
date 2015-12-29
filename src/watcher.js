@@ -55,10 +55,18 @@ Watcher.prototype.check = function() {
 
 
 Watcher.prototype._check = function(last,current) {
+  var self = this
+
   _.each(this.__directives,function(dir){
     //directive自己判断要不要更新
     if (dir.shoudUpdate(last,current)) {
+      //调用父级view的hook
+      self.__view.$rootView.__beforeUpdate && self.__view.$rootView.__beforeUpdate(dir,last,current)
+
       dir.update && dir.update(current)
+
+      self.__view.$rootView.__afterUpdate && self.__view.$rootView.__afterUpdate(dir,last,current)
+
     }
   })
 

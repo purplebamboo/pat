@@ -41,6 +41,9 @@ var View = function (options) {
   this.__watchers = {}
   //用户自定义的观察对象
   this.__userWatchers = {}
+  //指令updateHook
+  this.__beforeUpdate = options.beforeUpdate || null
+  this.__afterUpdate = options.afterUpdate || null
   //所有过滤器
   this.__filters = options.filters || {}
   //唯一标识
