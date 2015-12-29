@@ -100,7 +100,7 @@ Node.prototype._fragmentRemove = function() {
 
   var node = this.start
   var prevNode
-  while(node != this.end){
+  while(node && node != this.end){
     prevNode = node
     node = node.nextSibling
     _.remove(prevNode)
