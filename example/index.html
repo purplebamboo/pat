@@ -127,14 +127,6 @@ var p2 = new Pat({
     fff:function(value) {
       return value + '-我是filter带的值'
     }
-  },
-  beforeUpdate:function(dir,oldValue,newValue) {
-    console.log(dir.describe)
-    console.log('before---old:' + oldValue + '---new:' + newValue)
-  },
-  afterUpdate:function(dir,oldValue,newValue) {
-    console.log(dir.describe)
-    console.log('after---old:' + oldValue + '---new:' + newValue)
   }
 })
 

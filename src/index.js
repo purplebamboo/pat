@@ -7,6 +7,7 @@ var Compile = require('./compile.js')
 var Watcher = require('./watcher.js')
 var Directive = require('./directive/index.js')
 var Parser = require('./parser/index.js')
+var Event = require('./event')
 var _ = require('./util')
 
 var VID = 0
@@ -41,9 +42,6 @@ var View = function (options) {
   this.__watchers = {}
   //用户自定义的观察对象
   this.__userWatchers = {}
-  //指令updateHook
-  this.__beforeUpdate = options.beforeUpdate || null
-  this.__afterUpdate = options.afterUpdate || null
   //所有过滤器
   this.__filters = options.filters || {}
   //唯一标识
@@ -61,6 +59,9 @@ var View = function (options) {
     _.timeEnd('view[' + this.__vid + ']-init:')
   }
 }
+
+//增加事件机制
+_.assign(View.prototype,Event)
 
 //初始化
 View.prototype._init = function() {

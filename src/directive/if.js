@@ -21,7 +21,8 @@ module.exports = {
     this.__node = new Node(this.el)
   },
   update:function(value){
-
+    //子view先开始脏检测
+    this.childView && this.childView.$digest()
     //if 不能使用watch的简单的对比值，而是看结果是true还是false
     //为true并且 上一次是销毁不是绑定
     if (!!value && this.bound == false) {
@@ -34,19 +35,23 @@ module.exports = {
         rootView:this.view.$rootView
       })
 
+      this.view.$rootView.fire('beforeAddBlock',[],this)
       this.node.before(this.placeholder)
+      this.view.$rootView.fire('afterAddBlock',this.node.allElements(),this)
+
       //_.before(this.el,this.placeholder)
       this.bound = true
     }
 
     if (!value && this.bound == true){
-
+      this.view.$rootView.fire('beforeDeleteBlock',this.node.allElements(),this)
       this.node.remove()
+      this.view.$rootView.fire('afterDeleteBlock',[],this)
+
       //_.remove(this.el)
       this.bound = false
     }
-    //子view开始脏检测
-    this.childView && this.childView.$digest()
+
   },
   unbind:function(){
     this.childView && this.childView.$destroy()

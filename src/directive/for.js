@@ -189,6 +189,7 @@ module.exports = {
 
   },
   _patch:function(){
+    var self = this
     var update, updatedIndex, updatedChild
     var initialChildren = {}
     var deleteChildren = []
@@ -205,7 +206,10 @@ module.exports = {
     }
     //删除所有需要先删除的
     _.each(deleteChildren, function(child) {
+      //this.prev
+      self.view.$rootView.fire('beforeDeleteBlock',child.__node.allElements(),self)
       child.$destroy()
+      self.view.$rootView.fire('afterDeleteBlock',[],self)
     })
 
     //保存一个复用的老的view队列
@@ -247,7 +251,7 @@ module.exports = {
   _insertChildAt:function(newNode,toIndex,oldNodeLists){
     var start = this.start
     var end = this.end
-
+    var self = this
     var index = -1
     var el = start
     var nextNode = oldNodeLists.shift()
@@ -262,20 +266,25 @@ module.exports = {
       }
 
       if (toIndex == index) {
+        self.view.$rootView.fire('beforeAddBlock',[],self)
         newNode.before(el)
+        self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+
         break
       }
     }
     //没找到,那就直接放到最后了
     if (toIndex > index) {
+      self.view.$rootView.fire('beforeAddBlock',[],self)
       newNode.before(end)
+      self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
     }
   },
   //用于把一个frag插入到指定位置，相对比较复杂一点
   _insertFragAt:function(newNode,toIndex,oldNodeLists){
     var start = this.start
     var end = this.end
-
+    var self = this
     var index = -1
     var el = start
     var nextNode = oldNodeLists.shift()
@@ -297,13 +306,17 @@ module.exports = {
       }
 
       if (toIndex == index) {
+        self.view.$rootView.fire('beforeAddBlock',[],self)
         newNode.before(el)
+        self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
         break
       }
     }
     //没找到,那就直接放到最后了
     if (toIndex > index) {
+      self.view.$rootView.fire('beforeAddBlock',[],self)
       newNode.before(end)
+      self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
     }
   },
   update: function(newLists) {

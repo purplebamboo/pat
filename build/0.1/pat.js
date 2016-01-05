@@ -63,6 +63,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Watcher = __webpack_require__(19)
 	var Directive = __webpack_require__(9)
 	var Parser = __webpack_require__(10)
+	var Event = __webpack_require__(20)
 	var _ = __webpack_require__(2)
 
 	var VID = 0
@@ -97,9 +98,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.__watchers = {}
 	  //用户自定义的观察对象
 	  this.__userWatchers = {}
-	  //指令updateHook
-	  this.__beforeUpdate = options.beforeUpdate || null
-	  this.__afterUpdate = options.afterUpdate || null
 	  //所有过滤器
 	  this.__filters = options.filters || {}
 	  //唯一标识
@@ -117,6 +115,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _.timeEnd('view[' + this.__vid + ']-init:')
 	  }
 	}
+
+	//增加事件机制
+	_.assign(View.prototype,Event)
 
 	//初始化
 	View.prototype._init = function() {
@@ -1515,7 +1516,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.__node = new Node(this.el)
 	  },
 	  update:function(value){
-
+	    //子view先开始脏检测
+	    this.childView && this.childView.$digest()
 	    //if 不能使用watch的简单的对比值，而是看结果是true还是false
 	    //为true并且 上一次是销毁不是绑定
 	    if (!!value && this.bound == false) {
@@ -1528,19 +1530,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	        rootView:this.view.$rootView
 	      })
 
+	      this.view.$rootView.fire('beforeAddBlock',[],this)
 	      this.node.before(this.placeholder)
+	      this.view.$rootView.fire('afterAddBlock',this.node.allElements(),this)
+
 	      //_.before(this.el,this.placeholder)
 	      this.bound = true
 	    }
 
 	    if (!value && this.bound == true){
-
+	      this.view.$rootView.fire('beforeDeleteBlock',this.node.allElements(),this)
 	      this.node.remove()
+	      this.view.$rootView.fire('afterDeleteBlock',[],this)
+
 	      //_.remove(this.el)
 	      this.bound = false
 	    }
-	    //子view开始脏检测
-	    this.childView && this.childView.$digest()
+
 	  },
 	  unbind:function(){
 	    this.childView && this.childView.$destroy()
@@ -1619,6 +1625,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return _.remove(curEl,target)
 	  }
 
+	  this.allElements = function() {
+	    return [this.el]
+	  }
+
 	  this.clone = function(){
 	    return new Node(_.clone(curEl))
 	  }
@@ -1642,6 +1652,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //策略是从占位节点开始挨个的删除
 	  this.remove = this._fragmentRemove
 	  this.clone = this._fragmentClone
+
+	  this.allElements = function() {
+	    if (this.__allElements) return this.__allElements
+	    var els = []
+	    if (!this.start || !this.end) {
+	      if (true) _.error('can‘t find a start or end anchor while use fragmentRemove')
+	      return
+	    }
+
+	    var node = this.start
+	    var prevNode
+	    while(node && node != this.end){
+	      node = node.nextSibling
+	      if (node.nodeType == 1) {
+	        els.push(node)
+	      }
+	    }
+
+	    this.__allElements = els
+	    return els
+	  }
 	}
 
 
@@ -1895,6 +1926,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  },
 	  _patch:function(){
+	    var self = this
 	    var update, updatedIndex, updatedChild
 	    var initialChildren = {}
 	    var deleteChildren = []
@@ -1911,7 +1943,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    //删除所有需要先删除的
 	    _.each(deleteChildren, function(child) {
+	      //this.prev
+	      self.view.$rootView.fire('beforeDeleteBlock',child.__node.allElements(),self)
 	      child.$destroy()
+	      self.view.$rootView.fire('afterDeleteBlock',[],self)
 	    })
 
 	    //保存一个复用的老的view队列
@@ -1953,7 +1988,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _insertChildAt:function(newNode,toIndex,oldNodeLists){
 	    var start = this.start
 	    var end = this.end
-
+	    var self = this
 	    var index = -1
 	    var el = start
 	    var nextNode = oldNodeLists.shift()
@@ -1968,20 +2003,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      if (toIndex == index) {
+	        self.view.$rootView.fire('beforeAddBlock',[],self)
 	        newNode.before(el)
+	        self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+
 	        break
 	      }
 	    }
 	    //没找到,那就直接放到最后了
 	    if (toIndex > index) {
+	      self.view.$rootView.fire('beforeAddBlock',[],self)
 	      newNode.before(end)
+	      self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
 	    }
 	  },
 	  //用于把一个frag插入到指定位置，相对比较复杂一点
 	  _insertFragAt:function(newNode,toIndex,oldNodeLists){
 	    var start = this.start
 	    var end = this.end
-
+	    var self = this
 	    var index = -1
 	    var el = start
 	    var nextNode = oldNodeLists.shift()
@@ -2003,13 +2043,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      if (toIndex == index) {
+	        self.view.$rootView.fire('beforeAddBlock',[],self)
 	        newNode.before(el)
+	        self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
 	        break
 	      }
 	    }
 	    //没找到,那就直接放到最后了
 	    if (toIndex > index) {
+	      self.view.$rootView.fire('beforeAddBlock',[],self)
 	      newNode.before(end)
+	      self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
 	    }
 	  },
 	  update: function(newLists) {
@@ -2064,10 +2108,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  _updateHtml:function(value){
 
+
+
 	    if (this.prev && this.prev.length > 0) {
+
+	      this.view.$rootView.fire('beforeDeleteBlock',this.prev,this)
+
 	      _.each(this.prev,function(child){
 	        _.remove(child)
 	      })
+
+	      this.view.$rootView.fire('afterDeleteBlock',[],this)
+
 	    }
 
 	    var wrap,firstChild
@@ -2077,16 +2129,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.prev = []
 
+	    this.view.$rootView.fire('beforeAddBlock',[],this)
+
 	    while(firstChild = wrap.firstChild){
 	      this.prev.push(firstChild)
 	      _.before(firstChild,this.placeholder)
 	    }
 
+	    this.view.$rootView.fire('afterAddBlock',this.prev,this)
+
 	  },
 	  _updateText:function(value){
 
 	    if (this.prev) {
+	      this.view.$rootView.fire('beforeDeleteBlock',[this.prev],this)
+
 	      _.remove(this.prev)
+
+	      this.view.$rootView.fire('afterDeleteBlock',[],this)
 	    }
 	    //因为是textNode所以会自动转义
 	    if (value === undefined || value === null) {
@@ -2094,7 +2154,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    this.prev = document.createTextNode(value)
+
+	    this.view.$rootView.fire('beforeAddBlock',[],this)
+
 	    _.before(this.prev,this.placeholder)
+
+	    this.view.$rootView.fire('afterAddBlock',[this.prev],this)
+
+
 	  },
 	  unbind:function(){
 
@@ -2168,12 +2235,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //directive自己判断要不要更新
 	    if (dir.shoudUpdate(last,current)) {
 	      //调用父级view的hook
-	      self.__view.$rootView.__beforeUpdate && self.__view.$rootView.__beforeUpdate(dir,last,current)
-
+	      self.__view.$rootView.fire('beforeDirectiveUpdate',dir,last,current)
 	      dir.update && dir.update(current)
-
-	      self.__view.$rootView.__afterUpdate && self.__view.$rootView.__afterUpdate(dir,last,current)
-
+	      self.__view.$rootView.fire('afterDirectiveUpdate',dir,last,current)
 	    }
 	  })
 
@@ -2191,6 +2255,67 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	module.exports = Watcher
+
+/***/ },
+/* 20 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(2)
+
+	module.exports = {
+	  //添加监听
+	  on: function(key, listener) {
+	    //this.__events存储所有的处理函数
+	    if (!this.__events) {
+	      this.__events = {}
+	    }
+	    if (!this.__events[key]) {
+	      this.__events[key] = []
+	    }
+	    if (_.indexOf(this.__events, listener) === -1 && typeof listener === 'function') {
+	      this.__events[key].push(listener)
+	    }
+
+	    return this
+	  },
+	  //触发一个事件，也就是通知
+	  fire: function(key) {
+
+	    if (!this.__events || !this.__events[key]) return
+
+	    var args = Array.prototype.slice.call(arguments, 1) || []
+
+	    var listeners = this.__events[key]
+	    var i = 0
+	    var l = listeners.length
+
+	    for (i; i < l; i++) {
+	      listeners[i].apply(this, args)
+	    }
+
+	    return this
+	  },
+	  //取消监听
+	  off: function(key, listener) {
+
+	    if (!key && !listener) {
+	      this.__events = {}
+	    }
+	    //不传监听函数，就去掉当前key下面的所有的监听函数
+	    if (key && !listener) {
+	      delete this.__events[key]
+	    }
+
+	    if (key && listener) {
+	      var listeners = this.__events[key]
+	      var index = _.indexOf(listeners, listener)
+
+	      (index > -1) && listeners.splice(index, 1)
+	    }
+	    return this;
+	  }
+
+	}
 
 /***/ }
 /******/ ])

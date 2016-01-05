@@ -25,10 +25,18 @@ module.exports = {
   },
   _updateHtml:function(value){
 
+
+
     if (this.prev && this.prev.length > 0) {
+
+      this.view.$rootView.fire('beforeDeleteBlock',this.prev,this)
+
       _.each(this.prev,function(child){
         _.remove(child)
       })
+
+      this.view.$rootView.fire('afterDeleteBlock',[],this)
+
     }
 
     var wrap,firstChild
@@ -38,16 +46,24 @@ module.exports = {
 
     this.prev = []
 
+    this.view.$rootView.fire('beforeAddBlock',[],this)
+
     while(firstChild = wrap.firstChild){
       this.prev.push(firstChild)
       _.before(firstChild,this.placeholder)
     }
 
+    this.view.$rootView.fire('afterAddBlock',this.prev,this)
+
   },
   _updateText:function(value){
 
     if (this.prev) {
+      this.view.$rootView.fire('beforeDeleteBlock',[this.prev],this)
+
       _.remove(this.prev)
+
+      this.view.$rootView.fire('afterDeleteBlock',[],this)
     }
     //因为是textNode所以会自动转义
     if (value === undefined || value === null) {
@@ -55,7 +71,14 @@ module.exports = {
     }
 
     this.prev = document.createTextNode(value)
+
+    this.view.$rootView.fire('beforeAddBlock',[],this)
+
     _.before(this.prev,this.placeholder)
+
+    this.view.$rootView.fire('afterAddBlock',[this.prev],this)
+
+
   },
   unbind:function(){
 

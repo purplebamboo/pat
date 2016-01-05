@@ -65,6 +65,10 @@ Node.prototype.initNormal = function() {
     return _.remove(curEl,target)
   }
 
+  this.allElements = function() {
+    return [this.el]
+  }
+
   this.clone = function(){
     return new Node(_.clone(curEl))
   }
@@ -88,6 +92,27 @@ Node.prototype.initFragment = function() {
   //策略是从占位节点开始挨个的删除
   this.remove = this._fragmentRemove
   this.clone = this._fragmentClone
+
+  this.allElements = function() {
+    if (this.__allElements) return this.__allElements
+    var els = []
+    if (!this.start || !this.end) {
+      if (process.env.NODE_ENV != 'production') _.error('can‘t find a start or end anchor while use fragmentRemove')
+      return
+    }
+
+    var node = this.start
+    var prevNode
+    while(node && node != this.end){
+      node = node.nextSibling
+      if (node.nodeType == 1) {
+        els.push(node)
+      }
+    }
+
+    this.__allElements = els
+    return els
+  }
 }
 
 
