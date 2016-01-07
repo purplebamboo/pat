@@ -1406,7 +1406,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (value != null && value !== false) {
+
+	      this.view.$rootView.fire('beforeUpdateAttribute',this.el,this)
 	      this.el.setAttribute(name,value)
+	      this.view.$rootView.fire('afterUpdateAttribute',this.el,name,value,this)
+
 	    }else{
 	      this.el.removeAttribute(name)
 	    }
