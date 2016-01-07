@@ -1440,7 +1440,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      };
 	    }
 	    return function(el, event, handler) {
-	      return el.detachEvent('on' + event, handler)
+	      if (handler) {
+	        return el.detachEvent('on' + event, handler)
+	      }else{
+	        return el.detachEvent('on' + event)
+	      }
 	    };
 	  })(),
 	  getInputValue: function(el) {
@@ -1468,7 +1472,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  bind:function(args) {
 	    //添加事件监听
 	    var self = this
-	    Util.bindEvent(self.el, 'blur', function() {
+
+	    self.blurFn = function() {
 	      var val = Util.getInputValue(self.el)
 	      var key = self.describe.value
 
@@ -1479,7 +1484,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //需要整个rootview脏检测,使用$apply防止脏检测冲突
 	        self.view.$rootView.$apply()
 	      }
-	    })
+	    }
+
+	    Util.bindEvent(self.el, 'blur', self.blurFn)
 	  },
 	  setValue: function(key, val) {
 	    return new Function('$scope', 'return $scope.' + key + '="' + val + '"')(this.view.$data)
@@ -1489,7 +1496,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.el.value = value
 	  },
 	  unbind: function() {
-	    Util.unbindEvent(this.el, 'blur')
+	    Util.unbindEvent(this.el, 'blur',self.blurFn)
 	  }
 	}
 
