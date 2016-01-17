@@ -10,18 +10,18 @@ var _ = require('../util')
 module.exports = {
   priority: 3000,
   bind:function(args) {
-    this.placeholder = _.createAnchor('text-statement')
-    _.replace(this.el,this.placeholder)
+    //this.placeholder = _.createAnchor('text-statement')
+    //_.replace(this.el,this.placeholder)
   },
   update:function(value){
     //默认情况下都是转义的，但是可以使用{{{}}}渲染html
-    var isHtml = this.describe.html
+    //var isHtml = this.describe.html
     //如果是html需要特殊处理
-    if (isHtml) {
-      this._updateHtml(value)
-    }else{//不是html可以直接简单赋值
+    //if (isHtml) {
+      //this._updateHtml(value)
+    //}else{//不是html可以直接简单赋值
       this._updateText(value)
-    }
+    //}
   },
   _updateHtml:function(value){
 

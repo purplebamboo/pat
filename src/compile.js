@@ -1,6 +1,6 @@
 var _ = require('./util')
 var Directive = require('./directive')
-var Watcher = require('./watcher')
+var Watcher = require('./watcher/index.js')
 var parser = require('./parser')
 var parseDirective = parser.parseDirective
 var parseText = parser.parseText
@@ -15,9 +15,9 @@ function _bindDir(describe) {
   var dirInstance, watcher, view, value
 
   //如果不是debug模式，可以把属性删除了.
-  if (!config.debug && describe.el && describe.el.removeAttribute) {
-    describe.el.removeAttribute(describe.name)
-  }
+  // if (!config.debug && describe.el && describe.el.removeAttribute) {
+  //   describe.el.removeAttribute(describe.name)
+  // }
 
 
   view = describe.view
@@ -45,13 +45,14 @@ function _bindDir(describe) {
 
   dirInstance.__watcher = watcher
   //执行绑定
-  dirInstance.bind(describe.args)
+  //dirInstance.bind(describe.args)
   //todo... 这边获取值可以缓存住,优化
   value = watcher.getValue()
   //赋值
   watcher.last = value
-  //首次自动调用update
-  dirInstance.update(value)
+  //首次自动调用bind
+  dirInstance.bind(value)
+  //dirInstance.update(value)
 
   return dirInstance
 }
@@ -60,12 +61,10 @@ function _bindDir(describe) {
 function _compileDirective(el,view,attributes) {
   var attrs, describe, skipChildren, childNodes,blockDirectiveCount,isCurViewRoot
 
-  //if (el.hasCompiled) return
 
   isCurViewRoot = el === view.$el ? true : false
 
   blockDirectiveCount = 0
-  //el.hasCompiled = true
   attributes = attributes || []
 
   var describes = [],blockDescribes = []
@@ -88,17 +87,15 @@ function _compileDirective(el,view,attributes) {
 
   /**
    * 策略是：
-   * 1. 如果有block并且不是在当前的root上，那么就可以交给子集的block指令去解析，它会负责创建新的view
-   * 2. 如果有block并且是在当前的root上，那么证明block的解析已经由父级view完成，那么只需要解析剩余的其他指令就可以了
+   * 1. 如果有block并且block没有解析，那么就可以交给子集的block指令去解析，它会负责解析自己的区块
+   * 2. 如果有block并且block已经解析过了，那么证明block的解析已经由父级view完成，那么只需要解析剩余的其他指令就可以了
    * 3. 没有block那么就正常解析普通就行。
    */
 
   if (!isCurViewRoot && blockDescribes.length) {
     //只管第一个block
+    //el.isBlockBind = true
     _bindDir(blockDescribes[0])
-
-    //重置为未处理
-    //el.hasCompiled = false
     return
   }
 
@@ -121,55 +118,80 @@ function _compileDirective(el,view,attributes) {
   }
 }
 
+//解析text，只会有一个
+function _compileTextNode(el, view) {
+  var tokens, token, text, placeholder,oneTime
+
+  token = parseText(el.data)[0]
+
+  oneTime = token.oneTime
+
+  //对于普通的文本节点作为 一次性的不需要更新
+  if (token.type === parser.TextTemplateParserTypes.text) {
+    oneTime = true
+  }
+
+  //el.html()
+  _bindDir({
+    name:'',
+    value:token.value,
+    view: view,
+    expression: parseExpression(token.value),
+    oneTime:oneTime,
+    html:token.html,
+    directive: 'text',
+    el: el
+  })
+}
 
 //解析text情况会很复杂，会支持多个插值，并且多个插值里面都有expression
-function _compileTextNode(el, view) {
-  var tokens, token, text, placeholder
+// function _compileTextNode(el, view) {
+//   var tokens, token, text, placeholder
 
-  tokens = parseText(el.data)
+//   tokens = parseText(el.data)
 
-  if (!(tokens.length === 1 && tokens[0].type === parser.TextTemplateParserTypes.text)) {
+//   if (!(tokens.length === 1 && tokens[0].type === parser.TextTemplateParserTypes.text)) {
 
-    placeholder = _.createAnchor('text-place-holder')
-    _.replace(el, placeholder)
-    for (var i = 0, len = tokens.length; i < len; i++) {
-      token = tokens[i];
-      text = document.createTextNode(token.value)
-      _.before(text, placeholder)
-      //是插值需要特殊处理，绑定directive
-      if (token.type === parser.TextTemplateParserTypes.binding) {
-        _bindDir({
-          name:'',
-          value:token.value,
-          view: view,
-          expression: parseExpression(token.value),
-          oneTime: token.oneTime,
-          html:token.html,
-          directive: 'textTemplate',
-          el: text
-        })
-      }
-    }
-    _.remove(placeholder)
-  }
+//     placeholder = _.createAnchor('text-place-holder')
+//     _.replace(el, placeholder)
+//     for (var i = 0, len = tokens.length; i < len; i++) {
+//       token = tokens[i];
+//       text = document.createTextNode(token.value)
+//       _.before(text, placeholder)
+//       //是插值需要特殊处理，绑定directive
+//       if (token.type === parser.TextTemplateParserTypes.binding) {
+//         _bindDir({
+//           name:'',
+//           value:token.value,
+//           view: view,
+//           expression: parseExpression(token.value),
+//           oneTime: token.oneTime,
+//           html:token.html,
+//           directive: 'textTemplate',
+//           el: text
+//         })
+//       }
+//     }
+//     _.remove(placeholder)
+//   }
 
-}
+// }
 
 
 
-exports.parseRoot = function(el,view){
+// exports.parseRoot = function(el,view){
 
-  var attrs = null
-  if (view.__node) {
-    attrs = _.toArray(view.__node.attrs)
-  }else{
-    attrs = _.toArray(el.attributes)
-  }
+//   var attrs = null
+//   if (view.__node) {
+//     attrs = _.toArray(view.__node.attrs)
+//   }else{
+//     attrs = _.toArray(el.attributes)
+//   }
 
-  //去重,需不需要合并之前的值?
-  //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
-  _compileDirective(el,view,attrs)
-}
+//   //去重,需不需要合并之前的值?
+//   //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
+//   _compileDirective(el,view,attrs)
+// }
 
 
 

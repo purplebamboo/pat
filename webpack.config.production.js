@@ -12,7 +12,7 @@ module.exports = {
   entry: APP_PATH,
   output: {
     path: BUILD_PATH,
-    filename: '0.1/pat-min.js',
+    filename: '1.0/pat-min.js',
     library: 'Pat',
     libraryTarget: 'umd'
   },

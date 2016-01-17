@@ -98,6 +98,15 @@ exports.prepend = function (el, target) {
   }
 }
 
+
+exports.string2node = function(string){
+  var wrap = document.createElement('div')
+  wrap.innerHTML = _.trim(string)
+
+  return wrap.firstChild
+
+}
+
 /**
  * Replace target with el
  *

@@ -14,7 +14,7 @@ var directives = {
   'if':require('./if.js'),
   'unless':require('./unless.js'),
   'for':require('./for.js'),
-  'textTemplate':require('./textTemplate.js')
+  'text':require('./text.js')
 }
 var noop = function(){}
 

@@ -14,7 +14,7 @@ module.exports = {
   //输出的文件名 合并以后的js会命名为dst.js
   output: {
     path: BUILD_PATH,
-    filename: '0.1/pat.js',
+    filename: '1.0/pat.js',
     library: 'Pat',
     libraryTarget: 'umd'
   },

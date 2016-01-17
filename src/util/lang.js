@@ -25,8 +25,6 @@ exports.bind = function (fn, ctx) {
   }
 }
 
-
-
 exports.htmlspecialchars = function(str) {
 
   if (!exports.isString(str)) return str
@@ -53,16 +51,25 @@ exports.toArray = function(arg) {
   return array
 }
 
+
+var toString = Object.prototype.toString
+
 exports.isArray = function(unknow) {
-  return Object.prototype.toString.call(unknow) === '[object Array]'
+  return toString.call(unknow) === '[object Array]'
+}
+exports.isPlainObject = function (obj) {
+  return toString.call(obj) === '[object Object]'
 }
 
 exports.isObject = function( unknow ) {
   return typeof unknow === "function" || ( typeof unknow === "object" && unknow != null )
 }
 
+
+
+
 exports.isElement = function(unknow){
-  return unknow && typeof unknow === 'object' && unknow.nodeType && typeof unknow.nodeName === 'string'
+  return unknow && typeof unknow === 'object' && unknow.nodeType
 }
 
 exports.isString = function(unknow){
@@ -105,7 +112,6 @@ exports.assign = function() {
   return target
 }
 
-
 exports.hasKey = function(object,key){
   for (var _key in object) {
     if (object.hasOwnProperty(_key) && _key == key) return true
@@ -127,4 +133,44 @@ exports.indexOf = function(array,key){
   var i = 0, length = array.length
   for (; i < length; i++) if (array[i] === key) return i
   return -1
+}
+
+exports.indexOfKey = function(arrayObject,key,value){
+  if (arrayObject === null) return -1
+  var i = 0, length = arrayObject.length
+  for (; i < length; i++) if (arrayObject[i][key] === value) return i
+  return -1
+}
+
+
+/*
+  深拷贝
+ */
+var _skipKeyFn = function(){
+  return false
+}
+
+exports.deepClone = function(obj,skipKeyFn) {
+
+  skipKeyFn = skipKeyFn || _skipKeyFn
+
+  if (exports.isPlainObject(obj)) {
+    var copy = {}
+    for (var key in obj) {
+      if (obj.hasOwnProperty(key) && !skipKeyFn(key)) {
+        copy[key] = exports.deepClone(obj[key],skipKeyFn)
+      }
+    }
+    return copy
+  }
+
+  if (exports.isArray(obj)) {
+    var copy = new Array(obj.length)
+    for (var i = 0, l = obj.length; i < l; i++) {
+      copy[i] = exports.deepClone(obj[i],skipKeyFn)
+    }
+    return copy
+  }
+
+  return obj
 }
