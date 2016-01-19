@@ -127,12 +127,20 @@ var Node = Class.extend({
   },
   replace: function(dstEl) {
 
+    //如果没有删除，那就先软删除自己
+    if (!this.deleted) {
+      this.remove(true)
+    }
+
     //这里比较特殊，会先改真实dom
     if (this.getElement()) {
+      //挨个的拿人家的子节点，替换
       var mountHtml = dstEl.mountView(this.view)
-      var node = _.string2node(mountHtml)
-      _.replace(this.element, node)
-      this.element = node
+      var nodes = _.string2nodes(mountHtml)
+      for (var i = 0,l = nodes.length; i < l; i++) {
+        _.before(nodes[0],this.element)
+      }
+      _.remove(this.element)
     }
 
     this.parentNode._findAndSplice(this, dstEl)
@@ -305,25 +313,25 @@ var Collection = Element.extend({
     }
     return startElement
   },
-  replace: function(dstEl) {
-    //如果没有删除，那就先软删除自己
-    if (!this.deleted) {
-      this.remove(true)
-    }
+  // replace: function(dstEl) {
+  //   //如果没有删除，那就先软删除自己
+  //   if (!this.deleted) {
+  //     this.remove(true)
+  //   }
 
-    if (this.getElement()) {
-      //挨个的拿人家的子节点，替换
-      var mountHtml = dstEl.mountView(this.view)
-      var nodes = _.string2nodes(mountHtml)
-      //var firstNode = nodes[0]
-      for (var i = 0,l = nodes.length; i < l; i++) {
-        _.before(nodes[0],this.element)
-      }
-      _.remove(this.element)
-    }
+  //   if (this.getElement()) {
+  //     //挨个的拿人家的子节点，替换
+  //     var mountHtml = dstEl.mountView(this.view)
+  //     var nodes = _.string2nodes(mountHtml)
+  //     //var firstNode = nodes[0]
+  //     for (var i = 0,l = nodes.length; i < l; i++) {
+  //       _.before(nodes[0],this.element)
+  //     }
+  //     _.remove(this.element)
+  //   }
 
-    this.parentNode._findAndSplice(this, dstEl)
-  },
+  //   this.parentNode._findAndSplice(this, dstEl)
+  // },
   remove: function(softDeleted) {
 
     var element = this.getElement()

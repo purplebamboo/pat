@@ -131,69 +131,17 @@ function _compileTextNode(el, view) {
     oneTime = true
   }
 
-  //el.html()
   _bindDir({
     name:'',
     value:token.value,
     view: view,
     expression: parseExpression(token.value),
     oneTime:oneTime,
-    html:token.html,
-    directive: 'text',
+    //html:token.html,
+    directive: token.html ? 'html' : 'text',
     el: el
   })
 }
-
-//解析text情况会很复杂，会支持多个插值，并且多个插值里面都有expression
-// function _compileTextNode(el, view) {
-//   var tokens, token, text, placeholder
-
-//   tokens = parseText(el.data)
-
-//   if (!(tokens.length === 1 && tokens[0].type === parser.TextTemplateParserTypes.text)) {
-
-//     placeholder = _.createAnchor('text-place-holder')
-//     _.replace(el, placeholder)
-//     for (var i = 0, len = tokens.length; i < len; i++) {
-//       token = tokens[i];
-//       text = document.createTextNode(token.value)
-//       _.before(text, placeholder)
-//       //是插值需要特殊处理，绑定directive
-//       if (token.type === parser.TextTemplateParserTypes.binding) {
-//         _bindDir({
-//           name:'',
-//           value:token.value,
-//           view: view,
-//           expression: parseExpression(token.value),
-//           oneTime: token.oneTime,
-//           html:token.html,
-//           directive: 'textTemplate',
-//           el: text
-//         })
-//       }
-//     }
-//     _.remove(placeholder)
-//   }
-
-// }
-
-
-
-// exports.parseRoot = function(el,view){
-
-//   var attrs = null
-//   if (view.__node) {
-//     attrs = _.toArray(view.__node.attrs)
-//   }else{
-//     attrs = _.toArray(el.attributes)
-//   }
-
-//   //去重,需不需要合并之前的值?
-//   //attrs = attrs.concat(el.attributes ? _.toArray(el.attributes) : [])
-//   _compileDirective(el,view,attrs)
-// }
-
-
 
 exports.parse = function(el,view) {
 

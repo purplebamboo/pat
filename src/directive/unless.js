@@ -8,6 +8,9 @@ var _if = require('./if.js')
  * @type {Object}
  */
 module.exports = _.assign({},_if,{
+  bind:function(value){
+    return _if.bind.call(this,!value)
+  },
   update:function(value){
     return _if.update.call(this,!value)
   }
