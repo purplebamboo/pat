@@ -208,4 +208,12 @@ exports.parse = function(el,view) {
   if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
     _compileDirective(el, view, _.toArray(el.attributes))
   }
+
+  //编译集合节点
+  if ((el.nodeType == -1)) {
+    //todo  只保留block节点
+    _compileDirective(el, view, _.toArray(el.attributes))
+  }
+
+
 }

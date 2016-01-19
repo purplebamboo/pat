@@ -22,11 +22,11 @@ function vid(){
  */
 var View = function (options) {
 
-  //需要绑定的节点，必须
+  //需要绑定的节点，必须,可以是
   this.$el = _.query(options.el)
 
-  if (process.env.NODE_ENV != 'production' && (!this.$el || !_.isElement(this.$el) || !(this.$el.nodeType == 11 || this.$el.nodeType == 1))) {
-    _.error('pat need a root el and must be a element or documentFragment')
+  if (process.env.NODE_ENV != 'production' && !this.$el) {
+    _.error('pat need a root el and must be a element or virtual dom')
   }
 
   this.$data = options.data || {}

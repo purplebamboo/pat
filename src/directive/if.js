@@ -13,9 +13,7 @@ module.exports = {
   },
   bind:function(value) {
 
-
     this.oriEl = this.el.clone()
-
     if (!!value){
       this.childView = new this.view.constructor({
         el:this.el,
@@ -27,7 +25,7 @@ module.exports = {
       this.bound = true
     }else{
       //软删除
-      this.el.remove()
+      this.el.remove(true)
       this.bound = false
     }
   },
@@ -39,6 +37,7 @@ module.exports = {
     if (!!value && this.bound == false) {
       //生成新的view
       var newVdNode = this.oriEl.clone()
+
       this.childView = new this.view.constructor({
         el:newVdNode,
         skipinject:true,
@@ -52,7 +51,8 @@ module.exports = {
     }
 
     if (!value && this.bound == true){
-      this.el.remove()
+      //软删除
+      this.el.remove(true)
       this.childView.$destroy()
       this.bound = false
     }

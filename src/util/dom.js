@@ -2,11 +2,16 @@
 
 var config = require('../config')
 var _ = require('./lang.js')
-
+TAG_ID = config.tagId
 
 exports.query = function (id) {
 
   if (!id) return null
+
+  //virtual dom 直接返回
+  if (_.isObject(id) && id.__VD__ == true) {
+    return id
+  }
 
   if (_.isElement(id)) {
     return id
@@ -15,6 +20,58 @@ exports.query = function (id) {
   if (_.isString(id)) {
     return document.getElementById(id.replace(/^#/,''))
   }
+
+}
+
+
+
+exports.walk = function(dom,fn){
+
+  if (dom.hasChildNodes()) {
+    for (var i = 0; i < dom.childNodes.length; i++) {
+
+      if(fn(dom.childNodes[i]) === false) break
+      exports.walk(dom.childNodes[i],fn)
+
+    }
+  }
+
+}
+
+
+function _matchPatid(node,patId){
+  var nodeType = node.nodeType
+
+  if (!nodeType || !_.inArray([1,8],nodeType)) return false
+
+
+  if (nodeType === 8 && _.trim(node.data) === 'deleted-'+patId) {
+    return node
+  }
+
+  if (nodeType === 1 && node.getAttribute && parseInt(node.getAttribute(TAG_ID)) === patId) {
+    return node
+  }
+
+  return null
+}
+
+/**
+ * 用来通过patId获取对应的节点
+ * @param  {[type]} patId [description]
+ * @return {[type]}       [description]
+ */
+exports.queryPatId = function(root,patId){
+  var node = null
+
+  exports.walk(root,function(child){
+    if (_matchPatid(child,patId)) {
+      node = child
+      return false
+    }
+  })
+
+  return node
 
 }
 
@@ -100,12 +157,17 @@ exports.prepend = function (el, target) {
 
 
 exports.string2node = function(string){
+  return exports.string2nodes(string)[0]
+}
+
+exports.string2nodes = function(string){
   var wrap = document.createElement('div')
   wrap.innerHTML = _.trim(string)
-
-  return wrap.firstChild
-
+  return wrap.childNodes
 }
+
+
+
 
 /**
  * Replace target with el

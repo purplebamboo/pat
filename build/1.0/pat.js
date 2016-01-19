@@ -78,11 +78,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var View = function (options) {
 
-	  //需要绑定的节点，必须
+	  //需要绑定的节点，必须,可以是
 	  this.$el = _.query(options.el)
 
-	  if (("development") != 'production' && (!this.$el || !_.isElement(this.$el) || !(this.$el.nodeType == 11 || this.$el.nodeType == 1))) {
-	    _.error('pat need a root el and must be a element or documentFragment')
+	  if (("development") != 'production' && !this.$el) {
+	    _.error('pat need a root el and must be a element or virtual dom')
 	  }
 
 	  this.$data = options.data || {}
@@ -503,6 +503,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
 	    _compileDirective(el, view, _.toArray(el.attributes))
 	  }
+
+	  //编译集合节点
+	  if ((el.nodeType == -1)) {
+	    //todo  只保留block节点
+	    _compileDirective(el, view, _.toArray(el.attributes))
+	  }
+
+
 	}
 
 /***/ },
@@ -542,11 +550,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var config = __webpack_require__(1)
 	var _ = __webpack_require__(5)
-
+	TAG_ID = config.tagId
 
 	exports.query = function (id) {
 
 	  if (!id) return null
+
+	  //virtual dom 直接返回
+	  if (_.isObject(id) && id.__VD__ == true) {
+	    return id
+	  }
 
 	  if (_.isElement(id)) {
 	    return id
@@ -555,6 +568,58 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (_.isString(id)) {
 	    return document.getElementById(id.replace(/^#/,''))
 	  }
+
+	}
+
+
+
+	exports.walk = function(dom,fn){
+
+	  if (dom.hasChildNodes()) {
+	    for (var i = 0; i < dom.childNodes.length; i++) {
+
+	      if(fn(dom.childNodes[i]) === false) break
+	      exports.walk(dom.childNodes[i],fn)
+
+	    }
+	  }
+
+	}
+
+
+	function _matchPatid(node,patId){
+	  var nodeType = node.nodeType
+
+	  if (!nodeType || !_.inArray([1,8],nodeType)) return false
+
+
+	  if (nodeType === 8 && _.trim(node.data) === 'deleted-'+patId) {
+	    return node
+	  }
+
+	  if (nodeType === 1 && node.getAttribute && parseInt(node.getAttribute(TAG_ID)) === patId) {
+	    return node
+	  }
+
+	  return null
+	}
+
+	/**
+	 * 用来通过patId获取对应的节点
+	 * @param  {[type]} patId [description]
+	 * @return {[type]}       [description]
+	 */
+	exports.queryPatId = function(root,patId){
+	  var node = null
+
+	  exports.walk(root,function(child){
+	    if (_matchPatid(child,patId)) {
+	      node = child
+	      return false
+	    }
+	  })
+
+	  return node
 
 	}
 
@@ -640,12 +705,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	exports.string2node = function(string){
+	  return exports.string2nodes(string)[0]
+	}
+
+	exports.string2nodes = function(string){
 	  var wrap = document.createElement('div')
 	  wrap.innerHTML = _.trim(string)
-
-	  return wrap.firstChild
-
+	  return wrap.childNodes
 	}
+
+
+
 
 	/**
 	 * Replace target with el
@@ -799,6 +869,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return false
 	}
 
+
+	exports.inArray = function(array,item){
+
+	  var index = exports.indexOf(array,item)
+
+	  if (index === -1) return false
+
+	  return true
+	}
 
 
 	/**
@@ -973,8 +1052,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  'bind':__webpack_require__(11),
 	  'model':__webpack_require__(12),
 	  'if':__webpack_require__(13),
-	  'unless':__webpack_require__(15),
-	  'for':__webpack_require__(16),
+	  'unless':__webpack_require__(14),
+	  'for':__webpack_require__(15),
 	  'text':__webpack_require__(17)
 	}
 	var noop = function(){}
@@ -1553,9 +1632,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  bind:function(value) {
 
-
 	    this.oriEl = this.el.clone()
-
 	    if (!!value){
 	      this.childView = new this.view.constructor({
 	        el:this.el,
@@ -1567,7 +1644,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.bound = true
 	    }else{
 	      //软删除
-	      this.el.remove()
+	      this.el.remove(true)
 	      this.bound = false
 	    }
 	  },
@@ -1579,6 +1656,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!!value && this.bound == false) {
 	      //生成新的view
 	      var newVdNode = this.oriEl.clone()
+
 	      this.childView = new this.view.constructor({
 	        el:newVdNode,
 	        skipinject:true,
@@ -1592,7 +1670,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (!value && this.bound == true){
-	      this.el.remove()
+	      //软删除
+	      this.el.remove(true)
 	      this.childView.$destroy()
 	      this.bound = false
 	    }
@@ -1606,164 +1685,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-
-	/**
-	 * 为什么要有这个类？
-	 *
-	 * 我们平时使用时，都是针对一个element节点操作
-	 * 但是当我们使用<template>这种节点时，会针对多个节点同时操作
-	 * 所以我们需要做一层封装，用来决定当前这个特殊节点，怎么删除，怎么添加
-	 */
-
-	var _ = __webpack_require__(3)
-
-	/**
-	 * 支持普通节点，template节点
-	 *
-	 */
-
-	function Node (el) {
-
-	  this.el = el
-
-	  this.attrs = el.attributes
-
-	  //如果是template,需要特殊处理
-	  if (el.tagName && el.tagName.toLowerCase() === 'template') {
-	    //chrome下面可以直接拿content就是个documentFragment,不支持的需要兼容
-	    if (this.el.content) {
-	      this.el = this.el.content
-	    }else{
-	      this.el = nodeToFrag(this.el)
-	    }
-	  }
-
-	  //如果是特殊的经过转换的template兼容写法
-	  if (el.getAttribute && el.getAttribute('_pat_tmpl') === 'true') {
-	    this.el = nodeToFrag(this.el)
-	  }
-
-
-	  this.isFrag = this.el.nodeType === 11
-
-	  if (!this.isFrag) {
-	    this.initNormal()
-	  }else{
-	    this.initFragment()
-	  }
-
-	}
-
-
-	//初始化普通节点的几个方法
-	Node.prototype.initNormal = function() {
-
-	  var curEl = this.el
-
-	  this.before = function(target){
-	    return _.before(curEl,target)
-	  }
-
-	  this.after = function(target){
-	    return _.after(curEl,target)
-	  }
-
-	  this.remove = function(target){
-	    return _.remove(curEl,target)
-	  }
-
-	  this.allElements = function() {
-	    return [this.el]
-	  }
-
-	  this.clone = function(){
-	    return new Node(_.clone(curEl))
-	  }
-	}
-	//初始化特殊节点Fragment的几个方法
-	Node.prototype.initFragment = function() {
-	  var curEl = this.el
-	  this.start = _.createAnchor('frag-start',true)
-	  this.end = _.createAnchor('frag-end',true)
-	  _.prepend(this.start, curEl)
-	  curEl.appendChild(this.end)
-
-	  //documentFragment直接可以before
-	  this.before = function(target){
-	    return _.before(curEl,target)
-	  }
-	  this.after = function(target){
-	    return _.after(curEl,target)
-	  }
-	  //documentFragment进行remove时比较麻烦，需要特殊处理不少东西
-	  //策略是从占位节点开始挨个的删除
-	  this.remove = this._fragmentRemove
-	  this.clone = this._fragmentClone
-
-	  this.allElements = function() {
-	    if (this.__allElements) return this.__allElements
-	    var els = []
-	    if (!this.start || !this.end) {
-	      if (true) _.error('can‘t find a start or end anchor while use fragmentRemove')
-	      return
-	    }
-
-	    var node = this.start
-	    var prevNode
-	    while(node && node != this.end){
-	      node = node.nextSibling
-	      if (node.nodeType == 1) {
-	        els.push(node)
-	      }
-	    }
-
-	    this.__allElements = els
-	    return els
-	  }
-	}
-
-
-	Node.prototype._fragmentRemove = function() {
-
-	  if (!this.start || !this.end) {
-	    if (true) _.error('can‘t find a start or end anchor while use fragmentRemove')
-	    return
-	  }
-
-	  var node = this.start
-	  var prevNode
-	  while(node && node != this.end){
-	    prevNode = node
-	    node = node.nextSibling
-	    _.remove(prevNode)
-	  }
-	  _.remove(this.end)
-
-	}
-
-	Node.prototype._fragmentClone = function(){
-	  //各种兼容性问题，待做
-	  return new Node(_.clone(this.el))
-	}
-
-	function nodeToFrag(el){
-	  var frag = document.createDocumentFragment()
-	  var child
-	  while (child = el.firstChild) {
-	    frag.appendChild(child)
-	  }
-	  return frag
-	}
-
-
-	module.exports = Node
-
-
-/***/ },
-/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1782,13 +1703,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
 	var parseExpression = parser.parseExpression
-	var Node = __webpack_require__(14)
+	var Node = __webpack_require__(16)
 
 
 	//差异更新的几种类型
@@ -2128,6 +2049,164 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+
+	/**
+	 * 为什么要有这个类？
+	 *
+	 * 我们平时使用时，都是针对一个element节点操作
+	 * 但是当我们使用<template>这种节点时，会针对多个节点同时操作
+	 * 所以我们需要做一层封装，用来决定当前这个特殊节点，怎么删除，怎么添加
+	 */
+
+	var _ = __webpack_require__(3)
+
+	/**
+	 * 支持普通节点，template节点
+	 *
+	 */
+
+	function Node (el) {
+
+	  this.el = el
+
+	  this.attrs = el.attributes
+
+	  //如果是template,需要特殊处理
+	  if (el.tagName && el.tagName.toLowerCase() === 'template') {
+	    //chrome下面可以直接拿content就是个documentFragment,不支持的需要兼容
+	    if (this.el.content) {
+	      this.el = this.el.content
+	    }else{
+	      this.el = nodeToFrag(this.el)
+	    }
+	  }
+
+	  //如果是特殊的经过转换的template兼容写法
+	  if (el.getAttribute && el.getAttribute('_pat_tmpl') === 'true') {
+	    this.el = nodeToFrag(this.el)
+	  }
+
+
+	  this.isFrag = this.el.nodeType === 11
+
+	  if (!this.isFrag) {
+	    this.initNormal()
+	  }else{
+	    this.initFragment()
+	  }
+
+	}
+
+
+	//初始化普通节点的几个方法
+	Node.prototype.initNormal = function() {
+
+	  var curEl = this.el
+
+	  this.before = function(target){
+	    return _.before(curEl,target)
+	  }
+
+	  this.after = function(target){
+	    return _.after(curEl,target)
+	  }
+
+	  this.remove = function(target){
+	    return _.remove(curEl,target)
+	  }
+
+	  this.allElements = function() {
+	    return [this.el]
+	  }
+
+	  this.clone = function(){
+	    return new Node(_.clone(curEl))
+	  }
+	}
+	//初始化特殊节点Fragment的几个方法
+	Node.prototype.initFragment = function() {
+	  var curEl = this.el
+	  this.start = _.createAnchor('frag-start',true)
+	  this.end = _.createAnchor('frag-end',true)
+	  _.prepend(this.start, curEl)
+	  curEl.appendChild(this.end)
+
+	  //documentFragment直接可以before
+	  this.before = function(target){
+	    return _.before(curEl,target)
+	  }
+	  this.after = function(target){
+	    return _.after(curEl,target)
+	  }
+	  //documentFragment进行remove时比较麻烦，需要特殊处理不少东西
+	  //策略是从占位节点开始挨个的删除
+	  this.remove = this._fragmentRemove
+	  this.clone = this._fragmentClone
+
+	  this.allElements = function() {
+	    if (this.__allElements) return this.__allElements
+	    var els = []
+	    if (!this.start || !this.end) {
+	      if (true) _.error('can‘t find a start or end anchor while use fragmentRemove')
+	      return
+	    }
+
+	    var node = this.start
+	    var prevNode
+	    while(node && node != this.end){
+	      node = node.nextSibling
+	      if (node.nodeType == 1) {
+	        els.push(node)
+	      }
+	    }
+
+	    this.__allElements = els
+	    return els
+	  }
+	}
+
+
+	Node.prototype._fragmentRemove = function() {
+
+	  if (!this.start || !this.end) {
+	    if (true) _.error('can‘t find a start or end anchor while use fragmentRemove')
+	    return
+	  }
+
+	  var node = this.start
+	  var prevNode
+	  while(node && node != this.end){
+	    prevNode = node
+	    node = node.nextSibling
+	    _.remove(prevNode)
+	  }
+	  _.remove(this.end)
+
+	}
+
+	Node.prototype._fragmentClone = function(){
+	  //各种兼容性问题，待做
+	  return new Node(_.clone(this.el))
+	}
+
+	function nodeToFrag(el){
+	  var frag = document.createDocumentFragment()
+	  var child
+	  while (child = el.firstChild) {
+	    frag.appendChild(child)
+	  }
+	  return frag
+	}
+
+
+	module.exports = Node
+
+
+/***/ },
 /* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -2388,208 +2467,209 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
 	var _ = __webpack_require__(3)
 	var Class = _.Class
 	var config = __webpack_require__(1)
 
-	var noop = function(){}
+	var noop = function() {}
 
 	PAT_ID = 1
 
 	TAG_ID = config.tagId
 
-	function getPatId(){
-	  return PAT_ID ++
+	function getPatId() {
+	  return PAT_ID++
 	}
 
 	var Node = Class.extend({
-	  init:function(){
+	  __VD__:true,
+	  init: function() {
 
 	  },
-	  mountView:function(view){
-	    var html,self
+	  mountView: function(view) {
+	    var html, self
 
 	    self = this
 	    self.view = view
 	    self.mountId()
 
-	    html = self.mountHtml(view)
+	    html = this.deleted ? self.mountDeleted(view) : self.mountHtml(view)
 
 	    // view.$rootView.on('afterMount',function(){
 	    // })
 	    self.mounted = true
 	    return html
 	  },
-	  mountHtml:function(){
+	  //软删除的节点，会在页面上存在一个注释，方便确认位置
+	  mountDeleted:function(){
+	    return '<!--deleted-' + this.patId + '-->'
+	  },
+	  mountHtml: function() {
 	    return ''
 	  },
-	  mountId:function(){
-	    //if (this.patId) return this.patId
-	    this.patId = getPatId()
+	  mountId: function() {
+	    if (!this.patId){
+	      this.patId = getPatId()
+	    }
 	  },
-	  _findAndSplice:function(dstEl,replace){
+	  _findAndSplice: function(dstEl, replace) {
 	    var childNodes = this.childNodes
 	    if (!childNodes) return
-	    _.each(childNodes,function(child,index){
+	    _.each(childNodes, function(child, index) {
 	      if (child == dstEl) {
-	        replace ? childNodes.splice(index,1,replace) : childNodes.splice(index,1)
+	        dstEl.parentNode = this
+	        replace ? childNodes.splice(index, 1, replace) : childNodes.splice(index, 1)
 	      }
 	    })
 	  },
-	  getElement:function(){
+	  getElement: function() {
 	    if (!this.patId || !this.view) return
 
 	    if (this.element) return this.element
-	    //todo 优化查找算法
-	    //todo 多个节点的处理
 	    var self = this
-	    var nodes = self.view.$rootView.$el.getElementsByTagName('*')
-	    _.each(nodes,function(node){
-	      if (node.getAttribute && node.getAttribute(TAG_ID) == self.patId) {
-	        self.element = node
-	      }
-	    })
-	    return this.element
+
+	    self.element = _.queryPatId(self.view.$rootView.$el,self.patId)
+	    return self.element
 	  },
-	  clone:function(){
+	  clone: function() {
 	    var options = null
 	    var childNodes
 
 	    //克隆初始化属性
-	    options = _.deepClone(this.options,function(key){
+	    options = _.deepClone(this.options, function(key) {
 	      return key == 'childNodes' ? true : false
 	    })
-
-	    //对于子节点需要特殊处理
-	    if (this.options.childNodes) {
-	      childNodes = []
-	      _.each(this.options.childNodes,function(child) {
-	        childNodes.push(child.clone())
-	      })
-	      options.childNodes = childNodes
-	    }
 
 	    var newNode = new this.constructor(options)
 	    //parentNode也需要特殊处理
 	    newNode.parentNode = this.parentNode
 
+	    //对于子节点需要特殊处理
+	    if (this.options.childNodes) {
+	      childNodes = []
+	      _.each(this.options.childNodes, function(child) {
+	        child.parentNode = newNode
+	        childNodes.push(child.clone())
+	      })
+	      options.childNodes = childNodes
+	      newNode.childNodes = childNodes
+	    }
+
 	    return newNode
 
 	  },
-	  pre:function(skipDeleted){
-	    var childNodes = this.childNodes
-	    var preNode,child
+	  pre: function(withDeleted) {
+	    var childNodes = this.parentNode.childNodes
+	    var preNode, child, index
+
+
 	    if (!childNodes || childNodes.length == 0) return
 
-	    for (var i = 0; i < childNodes.length - 1; i++) {
+	    index = _.indexOf(childNodes, this)
+
+	    if (index == -1) return
+
+	    for (var i = index - 1; i > 0; i--) {
 	      child = childNodes[i]
-	      if (skipDeleted && !child.deleted) {
+	      if (withDeleted || (!withDeleted && !child.deleted)) {
 	        preNode = child
+	        break
 	      }
-	      if (!skipDeleted) {
-	        preNode = child
-	      }
-	      if (childNodes[i+1] && childNodes[i+1] == dstEl) break
 	    }
 	    return preNode
 	  },
-	  next:function(skipDeleted){
-	    var childNodes = this.childNodes
-	    var nextNode,child
+	  next: function(withDeleted) {
+	    var childNodes = this.parentNode.childNodes
+	    var nextNode, child, index
 	    if (!childNodes || childNodes.length == 0) return
 
-	    for (var i = 0, l = childNodes.length; i > l; i--) {
+	    if (index == -1) return
+
+	    for (var i = index + 1; i < childNodes.length; i++) {
 	      child = childNodes[i]
-	      if (skipDeleted && !child.deleted) {
-	        nextNode = child
+	      if (withDeleted || (!withDeleted && !child.deleted)) {
+	        preNode = child
+	        break
 	      }
-	      if (!skipDeleted) {
-	        nextNode = child
-	      }
-	      if (childNodes[i-1] && childNodes[i-1] == dstEl) break
 	    }
+	    return preNode
 	  },
-	  replace:function(dstEl){
-	    var mountHtml = dstEl.mountView(this.view)
-	    var node = _.string2node(mountHtml)
-	    var preNode = null
+	  replace: function(dstEl) {
+
 	    //这里比较特殊，会先改真实dom
-	    if (this.mounted){
-	      if (this.element) {
-	        _.replace(this.element,node)
-	      }else{//如果页面上已经没有了，那就只能找前面的节点定位
-	        preNode = this.pre(true)
-	        //preNode.
-	        preNode ? _.after(node,preNode.getElement()) : _.prepend(node,this.parentNode.getElement())
-	      }
+	    if (this.getElement()) {
+	      var mountHtml = dstEl.mountView(this.view)
+	      var node = _.string2node(mountHtml)
+	      _.replace(this.element, node)
+	      this.element = node
 	    }
 
-	    this.parentNode._findAndSplice(this,dstEl)
-	    //this.destroy()
+	    this.parentNode._findAndSplice(this, dstEl)
 
+	    return dstEl
 	  },
-	  remove:function(deletedVirtual){
+	  remove: function(softDeleted) {
 
-	    if (deletedVirtual && this.parentNode) {
-	      this.parentNode._findAndSplice(this)
-	    }else{
+	    if (softDeleted) {
 	      this.deleted = true
+	    } else {
+	      this.parentNode._findAndSplice(this)
 	    }
 
 	    if (!this.mounted || !this.getElement()) return
-	    this.element.remove()
-	    this.element = null
-	    //this.mounted = false
+	    //软删除的话不是真的删除，而是加一个占位符
+	    if (softDeleted) {
+	      var deletedNode = _.string2node(this.mountDeleted())
+	      _.replace(this.element,deletedNode)
+	      this.element = deletedNode
+	    }else{
+	      _.remove(this.element)
+	    }
+
+
 	  },
-	  destroy:function() {
+	  destroy: function() {
 
 	  }
 	})
 
-	//一个集合，主要用于处理包裹的问题，根节点还有 if for的block都是这种节点
-	//这个节点本身没有什么属性之类的，有的是多个子节点，操作时也是多个子节点
-	//由virtual dom来解决这个差异问题
-	var Collection = Node.extend({
-	  init:function(options){
-	    this.nodeType = -1
-	    this.tagName = options.tagName
-	    this.childNodes = options.childNodes
-	  },
-	  hasChildNodes:function(){
-	    return this.childNodes && this.childNodes.length && this.childNodes.length > 0
-	  }
-	})
+
 
 
 	var Element = Node.extend({
-	  init:function(options){
+	  init: function(options) {
 	    this.options = options
 	    this.attributes = options.attributes
 	    this.tagName = options.tagName
 	    this.childNodes = options.childNodes
 	    this.nodeType = 1
 	  },
-	  hasChildNodes:function(){
+	  hasChildNodes: function() {
 	    return this.childNodes && this.childNodes.length && this.childNodes.length > 0
 	  },
-	  setAttribute:function(key,value){
-	    var index = _.indexOfKey(this.attributes,'name',key)
+	  first:function(){
+	    return this.childNodes[0]
+	  },
+	  last:function(){
+	    return this.childNodes[this.childNodes.length-1]
+	  },
+	  setAttribute: function(key, value) {
+	    var index = _.indexOfKey(this.attributes, 'name', key)
 	    var attr = {
-	      name:key,
-	      value:value
+	      name: key,
+	      value: value
 	    }
 
 	    if (index !== -1) {
 	      this.attributes[index] = attr
-	    }else{
+	    } else {
 	      this.attributes.push(attr)
 	    }
 	    //修改真实dom
 	    if (!this.mounted || !this.getElement()) return
 	    var element = this.getElement()
 
-	    this.view.$rootView.fire('beforeUpdateAttribute',[element],this)
+	    this.view.$rootView.fire('beforeUpdateAttribute', [element], this)
 
 	    //不允许存在破坏节点的特殊字符
 	    //todo 一些防止xss的处理
@@ -2597,114 +2677,235 @@ return /******/ (function(modules) { // webpackBootstrap
 	      value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
 	    }
 
-	    if (_.indexOf(['value','checked','selected'],key) !== -1 && key in element){
-	      element[key] = key === 'value'
-	        ? (value || '') // IE9 will set input.value to "null" for null...
+	    if (_.indexOf(['value', 'checked', 'selected'], key) !== -1 && key in element) {
+	      element[key] = key === 'value' ? (value || '') // IE9 will set input.value to "null" for null...
 	        : value
-	    }else{
-	      element.setAttribute(key,value)
+	    } else {
+	      element.setAttribute(key, value)
 	    }
 
-	    this.view.$rootView.fire('afterUpdateAttribute',[element],key,value,this)
+	    this.view.$rootView.fire('afterUpdateAttribute', [element], key, value, this)
 
 	  },
-	  removeAttribute:function(key){
-	    var index = _.indexOfKey(this.attributes,'name',key)
+	  removeAttribute: function(key) {
+	    var index = _.indexOfKey(this.attributes, 'name', key)
 	    if (index !== -1) {
-	      this.attributes.splice(index,1)
+	      this.attributes.splice(index, 1)
 	    }
 	    //修改真实dom
 	    if (!this.mounted || !this.getElement()) return
 
 	    var element = this.getElement()
-	    this.view.$rootView.fire('beforeRemoveAttribute',[element],key,this)
+	    this.view.$rootView.fire('beforeRemoveAttribute', [element], key, this)
 	    node.removeAttribute(key)
-	    this.view.$rootView.fire('afterRemoveAttribute',[element],key,this)
+	    this.view.$rootView.fire('afterRemoveAttribute', [element], key, this)
 
 	  },
-	  mountHtml:function(view){
+	  mountHtml: function(view) {
 	    //todo 不闭合标签
 	    var tagName = this.tagName
 	    var attrsString = ''
 
-	    _.each(this.attributes,function(attr){
+	    _.each(this.attributes, function(attr) {
 	      //需要判断整数的情况
-	      attrsString += [' ',attr.name,'="',attr.value,'" '].join('')
+	      attrsString += [' ', attr.name, '="', attr.value, '" '].join('')
 	    })
 
 	    attrsString += ' ' + TAG_ID + '="' + this.patId + '"'
 
 	    var childHtml = ''
-	    _.each(this.childNodes,function(child){
+	    _.each(this.childNodes, function(child) {
 	      childHtml += child.mountView(view)
 	    })
 
 	    return '<' + tagName + attrsString + '>' + childHtml + '</' + tagName + '>'
 	  },
-	  append:function(){
+	  append: function() {
 
 	  },
-	  preapend:function(){
+	  preapend: function() {
 
 	  }
 	})
 
+
+	//一个集合，主要用于处理包裹的问题，根节点还有 if for的block都是这种节点
+	//这个节点本身没有什么属性之类的，有的是多个子节点，操作时也是多个子节点
+	//由virtual dom来解决这个差异问题
+	var Collection = Element.extend({
+	  init: function(options) {
+	    this.options = options
+	    this.nodeType = -1
+	    this.tagName = options.tagName
+	    this.attributes = options.attributes
+	    this.childNodes = options.childNodes
+	    //this.startNode = this.childNodes[0]
+	    //this.endNode = this.childNodes[this.childNodes.length-1]
+	  },
+	  mountHtml:function(view){
+	    var childHtml = ''
+	    _.each(this.childNodes, function(child) {
+	      childHtml += child.mountView(view)
+	    })
+
+	    return childHtml
+	  },
+	  getElement: function() {
+	    if (!this.patId || !this.view) return
+
+	    if (this.element) return this.element
+
+	    //删除的情况下直接返回占位的节点
+	    if (this.deleted) {
+	      this.element = _.queryPatId(this.view.$rootView.$el,this.patId)
+	      return this.element
+	    }
+
+	    //否则返回第一个子节点
+	    var startElement = this.first().getElement()
+	    var endElement = this.last().getElement()
+
+	    if (startElement) {
+	      this.element = startElement
+	    }
+
+	    if (endElement) {
+	      this.endElement = endElement
+	    }
+	    return startElement
+	  },
+	  replace: function(dstEl) {
+	    //如果没有删除，那就先软删除自己
+	    if (!this.deleted) {
+	      this.remove(true)
+	    }
+
+	    if (this.getElement()) {
+	      //挨个的拿人家的子节点，替换
+	      var mountHtml = dstEl.mountView(this.view)
+	      var nodes = _.string2nodes(mountHtml)
+	      //var firstNode = nodes[0]
+	      for (var i = 0,l = nodes.length; i < l; i++) {
+	        _.before(nodes[0],this.element)
+	      }
+	      _.remove(this.element)
+	    }
+
+	    this.parentNode._findAndSplice(this, dstEl)
+	  },
+	  remove: function(softDeleted) {
+
+	    var element = this.getElement()
+
+	    if (softDeleted) {
+	      this.deleted = true
+	    } else {
+	      this.parentNode._findAndSplice(this)
+	    }
+
+	    if (!this.mounted) return
+	    //软删除的话不是真的删除，而是加一个占位符
+	    var deletedNode = _.string2node(this.mountDeleted())
+	    _.replace(element,deletedNode)
+	    this.element = deletedNode
+	    this.childNodes.shift()
+	    //挨个删除子节点，这个是硬删除，没必要留着了。有个位置留着就行
+	    while(this.childNodes.length){
+	      this.childNodes[0].remove()
+	    }
+	  },
+	  hasChildNodes: function() {
+	    return this.childNodes && this.childNodes.length && this.childNodes.length > 0
+	  }
+	})
+
+
 	var TextNode = Node.extend({
-	  init:function(options){
+	  init: function(options) {
 	    this.options = options
 	    this.data = options.data
 	    this.nodeType = 3
 	    this.oneTime = false
 	  },
-	  html:function(text){
+	  html: function(text) {
 	    if (this.oneTime) return
 
 	    this.data = text
-	    //修改真实dom
+	      //修改真实dom
 	    if (!this.mounted || !this.getElement()) return
 	    this.getElement().innerHTML = text
 	  },
-	  mountHtml:function(view){
-	    if (this.oneTime) return this.data
+	  mountHtml: function(view) {
+	    //如果一些文本不需要改变，那就直接渲染成文本，不需要二次修改,就不需要包裹标签
+	    //这里注意有个例外，如果这个文本节点是collection节点的第一个或者最后一个子元素
+	    //因为collection需要定位，所以需要包裹
+	    var parentNode = this.parentNode
+	    var isFirstNode = (parentNode.nodeType == -1 && parentNode.first() === this)
+	    var isLastNode = (parentNode.nodeType == -1 && parentNode.last() === this)
 
-	    return '<span '+ TAG_ID +'="' + this.patId + '">' + this.data + '</span>'
+	    if (this.oneTime && !isFirstNode && !isLastNode){
+	     return this.data
+	    }
+
+	    return '<span ' + TAG_ID + '="' + this.patId + '">' + this.data + '</span>'
 	  },
-	  append:function(){
-	  },
-	  preapend:function(){
+	  append: function() {},
+	  preapend: function() {
 
 	  }
 	})
 
 
 	module.exports = {
-	  createCollection:function(childNodes){
-	    return new Collection(childNodes)
-	  },
-	  createElement:function(tag,attrs,childNodes){
+	  // createCollection: function(attrs,childNodes) {
+	  //   return new Collection(childNodes)
+	  // },
+	  createElement: function(tag, attrs, childNodes) {
 	    var attributes = []
-	    _.each(attrs,function(value,key){
+	    _.each(attrs, function(value, key) {
 	      attributes.push({
-	        name:key,
-	        value:value
+	        name: key,
+	        value: value
 	      })
 	    })
 
-	    var element = new Element({
-	      tagName:tag,
-	      attributes:attributes,
-	      childNodes:childNodes
-	    })
+	    var element = null
 
-	    _.each(childNodes,function(child){
+	    if (tag == 'template') {
+
+	      //如果发现不到两个子节点，那么这个collection是没有意义的，直接，返回子节点
+
+	      if (childNodes && childNodes.length == 1) {
+	        return childNodes[0]
+	      }else if(!childNodes || childNodes.length == 0){
+	        return
+	      }else{
+	        element = new Collection({
+	          tagName: tag,
+	          attributes: attributes,
+	          childNodes: childNodes
+	        })
+	      }
+
+	    }else{
+	      element = new Element({
+	        tagName: tag,
+	        attributes: attributes,
+	        childNodes: childNodes
+	      })
+	    }
+
+	    _.each(childNodes, function(child) {
 	      child.parentNode = element
 	    })
 
 	    return element
 	  },
-	  createTextNode:function(data){
+	  createTextNode: function(data) {
+	    if (!data) return
+
 	    return new TextNode({
-	      data:data
+	      data: data
 	    })
 	  }
 

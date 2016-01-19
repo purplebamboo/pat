@@ -38,9 +38,13 @@ var templ = Pat.createElement('div',{
   Pat.createElement('div',{
     id:'{{word}}',
     't-if':'key == 11'
-  },[Pat.createTextNode('我是if')]),
+  },[Pat.createTextNode('我是if'),Pat.createTextNode('我是if2')]),
   Pat.createTextNode('123456'),
-  Pat.createTextNode('{{word}}')
+  Pat.createTextNode('{{word}}'),
+  Pat.createElement('template',{
+    id:'{{word}}',
+    't-if':'key == 11'
+  },[Pat.createTextNode('{{word}}'),Pat.createTextNode('我是if2222')])
 ])
 
 
@@ -50,7 +54,7 @@ var p2 = new Pat({
   el:'test',
   data:{
     text:'hello',
-    key:11,
+    key:10,
     word:'hello world',
     lists:[{
       name:'1',

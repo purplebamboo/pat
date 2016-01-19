@@ -121,6 +121,15 @@ exports.hasKey = function(object,key){
 }
 
 
+exports.inArray = function(array,item){
+
+  var index = exports.indexOf(array,item)
+
+  if (index === -1) return false
+
+  return true
+}
+
 
 /**
  * find the index a value in array
