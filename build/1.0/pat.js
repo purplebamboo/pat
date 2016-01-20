@@ -56,12 +56,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var config = __webpack_require__(1)
 	var Compile = __webpack_require__(2)
-	var Watcher = __webpack_require__(18)
+	var Watcher = __webpack_require__(20)
 	var Directive = __webpack_require__(8)
 	var Parser = __webpack_require__(9)
-	var Data = __webpack_require__(20)
-	var Element = __webpack_require__(21)
-	var Event = __webpack_require__(22)
+	var Data = __webpack_require__(22)
+	var Element = __webpack_require__(19)
+	var Event = __webpack_require__(23)
 	var _ = __webpack_require__(3)
 
 	var VID = 0
@@ -295,7 +295,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var Directive = __webpack_require__(8)
-	var Watcher = __webpack_require__(18)
+	var Watcher = __webpack_require__(20)
 	var parser = __webpack_require__(9)
 	var parseDirective = parser.parseDirective
 	var parseText = parser.parseText
@@ -1003,7 +1003,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  'unless':__webpack_require__(14),
 	  'for':__webpack_require__(15),
 	  'text':__webpack_require__(17),
-	  'html':__webpack_require__(23)
+	  'html':__webpack_require__(18)
 	}
 	var noop = function(){}
 
@@ -2196,227 +2196,40 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/**
+	 * 这是非常特殊的一个directive，用来处理文本节点的插值
+	 */
+
+
 	var _ = __webpack_require__(3)
-	var watchersQueue = __webpack_require__(19)
-
-	//观察者
-	function Watcher(view, expression, callback) {
-	  this.__directives = []
-	  this.__view = view
-	  this.expression = expression
-	  this.callbacks = callback ? [callback] : []
-	  this.scope = view.$data
-	  this.last = null
-	  this.current = null
-	  //是否已经取过第一次值了，意味着不再需要检测针对defineproperty依赖了
-	  this.hasFirstGetValued = false
-
-	}
-
-	Watcher.currentTarget = null
-
-	Watcher.prototype.removeDirective = function(dir) {
-	  var dirs = this.__directives
-	  var index = _.indexOf(dirs,dir)
-
-	  if (index != -1) {
-	    dirs.splice(index,1)
-	  }
-
-	}
+	var elements = __webpack_require__(19)
 
 
-	Watcher.prototype.applyFilter = function(value, filterName) {
-
-	  if (!filterName) return value
-
-	  //从rootview拿filter
-	  var filter = this.__view.$rootView.__filters[filterName]
-	  if (filter) {
-	    return filter.call(this.__view.$rootView, value, this.scope)
-	  }
-	  return value
-	}
-
-	Watcher.prototype.getValue = function() {
-	  if (!this.expression) return ''
-	    //取值很容易出错，需要给出错误提示
-	  var value
-
-	  try {
-
-	    if (!this.hasFirstGetValued) Watcher.currentTarget = this
-	    value = new Function('_scope', '_that', 'return ' + this.expression)(this.scope, this)
-	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
-	  } catch (e) {
-
-	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
-	    if (true) _.log('error when watcher get the value,please check your expression: "' + this.expression + '"', e)
-	  }
-
-	  this.hasFirstGetValued = true
-	  return value
-	}
-
-	//使用队列更新
-	// Watcher.prototype.batchCheck = function() {
-	//   //每个rootview有自己的执行队列
-	//   var batchQueue = this.__view.$rootView.batchQueue
-	//   if (!batchQueue) batchQueue = this.__view.$rootView.batchQueue = new watchersQueue()
-
-	//   batchQueue.push(this)
-
-	// }
-
-
-	Watcher.prototype.check = function() {
-	  var self = this
-
-	  this.current = this.getValue()
-
-	  this._check(this.last, this.current)
-
-	  if (this.last != this.current) {
-	    _.each(this.callbacks, function(callback) {
-	      callback(self.last, self.current)
-	    })
-	  }
-
-	  this.last = this.current
-	}
-
-
-	Watcher.prototype._check = function(last, current) {
-	  var self = this
-
-	  _.each(this.__directives, function(dir) {
-	    //directive自己判断要不要更新
-	    if (dir.shoudUpdate(last, current)) {
-	      //调用父级view的hook
-	      self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
-	      dir.update && dir.update(current)
-	      self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
+	module.exports = {
+	  block:true,
+	  priority: 3000,
+	  bind:function(value) {
+	    this.update(value)
+	  },
+	  update:function(value){
+	    if (value === undefined || value === null) {
+	      value = ''
 	    }
-	  })
+	    //compile html 得到一个带有根node的节点,根node就是collection节点
+	    var el = this.view.$rootView.compileHtml(value)
+	    //elements
+	    //var newCollection = elements.createElement('template',{},el.childNodes)
+	    //把当前节点替换成一个collection节点
+	    this.el.replace(el)
+	    this.el = el
+	  },
+	  unbind:function(){
 
+	  }
 	}
-
-	Watcher.prototype.destroy = function() {
-	  //通知所有的directive销毁
-	  this.isDestroyed = true
-	  _.each(this.__directives, function(dir) {
-	    dir.destroy && dir.destroy()
-	  })
-
-	}
-
-
-
-	module.exports = Watcher
 
 /***/ },
 /* 19 */
-/***/ function(module, exports) {
-
-	//处理批量的问题
-	//存在一个队列，当第一个变动时，会在10后启动update
-	//会去重
-	//可以手动forceUpdate
-
-
-
-
-	exports.queue = function(watcher) {
-
-
-
-	}
-
-
-
-
-
-
-
-
-
-
-
-/***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Watcher = __webpack_require__(18)
-	var _ = __webpack_require__(3)
-
-
-	var removeDeleted = function(watchers){
-
-	  var newWatchers = []
-
-	  _.each(watchers,function(watcher){
-	    if (!watcher.isDestroyed) {
-	      newWatchers.push(watcher)
-	    }
-	  })
-
-	  return newWatchers
-
-	}
-
-
-	var defineProperty = function(obj,key){
-
-	  var watchers = [] //保存 针对当前这个key依赖的watchers
-	  var val = obj[key]
-
-	  Object.defineProperty(obj, key, {
-	    enumerable: true,
-	    configurable: true,
-	    get: function() {
-	      //找到正在交互的watch
-	      var kkk = key
-	      var currentTarget = Watcher.currentTarget
-	      if (currentTarget) {
-	        watchers.push(currentTarget)
-	      }
-	      return val
-	    },
-	    set: function(newVal) {
-	      if (newVal === val) {
-	        return
-	      }
-
-	      val = newVal
-	      //有些已经失效的watcher先去掉
-	      watchers = removeDeleted(watchers)
-	      _.each(watchers,function(watcher){
-	        watcher.check()
-	      })
-	    }
-	  })
-	}
-
-	exports.inject = function(data) {
-
-	  if (_.isArray(data)) {
-	    _.each(data,function(value){
-	      exports.inject(value)
-	    })
-	  }
-
-	  if (_.isPlainObject(data)) {
-	    _.each(data,function(value,key){
-
-	      defineProperty(data,key)
-
-	      exports.inject(value)
-	    })
-	  }
-	}
-
-/***/ },
-/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
@@ -2872,7 +2685,230 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
+/* 20 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(3)
+	var watchersQueue = __webpack_require__(21)
+
+	//观察者
+	function Watcher(view, expression, callback) {
+	  this.__directives = []
+	  this.__view = view
+	  this.expression = expression
+	  this.callbacks = callback ? [callback] : []
+	  this.scope = view.$data
+	  this.last = null
+	  this.current = null
+	  //是否已经取过第一次值了，意味着不再需要检测针对defineproperty依赖了
+	  this.hasFirstGetValued = false
+
+	}
+
+	Watcher.currentTarget = null
+
+	Watcher.prototype.removeDirective = function(dir) {
+	  var dirs = this.__directives
+	  var index = _.indexOf(dirs,dir)
+
+	  if (index != -1) {
+	    dirs.splice(index,1)
+	  }
+
+	}
+
+
+	Watcher.prototype.applyFilter = function(value, filterName) {
+
+	  if (!filterName) return value
+
+	  //从rootview拿filter
+	  var filter = this.__view.$rootView.__filters[filterName]
+	  if (filter) {
+	    return filter.call(this.__view.$rootView, value, this.scope)
+	  }
+	  return value
+	}
+
+	Watcher.prototype.getValue = function() {
+	  if (!this.expression) return ''
+	    //取值很容易出错，需要给出错误提示
+	  var value
+
+	  try {
+
+	    if (!this.hasFirstGetValued) Watcher.currentTarget = this
+	    value = new Function('_scope', '_that', 'return ' + this.expression)(this.scope, this)
+	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
+	  } catch (e) {
+
+	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
+	    if (true) _.log('error when watcher get the value,please check your expression: "' + this.expression + '"', e)
+	  }
+
+	  this.hasFirstGetValued = true
+	  return value
+	}
+
+	//使用队列更新
+	// Watcher.prototype.batchCheck = function() {
+	//   //每个rootview有自己的执行队列
+	//   var batchQueue = this.__view.$rootView.batchQueue
+	//   if (!batchQueue) batchQueue = this.__view.$rootView.batchQueue = new watchersQueue()
+
+	//   batchQueue.push(this)
+
+	// }
+
+
+	Watcher.prototype.check = function() {
+	  var self = this
+
+	  this.current = this.getValue()
+
+	  this._check(this.last, this.current)
+
+	  if (this.last != this.current) {
+	    _.each(this.callbacks, function(callback) {
+	      callback(self.last, self.current)
+	    })
+	  }
+
+	  this.last = this.current
+	}
+
+
+	Watcher.prototype._check = function(last, current) {
+	  var self = this
+
+	  _.each(this.__directives, function(dir) {
+	    //directive自己判断要不要更新
+	    if (dir.shoudUpdate(last, current)) {
+	      //调用父级view的hook
+	      self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
+	      dir.update && dir.update(current)
+	      self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
+	    }
+	  })
+
+	}
+
+	Watcher.prototype.destroy = function() {
+	  //通知所有的directive销毁
+	  this.isDestroyed = true
+	  _.each(this.__directives, function(dir) {
+	    dir.destroy && dir.destroy()
+	  })
+
+	}
+
+
+
+	module.exports = Watcher
+
+/***/ },
+/* 21 */
+/***/ function(module, exports) {
+
+	//处理批量的问题
+	//存在一个队列，当第一个变动时，会在10后启动update
+	//会去重
+	//可以手动forceUpdate
+
+
+
+
+	exports.queue = function(watcher) {
+
+
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+/***/ },
 /* 22 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Watcher = __webpack_require__(20)
+	var _ = __webpack_require__(3)
+
+
+	var removeDeleted = function(watchers){
+
+	  var newWatchers = []
+
+	  _.each(watchers,function(watcher){
+	    if (!watcher.isDestroyed) {
+	      newWatchers.push(watcher)
+	    }
+	  })
+
+	  return newWatchers
+
+	}
+
+
+	var defineProperty = function(obj,key){
+
+	  var watchers = [] //保存 针对当前这个key依赖的watchers
+	  var val = obj[key]
+
+	  Object.defineProperty(obj, key, {
+	    enumerable: true,
+	    configurable: true,
+	    get: function() {
+	      //找到正在交互的watch
+	      var kkk = key
+	      var currentTarget = Watcher.currentTarget
+	      if (currentTarget) {
+	        watchers.push(currentTarget)
+	      }
+	      return val
+	    },
+	    set: function(newVal) {
+	      if (newVal === val) {
+	        return
+	      }
+
+	      val = newVal
+	      //有些已经失效的watcher先去掉
+	      watchers = removeDeleted(watchers)
+	      _.each(watchers,function(watcher){
+	        watcher.check()
+	      })
+	    }
+	  })
+	}
+
+	exports.inject = function(data) {
+
+	  if (_.isArray(data)) {
+	    _.each(data,function(value){
+	      exports.inject(value)
+	    })
+	  }
+
+	  if (_.isPlainObject(data)) {
+	    _.each(data,function(value,key){
+
+	      defineProperty(data,key)
+
+	      exports.inject(value)
+	    })
+	  }
+	}
+
+/***/ },
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
@@ -2930,42 +2966,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return this;
 	  }
 
-	}
-
-/***/ },
-/* 23 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * 这是非常特殊的一个directive，用来处理文本节点的插值
-	 */
-
-
-	var _ = __webpack_require__(3)
-	var elements = __webpack_require__(21)
-
-
-	module.exports = {
-	  block:true,
-	  priority: 3000,
-	  bind:function(value) {
-	    this.update(value)
-	  },
-	  update:function(value){
-	    if (value === undefined || value === null) {
-	      value = ''
-	    }
-	    //compile html 得到一个带有根node的节点,根node就是collection节点
-	    var el = this.view.$rootView.compileHtml(value)
-	    //elements
-	    //var newCollection = elements.createElement('template',{},el.childNodes)
-	    //把当前节点替换成一个collection节点
-	    this.el.replace(el)
-	    this.el = el
-	  },
-	  unbind:function(){
-
-	  }
 	}
 
 /***/ }
