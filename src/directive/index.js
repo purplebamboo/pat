@@ -3,6 +3,7 @@
 var _ = require('../util/index.js')
 var Class = _.Class
 var parser = require('../parser')
+var config = require('../config.js')
 
 DIR_REGX = parser.DIR_REGX
 INTERPOLATION_REGX = parser.INTERPOLATION_REGX
@@ -62,6 +63,17 @@ module.exports = {
   create:function(describe){
     var dirFn = publicDirectives[describe.directive]
     return new dirFn(describe)
+  },
+  isBlockDirective:function(attr){
+    var name = _.isString(attr) ? attr : attr.name
+
+    name = name.replace(config.prefix + '-','')
+    if (directives[name] && directives[name].block) {
+      return true
+    }else{
+      return false
+    }
+
   },
   isDirective:function(attr){
 

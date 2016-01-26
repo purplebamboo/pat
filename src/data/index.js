@@ -17,7 +17,7 @@ var removeDeleted = function(watchers){
 }
 
 
-var defineProperty = function(obj,key){
+exports.defineProperty = function(obj,key){
 
   var watchers = [] //保存 针对当前这个key依赖的watchers
   var val = obj[key]
@@ -27,10 +27,10 @@ var defineProperty = function(obj,key){
     configurable: true,
     get: function() {
       //找到正在交互的watch
-      var kkk = key
+      //var kkk = key
       var currentTarget = Watcher.currentTarget
       if (currentTarget) {
-        watchers.push(currentTarget)
+        watchers.unshift(currentTarget)
       }
       return val
     },
@@ -60,7 +60,7 @@ exports.inject = function(data) {
   if (_.isPlainObject(data)) {
     _.each(data,function(value,key){
 
-      defineProperty(data,key)
+      exports.defineProperty(data,key)
 
       exports.inject(value)
     })

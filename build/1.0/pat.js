@@ -59,9 +59,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Watcher = __webpack_require__(20)
 	var Directive = __webpack_require__(8)
 	var Parser = __webpack_require__(9)
-	var Data = __webpack_require__(22)
+	var Dom = __webpack_require__(22)
+	var Data = __webpack_require__(23)
 	var Element = __webpack_require__(19)
-	var Event = __webpack_require__(23)
+	var Event = __webpack_require__(24)
 	var _ = __webpack_require__(3)
 
 	var VID = 0
@@ -125,7 +126,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if (this.__template) {
 	    this.$el.innerHTML = ''
-	    el = this.__template
+	    el = Dom.transfer(this.__template)
 	  }
 
 	  if (!this.skipinject) {
@@ -201,10 +202,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  })
 	  destroyRoot ? _.remove(this.$el) : (this.$el.innerHTML = '')
 
+	  // if (this.$el.nodeType == -1) {
+	  //   this.$el.remove()
+	  // }
+
 	  this.$el = null
 	  this.$data = null
 	  this.$rootView = null
-	  this.__node = null
 	  this.__template = null
 	  this.__watchers = null
 	  this.__userWatchers = null
@@ -264,6 +268,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	//暴露基本对象接口
 	View.Parser = Parser
+	View.Dom = Dom
 	View.Directive = Directive
 	View.Compile = Compile
 	View.Watcher = Watcher
@@ -339,6 +344,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  dirInstance.__watcher = watcher
+	  dirInstance.initialize && dirInstance.initialize()
 	  //执行绑定
 	  //dirInstance.bind(describe.args)
 	  //todo... 这边获取值可以缓存住,优化
@@ -441,7 +447,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.parse = function(el,view) {
 
 	  if (!_.isElement(el)) return
-
 	  //对于文本节点采用比较特殊的处理
 	  if (el.nodeType == 3 && _.trim(el.data)) {
 	    _compileTextNode(el, view)
@@ -991,6 +996,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _ = __webpack_require__(3)
 	var Class = _.Class
 	var parser = __webpack_require__(9)
+	var config = __webpack_require__(1)
 
 	DIR_REGX = parser.DIR_REGX
 	INTERPOLATION_REGX = parser.INTERPOLATION_REGX
@@ -1050,6 +1056,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	  create:function(describe){
 	    var dirFn = publicDirectives[describe.directive]
 	    return new dirFn(describe)
+	  },
+	  isBlockDirective:function(attr){
+	    var name = _.isString(attr) ? attr : attr.name
+
+	    name = name.replace(config.prefix + '-','')
+	    if (directives[name] && directives[name].block) {
+	      return true
+	    }else{
+	      return false
+	    }
+
 	  },
 	  isDirective:function(attr){
 
@@ -1314,6 +1331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return mergedExpression.join('+')
 	}
 
+	exports.TAG_RE = tagRE
 	exports.INTERPOLATION_REGX = interpolationRegx
 	exports.DIR_REGX = dirRegx
 	exports.TextTemplateParserTypes = TextTemplateParserTypes
@@ -1686,7 +1704,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //否则 任何时候都是需要更新的，哪怕两次的值一样，也是需要更新的，因为你要考虑子view的更新
 	    return true
 	  },
-	  bind: function(args) {
+	  initialize:function(){
 	    // for 语句比较特殊，不使用系统生成的expression
 	    var inMatch = this.describe.value.match(/(.*) in (.*)/)
 	    if (inMatch) {
@@ -1705,18 +1723,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	      _.error('required a alias in for directive')
 	    }
 
-	    this.start = _.createAnchor('for-start')
-	    this.end = _.createAnchor('for-end')
-	    _.replace(this.el, this.end)
-	    _.before(this.start, this.end)
-
-	    this.__node = new Node(this.el)
-	    //检测当前循环的是不是template,这个时候的处理需要比较复杂的运算
-	    this.__isFrag = this.__node.isFrag
-
-
 	    this.oldViewMap = {}
 	    this.oldViewLists = []
+	    this.__node = this.el.clone()
+	  },
+	  bind: function(value) {
+
+	    // this.start = _.createAnchor('for-start')
+	    // this.end = _.createAnchor('for-end')
+	    // _.replace(this.el, this.end)
+	    // _.before(this.start, this.end)
+
+	    // this.__node = new Node(this.el)
+	    // //检测当前循环的是不是template,这个时候的处理需要比较复杂的运算
+	    // this.__isFrag = this.__node.isFrag
+
+	    //初次渲染时需要判断
+	    //如果是没数据，那么就加一个占位符，空在那边方便以后定位
+	    //if (!value || value.length == 0) {
+	     // this.el.remove(true)
+	    //}
+
+	    this.startNode = this.el
+	    //第一次直接软删除，作为定位
+	    this.startNode.remove(true)
+	    //var name = this._generateKey()
+
+	    // this.oldViewMap = {
+	    //   name:
+	    // }
+	    // this.oldViewLists = []
+
+	    this.update(value)
 
 	  },
 	  _generateKey: function() {
@@ -1740,19 +1778,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        newViewMap[name] = oldViewMap[name]
 	        //发现可以复用，就直接更新view就行
 	        //当然要注意重新assign父级数据,如果上一级数据变化了，这里才能脏检测到改变
-	        _.assign(oldViewMap[name].$data,self.view.$data)
-	        //key需要重新赋值
+	        //_.assign(oldViewMap[name].$data,self.view.$data)
+	        //key需要重新赋值,会自动做出defineproperty的监听改变
 	        if(self.iterator) oldViewMap[name].$data[self.iterator] = key
 
-	        oldViewMap[name].$digest()
+	        //oldViewMap[name].$digest()
 
 	      } else {
 	        //否则需要新建新的view
 	        data = {}
-	        data[self.alias] = item
+
 	        _.assign(data,self.view.$data)
 
 	        if(self.iterator) data[self.iterator] = key
+
+	        data[self.alias] = item
 
 	        newNode = self.__node.clone()
 	        //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
@@ -1761,9 +1801,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        item[curKey] = name
 
 	        newViewMap[name] = new self.view.constructor({
-	          el: newNode.el,
-	          node:newNode,
+	          el: newNode,
 	          data: data,
+	          skipinject:true,
 	          vid:name,
 	          rootView:self.view.$rootView
 	        })
@@ -1824,7 +1864,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          type: UPDATE_TYPES.INSERT_MARKUP,
 	          fromIndex: null,
 	          toIndex: nextIndex,
-	          markup: nextChild.__node //新增的节点，多一个此属性，表示新节点的dom内容
+	          markup: nextChild.$el //新增的节点，多一个此属性，表示新节点的dom内容
 	        })
 	      }
 
@@ -1859,24 +1899,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (update.type === UPDATE_TYPES.MOVE_EXISTING || update.type === UPDATE_TYPES.REMOVE_NODE) {
 
 	        updatedChild = this.oldViewMap[update.name]
-	        initialChildren[update.name] = updatedChild.__node
+	        initialChildren[update.name] = updatedChild.$el
 	        //所有需要修改的节点先删除,对于move的，后面再重新插入到正确的位置即可
 	        deleteChildren.push(updatedChild)
 	      }
 	    }
 	    //删除所有需要先删除的
 	    _.each(deleteChildren, function(child) {
-	      //this.prev
-	      self.view.$rootView.fire('beforeDeleteBlock',child.__node.allElements(),self)
+	      //self.view.$rootView.fire('beforeDeleteBlock',child.__node.allElements(),self)
+	      //删除
+	      //第一个节点不能硬删除，还要留着定位呢,先软删除
+	      if (child.$el == self.startNode) {
+	        child.$el.remove(true)
+	      }else{
+	        child.$el.remove()
+	      }
 	      child.$destroy()
-	      self.view.$rootView.fire('afterDeleteBlock',[],self)
+	      //self.view.$rootView.fire('afterDeleteBlock',[],self)
 	    })
 
 	    //保存一个复用的老的view队列
 	    var oldNodeLists = this._generateOldReuseLists()
-
+	    this.end = oldNodeLists[oldNodeLists.length]
+	debugger
 	    //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入
-	    var insertFn = this.__isFrag ? this._insertFragAt : this._insertChildAt
+	    var insertFn = this._insertChildAt
 	    for (var k = 0; k < updates.length; k++) {
 	      update = updates[k];
 	      switch (update.type) {
@@ -1900,7 +1947,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var lists = []
 	    _.each(oldViewLists,function(oldView){
 	      if (oldView && oldView._destroyed !== true) {
-	        lists.push(oldView.__node)
+	        lists.push(oldView.$el)
 	      }
 	    })
 
@@ -1909,79 +1956,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  //用于把一个node插入到指定位置，通过之前的占位节点去找
 	  _insertChildAt:function(newNode,toIndex,oldNodeLists){
-	    var start = this.start
-	    var end = this.end
+	    var start = this.startNode
 	    var self = this
 	    var index = -1
 	    var el = start
 	    var nextNode = oldNodeLists.shift()
+	    var end = this.end ? this.end : start
+	    //newNode.
+	    while(el){
+	      el = el.next()
 
-	    while(el && el !== end){
+	      if (el == end) break
 
-	      el = el.nextSibling
-
-	      if (nextNode && el === nextNode.el) {
+	      if (nextNode && el === nextNode) {
 	        index ++
 	        nextNode = oldNodeLists.shift()
 	      }
 
 	      if (toIndex == index) {
-	        self.view.$rootView.fire('beforeAddBlock',[],self)
+	        //self.view.$rootView.fire('beforeAddBlock',[],self)
 	        newNode.before(el)
-	        self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-
+	        //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
 	        break
 	      }
 	    }
 	    //没找到,那就直接放到最后了
 	    if (toIndex > index) {
-	      self.view.$rootView.fire('beforeAddBlock',[],self)
-	      newNode.before(end)
-	      self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-	    }
-	  },
-	  //用于把一个frag插入到指定位置，相对比较复杂一点
-	  _insertFragAt:function(newNode,toIndex,oldNodeLists){
-	    var start = this.start
-	    var end = this.end
-	    var self = this
-	    var index = -1
-	    var el = start
-	    var nextNode = oldNodeLists.shift()
-	    var inFragment = false
-
-	    while(el && el !== end){
-
-	      el = el.nextSibling
-
-	      if (nextNode && el === nextNode.end) {
-	        inFragment = false
-	      }
-
-	      if (inFragment) continue
-
-	      if (nextNode && el === nextNode.start) {
-	        index ++
-	        nextNode = oldNodeLists.shift()
-	      }
-
-	      if (toIndex == index) {
-	        self.view.$rootView.fire('beforeAddBlock',[],self)
-	        newNode.before(el)
-	        self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-	        break
-	      }
-	    }
-	    //没找到,那就直接放到最后了
-	    if (toIndex > index) {
-	      self.view.$rootView.fire('beforeAddBlock',[],self)
-	      newNode.before(end)
-	      self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+	      //var endNode = this.startNode.parentNode.last()
+	      //self.view.$rootView.fire('beforeAddBlock',[],self)
+	      //this.startNode
+	      newNode.after(end)
+	      this.end = newNode
+	      //end = newNode
+	      //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
 	    }
 	  },
 	  update: function(newLists) {
 	    //策略，先删除以前的，再使用最新的，找出最小差异更新
 	    //参考reactjs的差异算法
+	    //
+	    //this.startNode.remove(true)
+
 	    this._generateNewChildren(newLists)
 
 	    this._diff()
@@ -1990,6 +2005,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.oldViewMap = this.newViewMap
 	    this.oldViewLists = this.newViewLists
 
+	    //如果后面有数据，那就硬删除掉startNode节点,把最新的第一个元素作为start节点
+	    if (this.oldViewLists.length > 0) {
+	      this.startNode.remove()
+	      this.startNode = this.oldViewLists[0].$el
+	    }
 	  },
 	  unbind: function() {
 	    _.each(this.oldViewMap,function(view){
@@ -2174,9 +2194,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = {
 	  priority: 3000,
 	  bind:function(value) {
-	    //对于一次性的节点，不需要做包裹
-	    if (this.describe.oneTime) {
-	      this.el.oneTime = true
+	    //对于不是一次性的节点，需要做包裹，方便下次定位
+	    if (!this.describe.oneTime) {
+	      this.el.oneTime = false
 	    }
 
 	    this.update(value)
@@ -2203,7 +2223,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var elements = __webpack_require__(19)
-
+	var Dom = __webpack_require__(22)
 
 	module.exports = {
 	  block:true,
@@ -2216,7 +2236,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      value = ''
 	    }
 	    //compile html 得到一个带有根node的节点,根node就是collection节点
-	    var el = this.view.$rootView.compileHtml(value)
+	    var el = Dom.transfer(value)
+	    el.parentNode = this.el.parentNode
 	    //elements
 	    //var newCollection = elements.createElement('template',{},el.childNodes)
 	    //把当前节点替换成一个collection节点
@@ -2235,6 +2256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _ = __webpack_require__(3)
 	var Class = _.Class
 	var config = __webpack_require__(1)
+
 
 	var noop = function() {}
 
@@ -2296,7 +2318,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    self.element = _.queryPatId(self.view.$rootView.$el,self.patId)
 	    return self.element
 	  },
-	  clone: function() {
+	  clone: function(parentNode) {
 	    var options = null
 	    var childNodes
 
@@ -2307,14 +2329,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var newNode = new this.constructor(options)
 	    //parentNode也需要特殊处理
-	    newNode.parentNode = this.parentNode
+	    newNode.parentNode = parentNode || this.parentNode
 
 	    //对于子节点需要特殊处理
 	    if (this.options.childNodes) {
 	      childNodes = []
 	      _.each(this.options.childNodes, function(child) {
-	        child.parentNode = newNode
-	        childNodes.push(child.clone())
+	        childNodes.push(child.clone(newNode))
 	      })
 	      options.childNodes = childNodes
 	      newNode.childNodes = childNodes
@@ -2348,16 +2369,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var nextNode, child, index
 	    if (!childNodes || childNodes.length == 0) return
 
+	    index = _.indexOf(childNodes, this)
 	    if (index == -1) return
 
 	    for (var i = index + 1; i < childNodes.length; i++) {
 	      child = childNodes[i]
 	      if (withDeleted || (!withDeleted && !child.deleted)) {
-	        preNode = child
+	        nextNode = child
 	        break
 	      }
 	    }
-	    return preNode
+	    return nextNode
 	  },
 	  replace: function(dstEl) {
 
@@ -2380,6 +2402,50 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.parentNode._findAndSplice(this, dstEl)
 
 	    return dstEl
+	  },
+	  before:function(dstEl){
+
+	    var dstChilds = dstEl.parentNode.childNodes
+	    var index = _.indexOf(dstChilds,dstEl)
+	    dstEl.parentNode.childNodes.splice(index,0,this)
+	    this.parentNode = dstEl.parentNode
+
+	    //没有在dom上不需要操作
+	    if (!dstEl.mounted) return
+
+	    //如果自己在dom上
+	    if (this.mounted && this.getElement()){
+	      _.before(this.element,dstEl.getElement())
+	    }else{
+	      var mountHtml = this.mountView(dstEl.view)
+	      var nodes = _.string2nodes(mountHtml)
+	      for (var i = 0,l = nodes.length; i < l; i++) {
+	        _.before(nodes[0],dstEl.getElement())
+	      }
+	    }
+	  },
+	  after:function(dstEl){
+
+	    var dstChilds = dstEl.parentNode.childNodes
+	    var index = _.indexOf(dstChilds,dstEl) + 1
+
+	    dstEl.parentNode.childNodes.splice(index,0,this)
+	    this.parentNode = dstEl.parentNode
+
+	    //没有在dom上不需要操作
+	    if (!dstEl.mounted) return
+
+	    //如果自己在dom上
+	    if (this.mounted && this.getElement()){
+	      _.after(this.element,dstEl.getElement())
+	    }else{
+	      var mountHtml = this.mountView(dstEl.view)
+	      var nodes = _.string2nodes(mountHtml)
+	      for (var i = 0,l = nodes.length; i < l; i++) {
+	        _.after(nodes[0],dstEl.getElement())
+	      }
+	    }
+
 	  },
 	  remove: function(softDeleted) {
 
@@ -2598,11 +2664,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.options = options
 	    this.data = options.data
 	    this.nodeType = 3
-	    this.oneTime = false
+	    this.oneTime = true
 	  },
 	  html: function(text) {
-	    if (this.oneTime) return
-
+	    //if (this.oneTime) return
 	    this.data = text
 	      //修改真实dom
 	    if (!this.mounted || !this.getElement()) return
@@ -2629,9 +2694,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 
+
+	function getBlockAttributes(attributes){
+	  var Directive = __webpack_require__(8)
+	  var newAttrs = []
+	  var attr
+	  for (var i = 0; i < attributes.length; i++) {
+	    attr = attributes[i]
+	    if (Directive.isBlockDirective(attr.name)) {
+	      newAttrs.push(attr)
+	      break
+	    }
+	  }
+
+	  return newAttrs
+
+	}
+
+
+
 	module.exports = {
 	  // createCollection: function(attrs,childNodes) {
-	  //   return new Collection(childNodes)
+
+	  //   return new Collection({
+	  //     tagName: tag,
+	  //     attributes: attributes,
+	  //     childNodes: childNodes
+	  //   })
+	  //   //return new Collection(childNodes)
 	  // },
 	  createElement: function(tag, attrs, childNodes) {
 	    var attributes = []
@@ -2646,9 +2736,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (tag == 'template') {
 
+	      //针对template的节点，只保留block类型的指令，并且只保留一个
+	      attributes = getBlockAttributes(attributes)
 	      //如果发现不到两个子节点，那么这个collection是没有意义的，直接，返回子节点
-
-	      if (childNodes && childNodes.length == 1) {
+	      if (childNodes && childNodes.length == 1 && childNodes[0].nodeType == 1) {
+	        //属性放到子节点上
+	        childNodes[0].attributes = childNodes[0].attributes.concat(attributes)
 	        return childNodes[0]
 	      }else if(!childNodes || childNodes.length == 0){
 	        return
@@ -2668,7 +2761,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      })
 	    }
 
-	    _.each(childNodes, function(child) {
+	    childNodes && _.each(childNodes, function(child) {
 	      child.parentNode = element
 	    })
 
@@ -2838,6 +2931,241 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
+
+	/**
+	 * 用来分析模板字符串，解析成virtual dom
+	 */
+
+	var _ = __webpack_require__(3)
+	var parser = __webpack_require__(9)
+	var Element = __webpack_require__(19)
+
+	var createElement = Element.createElement
+	var createTextNode = Element.createTextNode
+
+	TAG_RE = parser.TAG_RE
+	TEXT_NODE = 'text'
+
+	/**
+	 * 收集模板中的各种Tag
+	 *
+	 * @param {String} template
+	 */
+	function collectTags(structure,template) {
+	  var inner
+	  var last_offset = 0
+
+	  template.replace(/<.*?>/g, function(match, offset) {
+	    if (offset > last_offset) {
+	      analyzeText(structure,template.slice(last_offset, offset))
+	    }
+
+	    inner = match.match(/<\/?(\w+)\ *(.*?)\ *\/?>$/)
+
+	    if (!inner && ("development") != 'production') {
+	      _.error('Bad tag' + match + '.')
+	    }
+
+	    structure.push({
+	      tagName: inner[1].toLowerCase()
+	    })
+	    structure.end++
+
+	    if (/<\/\w+/.test(match)) {
+	      structure[structure.end].isEnd = true
+	    } else if (inner[2] !== '') {
+	      structure[structure.end].attrs = analyzeAttributes(inner[2])
+	    }
+
+	    last_offset = offset + match.length
+
+	    return match
+	  })
+
+	  if (last_offset != template.length) {
+	    analyzeText(structure,template.slice(last_offset))
+	  }
+	}
+
+	//对于前后的回车空格全部删除
+	//text如果里面有{{}}需要作为单独的节点
+	function analyzeText(structure,tempText){
+
+	  tempText = tempText.replace(/^[\n\s\t]+/g,'').replace(/[\n\s\t]+$/g,'')
+
+	  if (!tempText) return
+
+	  //找出里面有没有特殊的占位节点
+	  var tokens = spText(tempText)
+
+	  _.each(tokens,function(text){
+	    structure.push({
+	      tagName:TEXT_NODE,
+	      text:text
+	    })
+	    structure.end++
+	  })
+
+	}
+
+	function spText(text){
+	  //匹配不到插值说明是普通的，直接返回
+	  if (!TAG_RE.test(text)) {
+	    return [text]
+	  }
+
+	  var result = []
+	  var lastIndex = TAG_RE.lastIndex = 0
+	  var match, index
+	  while (match = TAG_RE.exec(text)) {
+	    index = match.index
+	      // push text token
+	    if (index > lastIndex) {
+	      result.push(text.slice(lastIndex, index))
+	    }
+	    result.push(match[0])
+	    lastIndex = index + match[0].length
+	  }
+
+	  if (lastIndex < text.length) {
+	    result.push(text.slice(lastIndex))
+	  }
+
+	  return result
+
+	}
+
+	function analyzeAttributes(attrString){
+	  var attributes = {}
+	  var attrs,name,value,index
+	  //严谨起见，避免出现多个空格的情况
+	  attrString = attrString.replace(/\ (?=\ )/g, '')
+
+	  attrs = attrString.match(/[^\ ]+=('.*?'|".*?")|[^\ ]+/g)//注意，属性里可能有引号
+
+	  _.each(attrs,function(attr){
+	    index = attr.indexOf('=')
+	    if (~index) {
+	      name = attr.slice(0,index)
+	      value = attr.slice(index+1).replace(/^('|")/,'').replace(/('|")$/,'')
+	    }else{
+	      name = attr
+	      value = ''
+	    }
+	    attributes[name] = value
+	  })
+
+	  return attributes
+
+	}
+
+
+	/**
+	 * 从后到前分析html tag
+	 *
+	 * @param {Array} tags
+	 * @param {Number} pointer
+	 * @param {Object} [pair]
+	 *
+	 * 思路：
+	 * 倒序分析tags————循环A，如果到头了就退出
+	 *    如果不是end
+	 *       如果有待配对tag且tagName相同
+	 *          与待配对的tag配上了，放到close_tag标记里
+	 *          退出循环A
+	 *       否则
+	 *          这是一个非闭合性的tag或TEXT_NODE，放到记录数组里
+	 *          进入下一轮循环A
+	 *    否则
+	 *       从前一个tag开始，寻找它的待配对tag
+	 *       如果子任务的返回没有close_tag
+	 *          tag没有闭合，抛出错误
+	 *          中止
+	 *       整理返回结果
+	 *       同步pointer
+	 *       进入下一轮循环A
+	 *
+	 * 返回记录数组
+	 */
+	function getStructure(tags, pointer, pair) {
+	  var re = {
+	      found: []
+	    },
+	    tmp
+
+	  for (var i = pointer; i >= 0; i--) {
+	    if (!tags[i].isEnd) {
+	      if (
+	        pair != undefined &&
+	        tags[i].tagName == pair.tagName
+	      ) {
+	        re.close_tag = tags[i]
+	        re.latest_pointer = i
+	        break;
+	      } else if (tags[i].tagName === TEXT_NODE) {
+	        re.found.unshift(createTextNode(tags[i].text))
+	      } else {
+	        re.found.unshift(createElement(tags[i].tagName,tags[i].attrs))
+	      }
+	    } else {
+	      tmp = getStructure(tags, i - 1, tags[i])
+	      if (!tmp && ("development") != 'production') {
+	        _.error(tags[i - 1].tagName + ' does not have correspond start tag.')
+	        return
+	      }
+	      if (!tmp.close_tag && ("development") != 'production') {
+	        _.error(tags[i].tagName + ' does not have correspond start tag.')
+	        return
+	      }
+	      tmp.close_tag.paired = true
+	      i = tmp.latest_pointer
+	      if (tmp.found.length != 0) {
+	        tmp.close_tag.children = tmp.found
+	      }
+	      re.found.unshift(createElement(tmp.close_tag.tagName,tmp.close_tag.attrs,tmp.close_tag.children))
+	    }
+	  }
+
+	  /**
+	   * 普通情况下，for循环后i会比实际情况小1，这是因为for循环会先改变i再对i>=0做判断。
+	   * 但是，如果是break的情况，i就是实际情况，所以这里要对i做区分处理。
+	   */
+	  if (re.latest_pointer === undefined) {
+	    re.latest_pointer = i + 1;
+	  }
+
+	  return re
+	}
+
+
+	exports.transfer = function(template) {
+
+	  if (_.isObject(template) && template.__VD__) {
+	    return template
+	  }
+	  var structure = []
+	  var result,rootElement
+
+	  structure.end = -1
+	  collectTags(structure,template)
+
+	  result = getStructure(structure,structure.length - 1)
+	  rootElement = createElement('template',{},result.found)
+
+	  return rootElement
+	}
+
+
+
+
+
+
+
+/***/ },
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
 	var Watcher = __webpack_require__(20)
 	var _ = __webpack_require__(3)
 
@@ -2857,7 +3185,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	var defineProperty = function(obj,key){
+	exports.defineProperty = function(obj,key){
 
 	  var watchers = [] //保存 针对当前这个key依赖的watchers
 	  var val = obj[key]
@@ -2867,10 +3195,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    configurable: true,
 	    get: function() {
 	      //找到正在交互的watch
-	      var kkk = key
+	      //var kkk = key
 	      var currentTarget = Watcher.currentTarget
 	      if (currentTarget) {
-	        watchers.push(currentTarget)
+	        watchers.unshift(currentTarget)
 	      }
 	      return val
 	    },
@@ -2900,7 +3228,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (_.isPlainObject(data)) {
 	    _.each(data,function(value,key){
 
-	      defineProperty(data,key)
+	      exports.defineProperty(data,key)
 
 	      exports.inject(value)
 	    })
@@ -2908,7 +3236,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)

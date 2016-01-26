@@ -44,6 +44,7 @@ function _bindDir(describe) {
   }
 
   dirInstance.__watcher = watcher
+  dirInstance.initialize && dirInstance.initialize()
   //执行绑定
   //dirInstance.bind(describe.args)
   //todo... 这边获取值可以缓存住,优化
@@ -146,7 +147,6 @@ function _compileTextNode(el, view) {
 exports.parse = function(el,view) {
 
   if (!_.isElement(el)) return
-
   //对于文本节点采用比较特殊的处理
   if (el.nodeType == 3 && _.trim(el.data)) {
     _compileTextNode(el, view)

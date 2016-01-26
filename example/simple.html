@@ -20,7 +20,14 @@
 <!--支持传入模板-->
 <script type="javascript/template" id="J_tmpl">
 <div class="container4 line">
-  {{text}}
+  {{text}}111
+  <span t-for="item in lists" id="{{item.name}}">
+    {{item.text}}
+  </span>
+
+  <template t-if="key == 11">
+    <div id="{{key}}">{{{word2}}}</div>
+  </template>
 </div>
 </script>
 
@@ -31,25 +38,25 @@ Pat.config({
 })
 
 
-var templ = Pat.createElement('div',{
-  id:'{{key}}',
-  class:'container4 line'
-},[
-  Pat.createElement('div',{
-    id:'{{word}}',
-    't-if':'key == 11'
-  },[Pat.createTextNode('我是if'),Pat.createTextNode('我是if2')]),
-  // Pat.createElement('div',{
-  //   id:'{{word}}',
-  //   't-for':'item in lists'
-  // },[Pat.createTextNode('我是if'),Pat.createTextNode('我是if2')]),
-  Pat.createTextNode('123456'),
-  Pat.createTextNode('{{word}}'),
-  Pat.createElement('template',{
-    id:'{{word}}',
-    't-if':'key == 11'
-  },[Pat.createTextNode('{{word}}'),Pat.createTextNode('我是if2222')])
-])
+// var templ = Pat.createElement('div',{
+//   id:'{{key}}',
+//   class:'container4 line'
+// },[
+//   Pat.createElement('div',{
+//     id:'{{word}}',
+//     't-if':'key == 11'
+//   },[Pat.createTextNode('我是if'),Pat.createTextNode('我是if2')]),
+//   Pat.createElement('div',{
+//     id:'{{word}}',
+//     't-for':'item in lists'
+//   },[Pat.createTextNode('啊是大大'),Pat.createTextNode('{{item.name}}')]),
+//   Pat.createTextNode('123456'),
+//   Pat.createTextNode('{{word}}'),
+//   Pat.createElement('template',{
+//     id:'{{word}}',
+//     't-if':'key == 11'
+//   },[Pat.createTextNode('{{word}}'),Pat.createTextNode('我是if2222')])
+// ])
 
 
 
@@ -60,6 +67,7 @@ var p2 = new Pat({
     text:'hello',
     key:10,
     word:'hello world',
+    word2:'<span class="ddd">aaa</span>',
     lists:[{
       name:'1',
       text:'11111'
@@ -68,7 +76,7 @@ var p2 = new Pat({
       text:'22222'
     }]
   },
-  template:templ
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 </script>

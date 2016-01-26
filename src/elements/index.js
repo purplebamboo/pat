@@ -2,6 +2,7 @@ var _ = require('../util/index.js')
 var Class = _.Class
 var config = require('../config.js')
 
+
 var noop = function() {}
 
 PAT_ID = 1
@@ -62,7 +63,7 @@ var Node = Class.extend({
     self.element = _.queryPatId(self.view.$rootView.$el,self.patId)
     return self.element
   },
-  clone: function() {
+  clone: function(parentNode) {
     var options = null
     var childNodes
 
@@ -73,14 +74,13 @@ var Node = Class.extend({
 
     var newNode = new this.constructor(options)
     //parentNode也需要特殊处理
-    newNode.parentNode = this.parentNode
+    newNode.parentNode = parentNode || this.parentNode
 
     //对于子节点需要特殊处理
     if (this.options.childNodes) {
       childNodes = []
       _.each(this.options.childNodes, function(child) {
-        child.parentNode = newNode
-        childNodes.push(child.clone())
+        childNodes.push(child.clone(newNode))
       })
       options.childNodes = childNodes
       newNode.childNodes = childNodes
@@ -114,16 +114,17 @@ var Node = Class.extend({
     var nextNode, child, index
     if (!childNodes || childNodes.length == 0) return
 
+    index = _.indexOf(childNodes, this)
     if (index == -1) return
 
     for (var i = index + 1; i < childNodes.length; i++) {
       child = childNodes[i]
       if (withDeleted || (!withDeleted && !child.deleted)) {
-        preNode = child
+        nextNode = child
         break
       }
     }
-    return preNode
+    return nextNode
   },
   replace: function(dstEl) {
 
@@ -146,6 +147,50 @@ var Node = Class.extend({
     this.parentNode._findAndSplice(this, dstEl)
 
     return dstEl
+  },
+  before:function(dstEl){
+
+    var dstChilds = dstEl.parentNode.childNodes
+    var index = _.indexOf(dstChilds,dstEl)
+    dstEl.parentNode.childNodes.splice(index,0,this)
+    this.parentNode = dstEl.parentNode
+
+    //没有在dom上不需要操作
+    if (!dstEl.mounted) return
+
+    //如果自己在dom上
+    if (this.mounted && this.getElement()){
+      _.before(this.element,dstEl.getElement())
+    }else{
+      var mountHtml = this.mountView(dstEl.view)
+      var nodes = _.string2nodes(mountHtml)
+      for (var i = 0,l = nodes.length; i < l; i++) {
+        _.before(nodes[0],dstEl.getElement())
+      }
+    }
+  },
+  after:function(dstEl){
+
+    var dstChilds = dstEl.parentNode.childNodes
+    var index = _.indexOf(dstChilds,dstEl) + 1
+
+    dstEl.parentNode.childNodes.splice(index,0,this)
+    this.parentNode = dstEl.parentNode
+
+    //没有在dom上不需要操作
+    if (!dstEl.mounted) return
+
+    //如果自己在dom上
+    if (this.mounted && this.getElement()){
+      _.after(this.element,dstEl.getElement())
+    }else{
+      var mountHtml = this.mountView(dstEl.view)
+      var nodes = _.string2nodes(mountHtml)
+      for (var i = 0,l = nodes.length; i < l; i++) {
+        _.after(nodes[0],dstEl.getElement())
+      }
+    }
+
   },
   remove: function(softDeleted) {
 
@@ -364,11 +409,10 @@ var TextNode = Node.extend({
     this.options = options
     this.data = options.data
     this.nodeType = 3
-    this.oneTime = false
+    this.oneTime = true
   },
   html: function(text) {
-    if (this.oneTime) return
-
+    //if (this.oneTime) return
     this.data = text
       //修改真实dom
     if (!this.mounted || !this.getElement()) return
@@ -395,9 +439,34 @@ var TextNode = Node.extend({
 })
 
 
+
+function getBlockAttributes(attributes){
+  var Directive = require('../directive/index.js')
+  var newAttrs = []
+  var attr
+  for (var i = 0; i < attributes.length; i++) {
+    attr = attributes[i]
+    if (Directive.isBlockDirective(attr.name)) {
+      newAttrs.push(attr)
+      break
+    }
+  }
+
+  return newAttrs
+
+}
+
+
+
 module.exports = {
   // createCollection: function(attrs,childNodes) {
-  //   return new Collection(childNodes)
+
+  //   return new Collection({
+  //     tagName: tag,
+  //     attributes: attributes,
+  //     childNodes: childNodes
+  //   })
+  //   //return new Collection(childNodes)
   // },
   createElement: function(tag, attrs, childNodes) {
     var attributes = []
@@ -412,9 +481,12 @@ module.exports = {
 
     if (tag == 'template') {
 
+      //针对template的节点，只保留block类型的指令，并且只保留一个
+      attributes = getBlockAttributes(attributes)
       //如果发现不到两个子节点，那么这个collection是没有意义的，直接，返回子节点
-
-      if (childNodes && childNodes.length == 1) {
+      if (childNodes && childNodes.length == 1 && childNodes[0].nodeType == 1) {
+        //属性放到子节点上
+        childNodes[0].attributes = childNodes[0].attributes.concat(attributes)
         return childNodes[0]
       }else if(!childNodes || childNodes.length == 0){
         return
@@ -434,7 +506,7 @@ module.exports = {
       })
     }
 
-    _.each(childNodes, function(child) {
+    childNodes && _.each(childNodes, function(child) {
       child.parentNode = element
     })
 

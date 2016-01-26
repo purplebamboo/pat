@@ -234,6 +234,7 @@ exports.token2expression = function(tokens) {
   return mergedExpression.join('+')
 }
 
+exports.TAG_RE = tagRE
 exports.INTERPOLATION_REGX = interpolationRegx
 exports.DIR_REGX = dirRegx
 exports.TextTemplateParserTypes = TextTemplateParserTypes

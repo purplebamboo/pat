@@ -3,6 +3,7 @@ var Compile = require('./compile.js')
 var Watcher = require('./watcher/index.js')
 var Directive = require('./directive/index.js')
 var Parser = require('./parser/index.js')
+var Dom = require('./parser/dom.js')
 var Data = require('./data/index.js')
 var Element = require('./elements/index.js')
 var Event = require('./event')
@@ -69,7 +70,7 @@ View.prototype._init = function() {
 
   if (this.__template) {
     this.$el.innerHTML = ''
-    el = this.__template
+    el = Dom.transfer(this.__template)
   }
 
   if (!this.skipinject) {
@@ -145,10 +146,13 @@ View.prototype.$destroy = function(destroyRoot) {
   })
   destroyRoot ? _.remove(this.$el) : (this.$el.innerHTML = '')
 
+  // if (this.$el.nodeType == -1) {
+  //   this.$el.remove()
+  // }
+
   this.$el = null
   this.$data = null
   this.$rootView = null
-  this.__node = null
   this.__template = null
   this.__watchers = null
   this.__userWatchers = null
@@ -208,6 +212,7 @@ View._isDigesting = false
 
 //暴露基本对象接口
 View.Parser = Parser
+View.Dom = Dom
 View.Directive = Directive
 View.Compile = Compile
 View.Watcher = Watcher

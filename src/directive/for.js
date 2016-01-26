@@ -26,7 +26,7 @@ module.exports = {
     //否则 任何时候都是需要更新的，哪怕两次的值一样，也是需要更新的，因为你要考虑子view的更新
     return true
   },
-  bind: function(args) {
+  initialize:function(){
     // for 语句比较特殊，不使用系统生成的expression
     var inMatch = this.describe.value.match(/(.*) in (.*)/)
     if (inMatch) {
@@ -45,18 +45,38 @@ module.exports = {
       _.error('required a alias in for directive')
     }
 
-    this.start = _.createAnchor('for-start')
-    this.end = _.createAnchor('for-end')
-    _.replace(this.el, this.end)
-    _.before(this.start, this.end)
-
-    this.__node = new Node(this.el)
-    //检测当前循环的是不是template,这个时候的处理需要比较复杂的运算
-    this.__isFrag = this.__node.isFrag
-
-
     this.oldViewMap = {}
     this.oldViewLists = []
+    this.__node = this.el.clone()
+  },
+  bind: function(value) {
+
+    // this.start = _.createAnchor('for-start')
+    // this.end = _.createAnchor('for-end')
+    // _.replace(this.el, this.end)
+    // _.before(this.start, this.end)
+
+    // this.__node = new Node(this.el)
+    // //检测当前循环的是不是template,这个时候的处理需要比较复杂的运算
+    // this.__isFrag = this.__node.isFrag
+
+    //初次渲染时需要判断
+    //如果是没数据，那么就加一个占位符，空在那边方便以后定位
+    //if (!value || value.length == 0) {
+     // this.el.remove(true)
+    //}
+
+    this.startNode = this.el
+    //第一次直接软删除，作为定位
+    this.startNode.remove(true)
+    //var name = this._generateKey()
+
+    // this.oldViewMap = {
+    //   name:
+    // }
+    // this.oldViewLists = []
+
+    this.update(value)
 
   },
   _generateKey: function() {
@@ -80,19 +100,21 @@ module.exports = {
         newViewMap[name] = oldViewMap[name]
         //发现可以复用，就直接更新view就行
         //当然要注意重新assign父级数据,如果上一级数据变化了，这里才能脏检测到改变
-        _.assign(oldViewMap[name].$data,self.view.$data)
-        //key需要重新赋值
+        //_.assign(oldViewMap[name].$data,self.view.$data)
+        //key需要重新赋值,会自动做出defineproperty的监听改变
         if(self.iterator) oldViewMap[name].$data[self.iterator] = key
 
-        oldViewMap[name].$digest()
+        //oldViewMap[name].$digest()
 
       } else {
         //否则需要新建新的view
         data = {}
-        data[self.alias] = item
+
         _.assign(data,self.view.$data)
 
         if(self.iterator) data[self.iterator] = key
+
+        data[self.alias] = item
 
         newNode = self.__node.clone()
         //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
@@ -101,9 +123,9 @@ module.exports = {
         item[curKey] = name
 
         newViewMap[name] = new self.view.constructor({
-          el: newNode.el,
-          node:newNode,
+          el: newNode,
           data: data,
+          skipinject:true,
           vid:name,
           rootView:self.view.$rootView
         })
@@ -164,7 +186,7 @@ module.exports = {
           type: UPDATE_TYPES.INSERT_MARKUP,
           fromIndex: null,
           toIndex: nextIndex,
-          markup: nextChild.__node //新增的节点，多一个此属性，表示新节点的dom内容
+          markup: nextChild.$el //新增的节点，多一个此属性，表示新节点的dom内容
         })
       }
 
@@ -199,24 +221,31 @@ module.exports = {
       if (update.type === UPDATE_TYPES.MOVE_EXISTING || update.type === UPDATE_TYPES.REMOVE_NODE) {
 
         updatedChild = this.oldViewMap[update.name]
-        initialChildren[update.name] = updatedChild.__node
+        initialChildren[update.name] = updatedChild.$el
         //所有需要修改的节点先删除,对于move的，后面再重新插入到正确的位置即可
         deleteChildren.push(updatedChild)
       }
     }
     //删除所有需要先删除的
     _.each(deleteChildren, function(child) {
-      //this.prev
-      self.view.$rootView.fire('beforeDeleteBlock',child.__node.allElements(),self)
+      //self.view.$rootView.fire('beforeDeleteBlock',child.__node.allElements(),self)
+      //删除
+      //第一个节点不能硬删除，还要留着定位呢,先软删除
+      if (child.$el == self.startNode) {
+        child.$el.remove(true)
+      }else{
+        child.$el.remove()
+      }
       child.$destroy()
-      self.view.$rootView.fire('afterDeleteBlock',[],self)
+      //self.view.$rootView.fire('afterDeleteBlock',[],self)
     })
 
     //保存一个复用的老的view队列
     var oldNodeLists = this._generateOldReuseLists()
-
+    this.end = oldNodeLists[oldNodeLists.length]
+debugger
     //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入
-    var insertFn = this.__isFrag ? this._insertFragAt : this._insertChildAt
+    var insertFn = this._insertChildAt
     for (var k = 0; k < updates.length; k++) {
       update = updates[k];
       switch (update.type) {
@@ -240,7 +269,7 @@ module.exports = {
     var lists = []
     _.each(oldViewLists,function(oldView){
       if (oldView && oldView._destroyed !== true) {
-        lists.push(oldView.__node)
+        lists.push(oldView.$el)
       }
     })
 
@@ -249,79 +278,47 @@ module.exports = {
   },
   //用于把一个node插入到指定位置，通过之前的占位节点去找
   _insertChildAt:function(newNode,toIndex,oldNodeLists){
-    var start = this.start
-    var end = this.end
+    var start = this.startNode
     var self = this
     var index = -1
     var el = start
     var nextNode = oldNodeLists.shift()
+    var end = this.end ? this.end : start
+    //newNode.
+    while(el){
+      el = el.next()
 
-    while(el && el !== end){
+      if (el == end) break
 
-      el = el.nextSibling
-
-      if (nextNode && el === nextNode.el) {
+      if (nextNode && el === nextNode) {
         index ++
         nextNode = oldNodeLists.shift()
       }
 
       if (toIndex == index) {
-        self.view.$rootView.fire('beforeAddBlock',[],self)
+        //self.view.$rootView.fire('beforeAddBlock',[],self)
         newNode.before(el)
-        self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-
+        //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
         break
       }
     }
     //没找到,那就直接放到最后了
     if (toIndex > index) {
-      self.view.$rootView.fire('beforeAddBlock',[],self)
-      newNode.before(end)
-      self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-    }
-  },
-  //用于把一个frag插入到指定位置，相对比较复杂一点
-  _insertFragAt:function(newNode,toIndex,oldNodeLists){
-    var start = this.start
-    var end = this.end
-    var self = this
-    var index = -1
-    var el = start
-    var nextNode = oldNodeLists.shift()
-    var inFragment = false
-
-    while(el && el !== end){
-
-      el = el.nextSibling
-
-      if (nextNode && el === nextNode.end) {
-        inFragment = false
-      }
-
-      if (inFragment) continue
-
-      if (nextNode && el === nextNode.start) {
-        index ++
-        nextNode = oldNodeLists.shift()
-      }
-
-      if (toIndex == index) {
-        self.view.$rootView.fire('beforeAddBlock',[],self)
-        newNode.before(el)
-        self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-        break
-      }
-    }
-    //没找到,那就直接放到最后了
-    if (toIndex > index) {
-      self.view.$rootView.fire('beforeAddBlock',[],self)
-      newNode.before(end)
-      self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+      //var endNode = this.startNode.parentNode.last()
+      //self.view.$rootView.fire('beforeAddBlock',[],self)
+      //this.startNode
+      newNode.after(end)
+      this.end = newNode
+      //end = newNode
+      //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
     }
   },
   update: function(newLists) {
     //策略，先删除以前的，再使用最新的，找出最小差异更新
     //参考reactjs的差异算法
+    //
+    //this.startNode.remove(true)
+
     this._generateNewChildren(newLists)
 
     this._diff()
@@ -330,6 +327,11 @@ module.exports = {
     this.oldViewMap = this.newViewMap
     this.oldViewLists = this.newViewLists
 
+    //如果后面有数据，那就硬删除掉startNode节点,把最新的第一个元素作为start节点
+    if (this.oldViewLists.length > 0) {
+      this.startNode.remove()
+      this.startNode = this.oldViewLists[0].$el
+    }
   },
   unbind: function() {
     _.each(this.oldViewMap,function(view){

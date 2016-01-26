@@ -5,7 +5,7 @@
 
 var _ = require('../util')
 var elements = require('../elements/index.js')
-
+var Dom = require('../parser/dom.js')
 
 module.exports = {
   block:true,
@@ -18,7 +18,8 @@ module.exports = {
       value = ''
     }
     //compile html 得到一个带有根node的节点,根node就是collection节点
-    var el = this.view.$rootView.compileHtml(value)
+    var el = Dom.transfer(value)
+    el.parentNode = this.el.parentNode
     //elements
     //var newCollection = elements.createElement('template',{},el.childNodes)
     //把当前节点替换成一个collection节点

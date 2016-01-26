@@ -10,9 +10,9 @@ var _ = require('../util')
 module.exports = {
   priority: 3000,
   bind:function(value) {
-    //对于一次性的节点，不需要做包裹
-    if (this.describe.oneTime) {
-      this.el.oneTime = true
+    //对于不是一次性的节点，需要做包裹，方便下次定位
+    if (!this.describe.oneTime) {
+      this.el.oneTime = false
     }
 
     this.update(value)
