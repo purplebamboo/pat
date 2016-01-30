@@ -128,20 +128,20 @@ function _compileTextNode(el, view) {
   oneTime = token.oneTime
 
   //对于普通的文本节点作为 一次性的不需要更新
-  if (token.type === parser.TextTemplateParserTypes.text) {
-    oneTime = true
+  if (token.type === parser.TextTemplateParserTypes.binding) {
+
+    _bindDir({
+      name:'',
+      value:token.value,
+      view: view,
+      expression: parseExpression(token.value),
+      oneTime:oneTime,
+      //html:token.html,
+      directive: token.html ? 'html' : 'text',
+      el: el
+    })
   }
 
-  _bindDir({
-    name:'',
-    value:token.value,
-    view: view,
-    expression: parseExpression(token.value),
-    oneTime:oneTime,
-    //html:token.html,
-    directive: token.html ? 'html' : 'text',
-    el: el
-  })
 }
 
 exports.parse = function(el,view) {

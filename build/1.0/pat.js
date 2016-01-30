@@ -56,13 +56,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var config = __webpack_require__(1)
 	var Compile = __webpack_require__(2)
-	var Watcher = __webpack_require__(20)
+	var Watcher = __webpack_require__(18)
 	var Directive = __webpack_require__(8)
 	var Parser = __webpack_require__(9)
-	var Dom = __webpack_require__(22)
-	var Data = __webpack_require__(23)
-	var Element = __webpack_require__(19)
-	var Event = __webpack_require__(24)
+	var Dom = __webpack_require__(26)
+	var Data = __webpack_require__(17)
+	var Element = __webpack_require__(25)
+	var Event = __webpack_require__(27)
 	var _ = __webpack_require__(3)
 
 	var VID = 0
@@ -92,6 +92,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //模板，可选
 	  this.__template = options.template
 	  this.skipinject = options.skipinject
+	  this.dependViews = []
 	  //所有指令观察对象
 	  this.__watchers = {}
 	  //用户自定义的观察对象
@@ -145,7 +146,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	//注入get set
 	View.prototype.$inject = function(){
-	  Data.inject(this.$data)
+	  var oriData = this.$data
+	  this.$data = Data.inject(this.$data)
+
+	  //增加对一级key的watcher,这样当用户改变了这个值以后，通知子view也去改变这个值。
+	  //达到联动的目的
+	  var self = this
+	  _.each(oriData,function(val,key){
+
+	    self.$watch(key,function(){
+	      _.each(self.dependViews,function(view){
+	        view.$data[key] = self.$data[key]
+	      })
+
+	    })
+	  })
+
 	}
 
 
@@ -300,7 +316,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var Directive = __webpack_require__(8)
-	var Watcher = __webpack_require__(20)
+	var Watcher = __webpack_require__(18)
 	var parser = __webpack_require__(9)
 	var parseDirective = parser.parseDirective
 	var parseText = parser.parseText
@@ -428,20 +444,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  oneTime = token.oneTime
 
 	  //对于普通的文本节点作为 一次性的不需要更新
-	  if (token.type === parser.TextTemplateParserTypes.text) {
-	    oneTime = true
+	  if (token.type === parser.TextTemplateParserTypes.binding) {
+
+	    _bindDir({
+	      name:'',
+	      value:token.value,
+	      view: view,
+	      expression: parseExpression(token.value),
+	      oneTime:oneTime,
+	      //html:token.html,
+	      directive: token.html ? 'html' : 'text',
+	      el: el
+	    })
 	  }
 
-	  _bindDir({
-	    name:'',
-	    value:token.value,
-	    view: view,
-	    expression: parseExpression(token.value),
-	    oneTime:oneTime,
-	    //html:token.html,
-	    directive: token.html ? 'html' : 'text',
-	    el: el
-	  })
 	}
 
 	exports.parse = function(el,view) {
@@ -663,6 +679,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.string2nodes = function(string){
 	  var wrap = document.createElement('div')
+	  //ie8下面不支持注释节点，所以需要做出特殊处理
+	  //todo...
 	  wrap.innerHTML = _.trim(string)
 	  return wrap.childNodes
 	}
@@ -846,6 +864,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return -1
 	}
 
+	exports.findAndRemove = function(array,value){
+	  var index = exports.indexOf(array,value)
+	  if (~index) {
+	    array.splice(index,1)
+	  }
+	}
+
+
 	exports.indexOfKey = function(arrayObject,key,value){
 	  if (arrayObject === null) return -1
 	  var i = 0, length = arrayObject.length
@@ -1008,8 +1034,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  'if':__webpack_require__(13),
 	  'unless':__webpack_require__(14),
 	  'for':__webpack_require__(15),
-	  'text':__webpack_require__(17),
-	  'html':__webpack_require__(18)
+	  'text':__webpack_require__(23),
+	  'html':__webpack_require__(24)
 	}
 	var noop = function(){}
 
@@ -1680,7 +1706,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var parser = __webpack_require__(9)
 	var parseExpression = parser.parseExpression
 	var Node = __webpack_require__(16)
-
+	var Data = __webpack_require__(17)
 
 	//差异更新的几种类型
 	var UPDATE_TYPES = {
@@ -1766,8 +1792,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var newViewLists = this.newViewLists = []
 	    var oldViewMap = this.oldViewMap
 	    var self = this
-	    var data,newNode,name
-	    var curKey = '__pat_key__'+self.uid
+	    var data,newNode,name,ori
+	    var curKey = '__pat_key__'
 	    //var isListsArray = _.isArray(newLists)
 
 	    _.each(newLists, function(item, key) {
@@ -1787,12 +1813,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	      } else {
 	        //否则需要新建新的view
 	        data = {}
-
-	        _.assign(data,self.view.$data)
+	        ori = self.view.$data.__ori__
+	        //需要把当前的数据复制过来
+	        for (var oriKey in ori) {
+	          if (ori.hasOwnProperty(oriKey)) {
+	            data[oriKey] = self.view.$data[oriKey]
+	          }
+	        }
 
 	        if(self.iterator) data[self.iterator] = key
 
 	        data[self.alias] = item
+
+	        //注入get set
+	        // for(var key in data){
+	        //   Data.defineProperty(data,key)
+	        // }
+
+	        data = Data.define(data)
+
 
 	        newNode = self.__node.clone()
 	        //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
@@ -1807,6 +1846,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          vid:name,
 	          rootView:self.view.$rootView
 	        })
+	        //增加依赖，这样父级值改变了也会自动改变子view的属性
+	        self.view.dependViews.push(newViewMap[name])
 	      }
 	      newViewLists.push(newViewMap[name])
 
@@ -1914,14 +1955,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }else{
 	        child.$el.remove()
 	      }
+	      _.findAndRemove(self.view.dependViews,child)
 	      child.$destroy()
 	      //self.view.$rootView.fire('afterDeleteBlock',[],self)
 	    })
 
 	    //保存一个复用的老的view队列
-	    var oldNodeLists = this._generateOldReuseLists()
-	    this.end = oldNodeLists[oldNodeLists.length]
-	debugger
+	    var oldNodeLists = this._generateOldLists()
+	    //this.end = oldNodeLists[oldNodeLists.length - 1] || this.startNode
+
 	    //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入
 	    var insertFn = this._insertChildAt
 	    for (var k = 0; k < updates.length; k++) {
@@ -1940,56 +1982,92 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	  },
-	  _generateOldReuseLists:function(){
+	  _generateOldLists:function(){
+
+	    //if () {};
 
 	    var oldViewLists = this.oldViewLists
-	    var oldViewMap = this.oldViewMap
+	    //var oldViewMap = this.oldViewMap
 	    var lists = []
+
+	    if (this.startNode.deleted) {
+	      lists.push(this.startNode)
+	    }
+
 	    _.each(oldViewLists,function(oldView){
 	      if (oldView && oldView._destroyed !== true) {
 	        lists.push(oldView.$el)
 	      }
 	    })
 
+	    // var start = this.startNode
+	    // var end = this.end
+
+	    // lists.push(start)
+
+	    // while(start && start !== end){
+	    //   start = start.next()
+	    //   lists.push(start)
+	    // }
+
 	    return lists
 
 	  },
 	  //用于把一个node插入到指定位置，通过之前的占位节点去找
 	  _insertChildAt:function(newNode,toIndex,oldNodeLists){
-	    var start = this.startNode
 	    var self = this
-	    var index = -1
-	    var el = start
-	    var nextNode = oldNodeLists.shift()
-	    var end = this.end ? this.end : start
-	    //newNode.
-	    while(el){
-	      el = el.next()
 
-	      if (el == end) break
+	    //var oldNodeLists = self._generateOldLists()
 
-	      if (nextNode && el === nextNode) {
-	        index ++
-	        nextNode = oldNodeLists.shift()
-	      }
-
-	      if (toIndex == index) {
-	        //self.view.$rootView.fire('beforeAddBlock',[],self)
-	        newNode.before(el)
-	        //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-	        break
-	      }
+	    var start = this.startNode
+	    var end = oldNodeLists[oldNodeLists.length - 1]
+	    //如果第一个是删除的节点，证明是定位，需要改变toIndex
+	    if (start.deleted) {
+	      toIndex = toIndex + 1
 	    }
-	    //没找到,那就直接放到最后了
-	    if (toIndex > index) {
-	      //var endNode = this.startNode.parentNode.last()
-	      //self.view.$rootView.fire('beforeAddBlock',[],self)
-	      //this.startNode
+
+	    //var index = 0
+	    //var nextNode = oldNodeLists[index + 1]
+	    nextNode = oldNodeLists[toIndex]
+	    if (nextNode) {
+	      newNode.before(nextNode)
+	      oldNodeLists.splice(toIndex,0,newNode)
+	    }else{
 	      newNode.after(end)
-	      this.end = newNode
-	      //end = newNode
-	      //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+	      oldNodeLists.push(newNode)
+	      //this.end = newNode
 	    }
+
+	    // var hasFound = false
+
+	    // while(start){
+
+	    //   if (start == end) break
+
+	    //   if (nextNode && start === nextNode) {
+	    //     index ++
+	    //     nextNode = oldNodeLists[index]
+	    //   }
+
+	    //   if (toIndex == index) {
+	    //     //self.view.$rootView.fire('beforeAddBlock',[],self)
+	    //     newNode.before(start)
+	    //     hasFound = true
+	    //     //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+	    //     break
+	    //   }
+	    //   start = start.next()
+	    // }
+	    // //没找到,那就直接放到最后了
+	    // if (!hasFound) {
+	    //   //var endNode = this.startNode.parentNode.last()
+	    //   //self.view.$rootView.fire('beforeAddBlock',[],self)
+	    //   //this.startNode
+	    //   newNode.after(end)
+	    //   this.end = newNode
+	    //   //end = newNode
+	    //   //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+	    // }
 	  },
 	  update: function(newLists) {
 	    //策略，先删除以前的，再使用最新的，找出最小差异更新
@@ -2006,7 +2084,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.oldViewLists = this.newViewLists
 
 	    //如果后面有数据，那就硬删除掉startNode节点,把最新的第一个元素作为start节点
-	    if (this.oldViewLists.length > 0) {
+	    if (this.oldViewLists.length > 0 && this.startNode.deleted) {
 	      this.startNode.remove()
 	      this.startNode = this.oldViewLists[0].$el
 	    }
@@ -2182,6 +2260,592 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var Watcher = __webpack_require__(18)
+	var _ = __webpack_require__(3)
+	var Observer = __webpack_require__(20)
+
+	__webpack_require__(21)
+
+
+
+	var defineGetProxy = function(obs,_key) {
+	  var ob = obs[_key]
+
+	  return function() {
+
+	    ob.addWatcher()
+
+	    if (_.isArray(ob.val) && !ob.val.__ob__) {
+	      ob.val.__ob__ = ob
+	    }
+
+	    return ob.val
+
+	  }
+	}
+
+	var defineSetProxy = function(obs,_key){
+
+	  var ob = obs[_key]
+
+	  return function(newVal) {
+	    if (newVal === ob.val) {
+	      return
+	    }
+
+	    //有些已经失效的watcher先去掉
+	    ob.unique()
+	    //watchers = removeDeleted(watchers)
+
+	    //如果是对象需要特殊处理
+	    if (_.isObject(newVal)) {
+	      ob.val = exports.inject(newVal)
+	      //依赖的watcher需要重新get一遍值
+	      //还要考虑scope有没有改变
+	      ob.depend()
+	    }else{
+	      ob.val = newVal
+	    }
+
+	    ob.notify()
+
+	  }
+	}
+
+	var define = null
+
+	if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
+	  var VB_ID = 0;
+
+	  window.execScript([
+	    'Function parseVB(code)',
+	    '\tExecuteGlobal(code)',
+	    'End Function'
+	  ].join('\r\n'), 'VBScript');
+
+	  define = function(obj) {
+	    var buffer = [],
+	      className,
+	      command = [],
+	      //key,
+	      //value_through = [],
+	      cb_poll = {},
+	      //prevent_double_call = {},
+	      re;
+	    var props = {}
+	    var obs = {}
+
+
+	    function defineSet(key, callback) {
+	      cb_poll[key + '_set'] = callback;
+	      buffer.push(
+	        '\tPublic Property Let [' + key + '](value)',
+	        '\t\tCall [_pro](me, "set", "' + key + '", value)',
+	        '\tEnd Property',
+	        '\tPublic Property Set [' + key + '](value)',
+	        '\t\tCall [_pro](me, "set", "' + key + '", value)',
+	        '\tEnd Property'
+	      );
+	    }
+
+	    function defineGet(key, callback) {
+	      cb_poll[key + '_get'] = callback;
+	      buffer.push(
+	        '\tPublic Property Get [' + key + ']',
+	        '\tOn Error Resume Next', //必须优先使用set语句,否则它会误将数组当字符串返回
+	        '\t\tSet [' + key + '] = [_pro](me, "get", "' + key + '")',
+	        '\tIf Err.Number <> 0 Then',
+	        '\t\t[' + key + '] = [_pro](me, "get", "' + key + '")',
+	        '\tEnd If',
+	        '\tOn Error Goto 0',
+	        '\tEnd Property'
+	      );
+	    }
+
+	    function proxy(me, type, key, value) {
+	      if (type == 'get') {
+	        return cb_poll[key + '_get'].apply(re, [value]);
+	      } else {
+	        cb_poll[key + '_set'].apply(re, [value]);
+	      }
+	    }
+
+	    for (var key in obj) {
+	      if (obj.hasOwnProperty && !obj.hasOwnProperty(key)) continue
+	      obs[key] = new Observer()
+	      obs[key].val = obj[key]
+
+	      props[key] = {
+	        enumerable: true,
+	        configurable: true,
+	        get: defineGetProxy(obs, key),
+	        set: defineSetProxy(obs, key),
+	      }
+	    }
+
+	    for (var key in props) {
+	      if (!props.hasOwnProperty(key)) continue
+	      if (props[key]['set'] || props[key]['get']) {
+	        if (props[key]['set']) {
+	          defineSet(key, props[key]['set']);
+	        }
+	        if (props[key]['get']) {
+	          defineGet(key, props[key]['get']);
+	        }
+	      }
+
+	    }
+
+	    buffer.push("\tPublic [" + '__pat_key__' + "]")
+	    buffer.push("\tPublic [" + '__ori__' + "]")
+	    buffer.push("\tPublic [" + '__inject__' + "]")
+
+	    buffer.unshift(
+	      '\r\n\tPrivate [_acc], [_pro]',
+	      '\tPublic Default Function [self](proxy)',
+	      '\t\tSet [_pro] = proxy',
+	      '\t\tSet [self] = me',
+	      '\tEnd Function'
+	    );
+
+	    buffer.push('End Class');
+
+	    buffer = buffer.join('\r\n');
+
+	    className = 'VB' + (VB_ID++);
+
+	    command.push('Class ' + className + buffer);
+	    command.push([
+	      'Function ' + className + 'F(proxy)',
+	      '\tSet ' + className + 'F = (New ' + className + ')(proxy)',
+	      'End Function'
+	    ].join('\r\n'));
+
+	    command = command.join('\r\n');
+
+	    window['parseVB'](command);
+	    re = window[className + 'F'](proxy);
+
+	    re.__ori__ = obj
+	    re.__inject__ = true
+
+
+	    return re;
+
+	  }
+	} else {
+	  define = function(obj) {
+	    //var re
+	    var props = {}
+	    var obs = {}
+	    var newObj = {}
+
+	    for (var key in obj) {
+
+	      if (!obj.hasOwnProperty(key)) continue
+	      obs[key] = new Observer()
+	      newObj[key] = obj[key]
+	      obs[key].val = newObj[key]
+
+	      props[key] = {
+	        enumerable:true,
+	        configurable:true,
+	        get:defineGetProxy(obs,key),
+	        set:defineSetProxy(obs,key),
+	      }
+	    }
+
+	    Object.defineProperties(newObj, props)
+
+	    newObj.__ori__ = obj
+	    newObj.__inject__ = true
+
+	    return newObj
+	  }
+
+	}
+
+	exports.define = define
+
+	// exports.defineProperty = function(obj,key){
+
+	//   //var watchers = [] //保存 针对当前这个key依赖的watchers
+
+	//   var ob = new Observer()
+	//   var val = obj[key]
+
+	//   Object.defineProperty(obj, key, {
+	//     enumerable: true,
+	//     configurable: true,
+	//     get: function() {
+	//       //找到正在交互的watch
+	//       //var kkk = key
+	//       // var currentTarget = Watcher.currentTarget
+	//       // if (currentTarget && _.indexOf(watchers,currentTarget) == -1) {
+	//       //   watchers.unshift(currentTarget)
+	//       // }
+	//       ob.addWatcher()
+
+	//       if (_.isArray(val) && !val.__ob__) {
+	//         val.__ob__ = ob
+	//       }
+
+	//       return val
+	//     },
+	//     set: function(newVal) {
+	//       if (newVal === val) {
+	//         return
+	//       }
+
+	//       //有些已经失效的watcher先去掉
+	//       ob.unique()
+	//       //watchers = removeDeleted(watchers)
+
+	//       val = newVal
+
+	//       //如果是对象需要特殊处理
+	//       if (_.isObject(newVal)) {
+	//         exports.inject(newVal)
+	//         //依赖的watcher需要重新get一遍值
+	//         //还要考虑scope有没有改变
+	//         ob.depend()
+	//         // _.each(watchers,function(watcher){
+	//         //   watcher.hasFirstGetValued = false
+	//         //   watcher.getValue()
+	//         // })
+	//       }
+
+	//       ob.notify()
+	//       // _.each(watchers,function(watcher){
+	//       //   watcher.check()
+	//       // })
+	//     }
+	//   })
+	// }
+
+	exports.inject = function(data) {
+	  var newData = null
+
+	  if (data.__inject__) return data
+
+	  if (_.isArray(data)) {
+
+	    newData = []
+	    newData.__inject__ = true
+	    _.each(data,function(value){
+	      newData.push(exports.inject(value))
+	    })
+	  }
+
+	  if (_.isPlainObject(data)) {
+	    //newData = {}
+	    //_.assign(newData,data)
+	    newData = exports.define(data)
+	    //检测对象的值，需要再递归的去inject
+	    _.each(data,function(value,key){
+	      if (_.isObject(value)) {
+	        newData[key] = exports.inject(value)
+	      }
+	    })
+
+	  }
+	  return newData
+	}
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(3)
+	var watchersQueue = __webpack_require__(19)
+
+	//观察者
+	function Watcher(view, expression, callback) {
+	  this.__directives = []
+	  this.__view = view
+	  this.expression = expression
+	  this.callbacks = callback ? [callback] : []
+	  this.scope = view.$data
+	  this.last = null
+	  this.current = null
+	  //是否已经取过第一次值了，意味着不再需要检测针对defineproperty依赖了
+	  this.hasFirstGetValued = false
+
+	}
+
+	Watcher.currentTarget = null
+
+	Watcher.prototype.removeDirective = function(dir) {
+	  var dirs = this.__directives
+	  var index = _.indexOf(dirs,dir)
+
+	  if (index != -1) {
+	    dirs.splice(index,1)
+	  }
+
+	}
+
+
+	Watcher.prototype.applyFilter = function(value, filterName) {
+
+	  if (!filterName) return value
+
+	  //从rootview拿filter
+	  var filter = this.__view.$rootView.__filters[filterName]
+	  if (filter) {
+	    return filter.call(this.__view.$rootView, value, this.scope)
+	  }
+	  return value
+	}
+
+	Watcher.prototype.getValue = function() {
+	  if (!this.expression) return ''
+	    //取值很容易出错，需要给出错误提示
+	  var value
+
+	  try {
+
+	    if (!this.hasFirstGetValued) Watcher.currentTarget = this
+	    value = new Function('_scope', '_that', 'return ' + this.expression)(this.scope, this)
+	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
+	  } catch (e) {
+
+	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
+	    if (true) _.log('error when watcher get the value,please check your expression: "' + this.expression + '"', e)
+	  }
+
+	  this.hasFirstGetValued = true
+	  return value
+	}
+
+	//使用队列更新
+	// Watcher.prototype.batchCheck = function() {
+	//   //每个rootview有自己的执行队列
+	//   var batchQueue = this.__view.$rootView.batchQueue
+	//   if (!batchQueue) batchQueue = this.__view.$rootView.batchQueue = new watchersQueue()
+
+	//   batchQueue.push(this)
+
+	// }
+
+
+	Watcher.prototype.check = function() {
+	  var self = this
+
+	  this.current = this.getValue()
+
+	  this._check(this.last, this.current)
+
+	  if (this.last != this.current) {
+	    _.each(this.callbacks, function(callback) {
+	      callback(self.last, self.current)
+	    })
+	  }
+
+	  this.last = this.current
+	}
+
+
+	Watcher.prototype._check = function(last, current) {
+	  var self = this
+
+	  _.each(this.__directives, function(dir) {
+	    //directive自己判断要不要更新
+	    if (dir.shoudUpdate(last, current)) {
+	      //调用父级view的hook
+	      self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
+	      dir.update && dir.update(current)
+	      self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
+	    }
+	  })
+
+	}
+
+	Watcher.prototype.destroy = function() {
+	  //通知所有的directive销毁
+	  this.isDestroyed = true
+	  _.each(this.__directives, function(dir) {
+	    dir.destroy && dir.destroy()
+	  })
+
+	}
+
+
+
+	module.exports = Watcher
+
+/***/ },
+/* 19 */
+/***/ function(module, exports) {
+
+	//处理批量的问题
+	//存在一个队列，当第一个变动时，会在10后启动update
+	//会去重
+	//可以手动forceUpdate
+
+
+
+
+	exports.queue = function(watcher) {
+
+
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+/***/ },
+/* 20 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(3)
+	var Watcher = __webpack_require__(18)
+
+	var Class = _.Class
+
+
+
+	var Observer = Class.extend({
+	  init:function() {
+
+	    this.watchers = []
+	  },
+	  addWatcher:function(watcher){
+	    var currentTarget = Watcher.currentTarget
+	    var watchers = this.watchers
+
+	    if (currentTarget && _.indexOf(watchers,currentTarget) == -1) {
+	      watchers.unshift(currentTarget)
+	    }
+
+	  },
+	  unique:function(){
+	    var watchers = this.watchers
+	    var newWatchers = []
+
+	    _.each(watchers,function(watcher){
+	      if (!watcher.isDestroyed) {
+	        newWatchers.push(watcher)
+	      }
+	    })
+	    this.watchers = newWatchers
+	  },
+	  depend:function(){
+	    var watchers = this.watchers
+	    _.each(watchers,function(watcher){
+	      watcher.hasFirstGetValued = false
+	      watcher.getValue()
+	    })
+	  },
+	  notify:function(){
+
+	    _.each(this.watchers,function(watcher){
+	      watcher.check()
+	    })
+
+	  }
+
+	})
+
+	module.exports = Observer
+
+/***/ },
+/* 21 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var _ = __webpack_require__(3)
+	var Data = __webpack_require__(17)
+
+	var arrayMethods = [
+	  'push',
+	  'pop',
+	  'shift',
+	  'unshift',
+	  'splice',
+	  'sort',
+	  'reverse'
+	]
+
+
+	var arrayPrototype = Array.prototype
+
+	_.each(arrayMethods,function(key) {
+
+	  var originMethod = arrayPrototype[key]
+
+	  arrayPrototype[key] = function(){
+	    var i = arguments.length
+	    var args = new Array(i)
+	    while (i--) {
+	      args[i] = arguments[i]
+	    }
+
+	    var result
+
+	    //对于有观察的数组，需要特殊处理
+	    if (this.__ob__) {
+
+	      if (key == 'push' || key == 'unshift') {
+	        args = Data.inject(args)
+	      }
+
+	      if (key == 'splice') {
+	        args = args.slice(0,2).concat(Data.inject(args.slice(2)))
+	      }
+
+	      result = originMethod.apply(this, args)
+
+	      this.__ob__.notify()
+
+	    }else{
+
+	      result = originMethod.apply(this, args)
+
+	    }
+
+	    return result
+	  }
+
+	})
+
+
+	//增加两个方法
+	arrayPrototype.$set = function(index, val) {
+	  if (index >= this.length) {
+	    this.length = index + 1
+	  }
+	  return this.splice(index, 1, val)[0]
+	}
+
+	arrayPrototype.$remove = function(item) {
+	  if (!this.length) return
+	  var index = _.indexOf(this, item)
+	  if (index > -1) {
+	    return this.splice(index, 1)
+	  }
+	}
+
+
+
+
+
+
+
+
+/***/ },
+/* 22 */,
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/**
 	 * 这是非常特殊的一个directive，用来处理文本节点的插值
 	 */
@@ -2213,7 +2877,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 18 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2222,8 +2886,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	var _ = __webpack_require__(3)
-	var elements = __webpack_require__(19)
-	var Dom = __webpack_require__(22)
+	var elements = __webpack_require__(25)
+	var Dom = __webpack_require__(26)
 
 	module.exports = {
 	  block:true,
@@ -2250,7 +2914,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 19 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
@@ -2778,157 +3442,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _ = __webpack_require__(3)
-	var watchersQueue = __webpack_require__(21)
-
-	//观察者
-	function Watcher(view, expression, callback) {
-	  this.__directives = []
-	  this.__view = view
-	  this.expression = expression
-	  this.callbacks = callback ? [callback] : []
-	  this.scope = view.$data
-	  this.last = null
-	  this.current = null
-	  //是否已经取过第一次值了，意味着不再需要检测针对defineproperty依赖了
-	  this.hasFirstGetValued = false
-
-	}
-
-	Watcher.currentTarget = null
-
-	Watcher.prototype.removeDirective = function(dir) {
-	  var dirs = this.__directives
-	  var index = _.indexOf(dirs,dir)
-
-	  if (index != -1) {
-	    dirs.splice(index,1)
-	  }
-
-	}
-
-
-	Watcher.prototype.applyFilter = function(value, filterName) {
-
-	  if (!filterName) return value
-
-	  //从rootview拿filter
-	  var filter = this.__view.$rootView.__filters[filterName]
-	  if (filter) {
-	    return filter.call(this.__view.$rootView, value, this.scope)
-	  }
-	  return value
-	}
-
-	Watcher.prototype.getValue = function() {
-	  if (!this.expression) return ''
-	    //取值很容易出错，需要给出错误提示
-	  var value
-
-	  try {
-
-	    if (!this.hasFirstGetValued) Watcher.currentTarget = this
-	    value = new Function('_scope', '_that', 'return ' + this.expression)(this.scope, this)
-	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
-	  } catch (e) {
-
-	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
-	    if (true) _.log('error when watcher get the value,please check your expression: "' + this.expression + '"', e)
-	  }
-
-	  this.hasFirstGetValued = true
-	  return value
-	}
-
-	//使用队列更新
-	// Watcher.prototype.batchCheck = function() {
-	//   //每个rootview有自己的执行队列
-	//   var batchQueue = this.__view.$rootView.batchQueue
-	//   if (!batchQueue) batchQueue = this.__view.$rootView.batchQueue = new watchersQueue()
-
-	//   batchQueue.push(this)
-
-	// }
-
-
-	Watcher.prototype.check = function() {
-	  var self = this
-
-	  this.current = this.getValue()
-
-	  this._check(this.last, this.current)
-
-	  if (this.last != this.current) {
-	    _.each(this.callbacks, function(callback) {
-	      callback(self.last, self.current)
-	    })
-	  }
-
-	  this.last = this.current
-	}
-
-
-	Watcher.prototype._check = function(last, current) {
-	  var self = this
-
-	  _.each(this.__directives, function(dir) {
-	    //directive自己判断要不要更新
-	    if (dir.shoudUpdate(last, current)) {
-	      //调用父级view的hook
-	      self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
-	      dir.update && dir.update(current)
-	      self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
-	    }
-	  })
-
-	}
-
-	Watcher.prototype.destroy = function() {
-	  //通知所有的directive销毁
-	  this.isDestroyed = true
-	  _.each(this.__directives, function(dir) {
-	    dir.destroy && dir.destroy()
-	  })
-
-	}
-
-
-
-	module.exports = Watcher
-
-/***/ },
-/* 21 */
-/***/ function(module, exports) {
-
-	//处理批量的问题
-	//存在一个队列，当第一个变动时，会在10后启动update
-	//会去重
-	//可以手动forceUpdate
-
-
-
-
-	exports.queue = function(watcher) {
-
-
-
-	}
-
-
-
-
-
-
-
-
-
-
-
-/***/ },
-/* 22 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -2939,7 +3453,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
-	var Element = __webpack_require__(19)
+	var Element = __webpack_require__(25)
 
 	var createElement = Element.createElement
 	var createTextNode = Element.createTextNode
@@ -3163,80 +3677,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 23 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Watcher = __webpack_require__(20)
-	var _ = __webpack_require__(3)
-
-
-	var removeDeleted = function(watchers){
-
-	  var newWatchers = []
-
-	  _.each(watchers,function(watcher){
-	    if (!watcher.isDestroyed) {
-	      newWatchers.push(watcher)
-	    }
-	  })
-
-	  return newWatchers
-
-	}
-
-
-	exports.defineProperty = function(obj,key){
-
-	  var watchers = [] //保存 针对当前这个key依赖的watchers
-	  var val = obj[key]
-
-	  Object.defineProperty(obj, key, {
-	    enumerable: true,
-	    configurable: true,
-	    get: function() {
-	      //找到正在交互的watch
-	      //var kkk = key
-	      var currentTarget = Watcher.currentTarget
-	      if (currentTarget) {
-	        watchers.unshift(currentTarget)
-	      }
-	      return val
-	    },
-	    set: function(newVal) {
-	      if (newVal === val) {
-	        return
-	      }
-
-	      val = newVal
-	      //有些已经失效的watcher先去掉
-	      watchers = removeDeleted(watchers)
-	      _.each(watchers,function(watcher){
-	        watcher.check()
-	      })
-	    }
-	  })
-	}
-
-	exports.inject = function(data) {
-
-	  if (_.isArray(data)) {
-	    _.each(data,function(value){
-	      exports.inject(value)
-	    })
-	  }
-
-	  if (_.isPlainObject(data)) {
-	    _.each(data,function(value,key){
-
-	      exports.defineProperty(data,key)
-
-	      exports.inject(value)
-	    })
-	  }
-	}
-
-/***/ },
-/* 24 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)

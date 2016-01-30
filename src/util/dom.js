@@ -162,6 +162,8 @@ exports.string2node = function(string){
 
 exports.string2nodes = function(string){
   var wrap = document.createElement('div')
+  //ie8下面不支持注释节点，所以需要做出特殊处理
+  //todo...
   wrap.innerHTML = _.trim(string)
   return wrap.childNodes
 }

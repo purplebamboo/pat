@@ -9,10 +9,7 @@
 </head>
 <body>
 
-
-
 <div id="test">
-
 
 
 </div>
@@ -21,13 +18,19 @@
 <script type="javascript/template" id="J_tmpl">
 <div class="container4 line">
   {{text}}111
-  <span t-for="item in lists" id="{{item.name}}">
-    {{item.text}}
-  </span>
+  <div t-for="item in lists" id="{{item.name}}">
+    {{item.text}}---{{text}}
+  </div>
 
   <template t-if="key == 11">
     <div id="{{key}}">{{{word2}}}</div>
   </template>
+</div>
+</script>
+
+<script type="javascript/template" id="J_tmpl2">
+<div class="container4 line">
+  {{text}}
 </div>
 </script>
 
@@ -57,9 +60,6 @@ Pat.config({
 //     't-if':'key == 11'
 //   },[Pat.createTextNode('{{word}}'),Pat.createTextNode('我是if2222')])
 // ])
-
-
-
 
 var p2 = new Pat({
   el:'test',

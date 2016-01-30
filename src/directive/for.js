@@ -2,7 +2,7 @@ var _ = require('../util')
 var parser = require('../parser')
 var parseExpression = parser.parseExpression
 var Node = require('../node.js')
-
+var Data = require('../data/index.js')
 
 //差异更新的几种类型
 var UPDATE_TYPES = {
@@ -88,8 +88,8 @@ module.exports = {
     var newViewLists = this.newViewLists = []
     var oldViewMap = this.oldViewMap
     var self = this
-    var data,newNode,name
-    var curKey = '__pat_key__'+self.uid
+    var data,newNode,name,ori
+    var curKey = '__pat_key__'
     //var isListsArray = _.isArray(newLists)
 
     _.each(newLists, function(item, key) {
@@ -109,12 +109,25 @@ module.exports = {
       } else {
         //否则需要新建新的view
         data = {}
-
-        _.assign(data,self.view.$data)
+        ori = self.view.$data.__ori__
+        //需要把当前的数据复制过来
+        for (var oriKey in ori) {
+          if (ori.hasOwnProperty(oriKey)) {
+            data[oriKey] = self.view.$data[oriKey]
+          }
+        }
 
         if(self.iterator) data[self.iterator] = key
 
         data[self.alias] = item
+
+        //注入get set
+        // for(var key in data){
+        //   Data.defineProperty(data,key)
+        // }
+
+        data = Data.define(data)
+
 
         newNode = self.__node.clone()
         //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
@@ -129,6 +142,8 @@ module.exports = {
           vid:name,
           rootView:self.view.$rootView
         })
+        //增加依赖，这样父级值改变了也会自动改变子view的属性
+        self.view.dependViews.push(newViewMap[name])
       }
       newViewLists.push(newViewMap[name])
 
@@ -236,14 +251,15 @@ module.exports = {
       }else{
         child.$el.remove()
       }
+      _.findAndRemove(self.view.dependViews,child)
       child.$destroy()
       //self.view.$rootView.fire('afterDeleteBlock',[],self)
     })
 
     //保存一个复用的老的view队列
-    var oldNodeLists = this._generateOldReuseLists()
-    this.end = oldNodeLists[oldNodeLists.length]
-debugger
+    var oldNodeLists = this._generateOldLists()
+    //this.end = oldNodeLists[oldNodeLists.length - 1] || this.startNode
+
     //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入
     var insertFn = this._insertChildAt
     for (var k = 0; k < updates.length; k++) {
@@ -262,56 +278,92 @@ debugger
     }
 
   },
-  _generateOldReuseLists:function(){
+  _generateOldLists:function(){
+
+    //if () {};
 
     var oldViewLists = this.oldViewLists
-    var oldViewMap = this.oldViewMap
+    //var oldViewMap = this.oldViewMap
     var lists = []
+
+    if (this.startNode.deleted) {
+      lists.push(this.startNode)
+    }
+
     _.each(oldViewLists,function(oldView){
       if (oldView && oldView._destroyed !== true) {
         lists.push(oldView.$el)
       }
     })
 
+    // var start = this.startNode
+    // var end = this.end
+
+    // lists.push(start)
+
+    // while(start && start !== end){
+    //   start = start.next()
+    //   lists.push(start)
+    // }
+
     return lists
 
   },
   //用于把一个node插入到指定位置，通过之前的占位节点去找
   _insertChildAt:function(newNode,toIndex,oldNodeLists){
-    var start = this.startNode
     var self = this
-    var index = -1
-    var el = start
-    var nextNode = oldNodeLists.shift()
-    var end = this.end ? this.end : start
-    //newNode.
-    while(el){
-      el = el.next()
 
-      if (el == end) break
+    //var oldNodeLists = self._generateOldLists()
 
-      if (nextNode && el === nextNode) {
-        index ++
-        nextNode = oldNodeLists.shift()
-      }
-
-      if (toIndex == index) {
-        //self.view.$rootView.fire('beforeAddBlock',[],self)
-        newNode.before(el)
-        //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-        break
-      }
+    var start = this.startNode
+    var end = oldNodeLists[oldNodeLists.length - 1]
+    //如果第一个是删除的节点，证明是定位，需要改变toIndex
+    if (start.deleted) {
+      toIndex = toIndex + 1
     }
-    //没找到,那就直接放到最后了
-    if (toIndex > index) {
-      //var endNode = this.startNode.parentNode.last()
-      //self.view.$rootView.fire('beforeAddBlock',[],self)
-      //this.startNode
+
+    //var index = 0
+    //var nextNode = oldNodeLists[index + 1]
+    nextNode = oldNodeLists[toIndex]
+    if (nextNode) {
+      newNode.before(nextNode)
+      oldNodeLists.splice(toIndex,0,newNode)
+    }else{
       newNode.after(end)
-      this.end = newNode
-      //end = newNode
-      //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+      oldNodeLists.push(newNode)
+      //this.end = newNode
     }
+
+    // var hasFound = false
+
+    // while(start){
+
+    //   if (start == end) break
+
+    //   if (nextNode && start === nextNode) {
+    //     index ++
+    //     nextNode = oldNodeLists[index]
+    //   }
+
+    //   if (toIndex == index) {
+    //     //self.view.$rootView.fire('beforeAddBlock',[],self)
+    //     newNode.before(start)
+    //     hasFound = true
+    //     //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+    //     break
+    //   }
+    //   start = start.next()
+    // }
+    // //没找到,那就直接放到最后了
+    // if (!hasFound) {
+    //   //var endNode = this.startNode.parentNode.last()
+    //   //self.view.$rootView.fire('beforeAddBlock',[],self)
+    //   //this.startNode
+    //   newNode.after(end)
+    //   this.end = newNode
+    //   //end = newNode
+    //   //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
+    // }
   },
   update: function(newLists) {
     //策略，先删除以前的，再使用最新的，找出最小差异更新
@@ -328,7 +380,7 @@ debugger
     this.oldViewLists = this.newViewLists
 
     //如果后面有数据，那就硬删除掉startNode节点,把最新的第一个元素作为start节点
-    if (this.oldViewLists.length > 0) {
+    if (this.oldViewLists.length > 0 && this.startNode.deleted) {
       this.startNode.remove()
       this.startNode = this.oldViewLists[0].$el
     }

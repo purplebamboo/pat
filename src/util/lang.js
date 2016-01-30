@@ -144,6 +144,14 @@ exports.indexOf = function(array,key){
   return -1
 }
 
+exports.findAndRemove = function(array,value){
+  var index = exports.indexOf(array,value)
+  if (~index) {
+    array.splice(index,1)
+  }
+}
+
+
 exports.indexOfKey = function(arrayObject,key,value){
   if (arrayObject === null) return -1
   var i = 0, length = arrayObject.length

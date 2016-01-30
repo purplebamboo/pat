@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>测试页面</title>
+  <script src="../src/data/define.js"></script>
+  <link rel="stylesheet" type="text/css" href="./css/example.css">
+
+</head>
+<body>
+
+<div id="test">
+
+
+
+</div>
+
+<script type="text/javascript">
+//debug会包括更多的信息，但是只有daily版本有效果
+// Pat.config({
+//   debug:false
+// })
+
+var a = {
+  a:'1111',
+  b:'2222'
+}
+
+t = defineProperties(a,{
+  b:{
+    //value:'1111',
+    enumerable:true,
+    configurable: true,
+    get:function(argument) {
+      console.log('arguments======')
+      console.log(key)
+      // body...
+      //return a['a']
+    },
+    set:function(){
+      console.log('------')
+    }
+  }
+})
+
+
+
+</script>
+</body>
+</html>

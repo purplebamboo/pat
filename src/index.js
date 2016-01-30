@@ -36,6 +36,7 @@ var View = function (options) {
   //模板，可选
   this.__template = options.template
   this.skipinject = options.skipinject
+  this.dependViews = []
   //所有指令观察对象
   this.__watchers = {}
   //用户自定义的观察对象
@@ -89,7 +90,22 @@ View.prototype._init = function() {
 
 //注入get set
 View.prototype.$inject = function(){
-  Data.inject(this.$data)
+  var oriData = this.$data
+  this.$data = Data.inject(this.$data)
+
+  //增加对一级key的watcher,这样当用户改变了这个值以后，通知子view也去改变这个值。
+  //达到联动的目的
+  var self = this
+  _.each(oriData,function(val,key){
+
+    self.$watch(key,function(){
+      _.each(self.dependViews,function(view){
+        view.$data[key] = self.$data[key]
+      })
+
+    })
+  })
+
 }
 
 
