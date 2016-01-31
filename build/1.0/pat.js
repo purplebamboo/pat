@@ -59,10 +59,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Watcher = __webpack_require__(18)
 	var Directive = __webpack_require__(8)
 	var Parser = __webpack_require__(9)
-	var Dom = __webpack_require__(26)
+	var Dom = __webpack_require__(25)
 	var Data = __webpack_require__(17)
-	var Element = __webpack_require__(25)
-	var Event = __webpack_require__(27)
+	var Element = __webpack_require__(24)
+	var Event = __webpack_require__(26)
 	var _ = __webpack_require__(3)
 
 	var VID = 0
@@ -268,6 +268,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }else{
 	    watcher = new Watcher(this, Parser.parseExpression(expression),callback)
 	    watcher.last = watcher.getValue()
+	    watcher.isUserWatcher = true
 	    this.__userWatchers[expression] = watcher
 	  }
 
@@ -714,6 +715,59 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return node.cloneNode(true)
 	}
 
+
+	/**
+	 * Defer a task to execute it asynchronously. Ideally this
+	 * should be executed as a microtask, so we leverage
+	 * MutationObserver if it's available, and fallback to
+	 * setTimeout(0).
+	 *
+	 * @param {Function} cb
+	 * @param {Object} ctx
+	 */
+
+	exports.nextTick = (function () {
+	  var callbacks = []
+	  var pending = false
+	  var timerFunc
+	  function nextTickHandler () {
+	    pending = false
+	    var copies = callbacks.slice(0)
+	    callbacks = []
+	    for (var i = 0; i < copies.length; i++) {
+	      copies[i]()
+	    }
+	  }
+	  /* istanbul ignore if */
+	  if (typeof MutationObserver !== 'undefined') {
+	    var counter = 1
+	    var observer = new MutationObserver(nextTickHandler)
+	    var textNode = document.createTextNode(counter)
+	    observer.observe(textNode, {
+	      characterData: true
+	    })
+	    timerFunc = function () {
+	      counter = (counter + 1) % 2
+	      textNode.data = counter
+	    }
+	  } else {
+	    timerFunc = setTimeout
+	  }
+	  return function (cb, ctx) {
+	    var func = ctx
+	      ? function () { cb.call(ctx) }
+	      : cb
+	    callbacks.push(func)
+	    if (pending) return
+	    pending = true
+	    timerFunc(nextTickHandler, 0)
+	  }
+	})()
+
+
+
+
+
 /***/ },
 /* 5 */
 /***/ function(module, exports) {
@@ -1034,8 +1088,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  'if':__webpack_require__(13),
 	  'unless':__webpack_require__(14),
 	  'for':__webpack_require__(15),
-	  'text':__webpack_require__(23),
-	  'html':__webpack_require__(24)
+	  'text':__webpack_require__(22),
+	  'html':__webpack_require__(23)
 	}
 	var noop = function(){}
 
@@ -1705,7 +1759,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
 	var parseExpression = parser.parseExpression
-	var Node = __webpack_require__(16)
 	var Data = __webpack_require__(17)
 
 	//差异更新的几种类型
@@ -2099,164 +2152,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 16 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-
-	/**
-	 * 为什么要有这个类？
-	 *
-	 * 我们平时使用时，都是针对一个element节点操作
-	 * 但是当我们使用<template>这种节点时，会针对多个节点同时操作
-	 * 所以我们需要做一层封装，用来决定当前这个特殊节点，怎么删除，怎么添加
-	 */
-
-	var _ = __webpack_require__(3)
-
-	/**
-	 * 支持普通节点，template节点
-	 *
-	 */
-
-	function Node (el) {
-
-	  this.el = el
-
-	  this.attrs = el.attributes
-
-	  //如果是template,需要特殊处理
-	  if (el.tagName && el.tagName.toLowerCase() === 'template') {
-	    //chrome下面可以直接拿content就是个documentFragment,不支持的需要兼容
-	    if (this.el.content) {
-	      this.el = this.el.content
-	    }else{
-	      this.el = nodeToFrag(this.el)
-	    }
-	  }
-
-	  //如果是特殊的经过转换的template兼容写法
-	  if (el.getAttribute && el.getAttribute('_pat_tmpl') === 'true') {
-	    this.el = nodeToFrag(this.el)
-	  }
-
-
-	  this.isFrag = this.el.nodeType === 11
-
-	  if (!this.isFrag) {
-	    this.initNormal()
-	  }else{
-	    this.initFragment()
-	  }
-
-	}
-
-
-	//初始化普通节点的几个方法
-	Node.prototype.initNormal = function() {
-
-	  var curEl = this.el
-
-	  this.before = function(target){
-	    return _.before(curEl,target)
-	  }
-
-	  this.after = function(target){
-	    return _.after(curEl,target)
-	  }
-
-	  this.remove = function(target){
-	    return _.remove(curEl,target)
-	  }
-
-	  this.allElements = function() {
-	    return [this.el]
-	  }
-
-	  this.clone = function(){
-	    return new Node(_.clone(curEl))
-	  }
-	}
-	//初始化特殊节点Fragment的几个方法
-	Node.prototype.initFragment = function() {
-	  var curEl = this.el
-	  this.start = _.createAnchor('frag-start',true)
-	  this.end = _.createAnchor('frag-end',true)
-	  _.prepend(this.start, curEl)
-	  curEl.appendChild(this.end)
-
-	  //documentFragment直接可以before
-	  this.before = function(target){
-	    return _.before(curEl,target)
-	  }
-	  this.after = function(target){
-	    return _.after(curEl,target)
-	  }
-	  //documentFragment进行remove时比较麻烦，需要特殊处理不少东西
-	  //策略是从占位节点开始挨个的删除
-	  this.remove = this._fragmentRemove
-	  this.clone = this._fragmentClone
-
-	  this.allElements = function() {
-	    if (this.__allElements) return this.__allElements
-	    var els = []
-	    if (!this.start || !this.end) {
-	      if (true) _.error('can‘t find a start or end anchor while use fragmentRemove')
-	      return
-	    }
-
-	    var node = this.start
-	    var prevNode
-	    while(node && node != this.end){
-	      node = node.nextSibling
-	      if (node.nodeType == 1) {
-	        els.push(node)
-	      }
-	    }
-
-	    this.__allElements = els
-	    return els
-	  }
-	}
-
-
-	Node.prototype._fragmentRemove = function() {
-
-	  if (!this.start || !this.end) {
-	    if (true) _.error('can‘t find a start or end anchor while use fragmentRemove')
-	    return
-	  }
-
-	  var node = this.start
-	  var prevNode
-	  while(node && node != this.end){
-	    prevNode = node
-	    node = node.nextSibling
-	    _.remove(prevNode)
-	  }
-	  _.remove(this.end)
-
-	}
-
-	Node.prototype._fragmentClone = function(){
-	  //各种兼容性问题，待做
-	  return new Node(_.clone(this.el))
-	}
-
-	function nodeToFrag(el){
-	  var frag = document.createDocumentFragment()
-	  var child
-	  while (child = el.firstChild) {
-	    frag.appendChild(child)
-	  }
-	  return frag
-	}
-
-
-	module.exports = Node
-
-
-/***/ },
+/* 16 */,
 /* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -2557,7 +2453,13 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
-	var watchersQueue = __webpack_require__(19)
+	var Queue = __webpack_require__(19)
+
+	var watcherId = 1
+
+	function getWatcherId(){
+	  return watcherId ++
+	}
 
 	//观察者
 	function Watcher(view, expression, callback) {
@@ -2570,7 +2472,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.current = null
 	  //是否已经取过第一次值了，意味着不再需要检测针对defineproperty依赖了
 	  this.hasFirstGetValued = false
-
+	  this.id = getWatcherId()
 	}
 
 	Watcher.currentTarget = null
@@ -2632,32 +2534,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	Watcher.prototype.check = function() {
 	  var self = this
 
-	  this.current = this.getValue()
+	  if (this.isUserWatcher) {
+	    this.current = this.getValue()
+	    if (this.last != this.current) {
+	      _.each(this.callbacks, function(callback) {
+	        callback(self.last, self.current)
+	      })
+	    }
 
-	  this._check(this.last, this.current)
+	    this.last = this.current
 
-	  if (this.last != this.current) {
-	    _.each(this.callbacks, function(callback) {
-	      callback(self.last, self.current)
-	    })
+	  }else{
+
+	    Queue.update(this)
+	    //this.batchCheck()
 	  }
 
-	  this.last = this.current
 	}
 
-
-	Watcher.prototype._check = function(last, current) {
+	//队列会调用这个方法
+	Watcher.prototype.batchCheck = function() {
 	  var self = this
+	  var last = this.last
+	  var current = this.getValue()
 
 	  _.each(this.__directives, function(dir) {
 	    //directive自己判断要不要更新
 	    if (dir.shoudUpdate(last, current)) {
 	      //调用父级view的hook
-	      self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
+	      //self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
 	      dir.update && dir.update(current)
-	      self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
+	      //使用queue去批量更新
+	      //watchersQueue.batchUpdate(dir)
+	      //self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
 	    }
 	  })
+
+	  this.last = this.current
 
 	}
 
@@ -2676,19 +2589,59 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 19 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	//处理批量的问题
-	//存在一个队列，当第一个变动时，会在10后启动update
+	//存在一个队列，当第一个变动时，会在0后启动update
 	//会去重
 	//可以手动forceUpdate
 
+	var _ = __webpack_require__(3)
+
+	//全局唯一的队列
+	var queue = []
+	//正在等待更新的watcher
+	var waiting = {}
+
+	var isWating = false
+	var isUpdating = false
 
 
+	function flushUpdate(){
 
-	exports.queue = function(watcher) {
+	  isUpdating = true
+
+	  _.each(queue,function(watcher){
+	    //如果watcher本身已经被销毁了（比如if,for的view destroy），就不需要再check了
+	    if(!watcher.isDestroyed) watcher.batchCheck()
+	    waiting[watcher.id] = null
+	  })
+
+	  queue = []
+	  waiting = {}
+	  isWating = isUpdating = false
+
+	}
 
 
+	exports.update = function(watcher) {
+	  var id = watcher.id
+
+	  if (!waiting[id]) {
+
+	    if (isUpdating) {
+	      watcher.batchCheck()
+	      return
+	    }
+
+	    queue.push(watcher)
+	    waiting[id] = queue.length
+
+	    if (!isWating) {
+	      isWating = true
+	      _.nextTick(flushUpdate)
+	    }
+	  }
 
 	}
 
@@ -2842,8 +2795,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 22 */,
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2877,7 +2829,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2886,8 +2838,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	var _ = __webpack_require__(3)
-	var elements = __webpack_require__(25)
-	var Dom = __webpack_require__(26)
+	var elements = __webpack_require__(24)
+	var Dom = __webpack_require__(25)
 
 	module.exports = {
 	  block:true,
@@ -2914,7 +2866,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
@@ -3442,7 +3394,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3453,7 +3405,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
-	var Element = __webpack_require__(25)
+	var Element = __webpack_require__(24)
 
 	var createElement = Element.createElement
 	var createTextNode = Element.createTextNode
@@ -3677,7 +3629,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)

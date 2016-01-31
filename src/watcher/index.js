@@ -1,5 +1,11 @@
 var _ = require('../util')
-var watchersQueue = require('./queue.js')
+var Queue = require('./queue.js')
+
+var watcherId = 1
+
+function getWatcherId(){
+  return watcherId ++
+}
 
 //观察者
 function Watcher(view, expression, callback) {
@@ -12,7 +18,7 @@ function Watcher(view, expression, callback) {
   this.current = null
   //是否已经取过第一次值了，意味着不再需要检测针对defineproperty依赖了
   this.hasFirstGetValued = false
-
+  this.id = getWatcherId()
 }
 
 Watcher.currentTarget = null
@@ -74,32 +80,43 @@ Watcher.prototype.getValue = function() {
 Watcher.prototype.check = function() {
   var self = this
 
-  this.current = this.getValue()
+  if (this.isUserWatcher) {
+    this.current = this.getValue()
+    if (this.last != this.current) {
+      _.each(this.callbacks, function(callback) {
+        callback(self.last, self.current)
+      })
+    }
 
-  this._check(this.last, this.current)
+    this.last = this.current
 
-  if (this.last != this.current) {
-    _.each(this.callbacks, function(callback) {
-      callback(self.last, self.current)
-    })
+  }else{
+
+    Queue.update(this)
+    //this.batchCheck()
   }
 
-  this.last = this.current
 }
 
-
-Watcher.prototype._check = function(last, current) {
+//队列会调用这个方法
+Watcher.prototype.batchCheck = function() {
   var self = this
+  var last = this.last
+  var current = this.getValue()
 
   _.each(this.__directives, function(dir) {
     //directive自己判断要不要更新
     if (dir.shoudUpdate(last, current)) {
       //调用父级view的hook
-      self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
+      //self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
       dir.update && dir.update(current)
-      self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
+      //使用queue去批量更新
+      //watchersQueue.batchUpdate(dir)
+      //self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
     }
   })
+
+  this.last = this.current
 
 }
 

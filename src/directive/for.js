@@ -1,7 +1,6 @@
 var _ = require('../util')
 var parser = require('../parser')
 var parseExpression = parser.parseExpression
-var Node = require('../node.js')
 var Data = require('../data/index.js')
 
 //差异更新的几种类型

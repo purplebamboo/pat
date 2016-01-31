@@ -212,6 +212,7 @@ View.prototype.$watch = function(expression,callback){
   }else{
     watcher = new Watcher(this, Parser.parseExpression(expression),callback)
     watcher.last = watcher.getValue()
+    watcher.isUserWatcher = true
     this.__userWatchers[expression] = watcher
   }
 
