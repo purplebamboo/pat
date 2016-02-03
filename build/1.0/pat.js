@@ -56,13 +56,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var config = __webpack_require__(1)
 	var Compile = __webpack_require__(2)
-	var Watcher = __webpack_require__(18)
+	var Watcher = __webpack_require__(17)
 	var Directive = __webpack_require__(8)
 	var Parser = __webpack_require__(9)
-	var Dom = __webpack_require__(25)
-	var Data = __webpack_require__(17)
-	var Element = __webpack_require__(24)
-	var Event = __webpack_require__(26)
+	var Dom = __webpack_require__(24)
+	var Data = __webpack_require__(16)
+	var Element = __webpack_require__(23)
+	var Event = __webpack_require__(25)
 	var _ = __webpack_require__(3)
 
 	var VID = 0
@@ -317,7 +317,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var Directive = __webpack_require__(8)
-	var Watcher = __webpack_require__(18)
+	var Watcher = __webpack_require__(17)
 	var parser = __webpack_require__(9)
 	var parseDirective = parser.parseDirective
 	var parseText = parser.parseText
@@ -1088,8 +1088,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  'if':__webpack_require__(13),
 	  'unless':__webpack_require__(14),
 	  'for':__webpack_require__(15),
-	  'text':__webpack_require__(22),
-	  'html':__webpack_require__(23)
+	  'text':__webpack_require__(21),
+	  'html':__webpack_require__(22)
 	}
 	var noop = function(){}
 
@@ -1629,34 +1629,42 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = {
 	  priority: 3000,
-	  bind:function(args) {
+	  bind:function(value) {
 	    //添加事件监听
 	    var self = this
 
 	    self.blurFn = function() {
-	      var val = Util.getInputValue(self.el)
+	      var val = Util.getInputValue(self.el.getElement())
 	      var key = self.describe.value
 
 	      if (val != self.curValue) {
 	        //这边其实有个坑，如果这个t-modle是在一个for循环语句里，这里修改的只会是当前的scope里面的属性值
 	        //这样从父级脏检测的话，父级老的值会把当前的值冲掉。就会是没有改变。这个还没想好怎么做
+
+	        //需要检查下 需不需要从父级开始改，判断是不是item开头
 	        self.setValue(key, val)
 	        //需要整个rootview脏检测,使用$apply防止脏检测冲突
-	        self.view.$rootView.$apply()
+	        //self.view.$rootView.$apply()
 	      }
 	    }
 
-	    Util.bindEvent(self.el, 'blur', self.blurFn)
+	    self.view.on('afterMount',function(){
+	      Util.bindEvent(self.el.getElement(), 'blur', self.blurFn)
+	    })
+
+	    this.update(value)
+
 	  },
 	  setValue: function(key, val) {
 	    return new Function('$scope', 'return $scope.' + key + '="' + val + '"')(this.view.$data)
 	  },
 	  update: function(value) {
 	    this.curValue = value
-	    this.el.value = value
+	    this.el.setAttribute('value',value)
+	    //.getElement().value = value
 	  },
 	  unbind: function() {
-	    Util.unbindEvent(this.el, 'blur',self.blurFn)
+	    Util.unbindEvent(this.el.getElement(), 'blur',self.blurFn)
 	  }
 	}
 
@@ -1759,7 +1767,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
 	var parseExpression = parser.parseExpression
-	var Data = __webpack_require__(17)
+	var Data = __webpack_require__(16)
 
 	//差异更新的几种类型
 	var UPDATE_TYPES = {
@@ -2152,15 +2160,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 16 */,
-/* 17 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Watcher = __webpack_require__(18)
+	var Watcher = __webpack_require__(17)
 	var _ = __webpack_require__(3)
-	var Observer = __webpack_require__(20)
+	var Observer = __webpack_require__(19)
 
-	__webpack_require__(21)
+	__webpack_require__(20)
 
 
 
@@ -2449,11 +2456,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
-	var Queue = __webpack_require__(19)
+	var Queue = __webpack_require__(18)
 
 	var watcherId = 1
 
@@ -2588,13 +2595,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Watcher
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
-
-	//处理批量的问题
-	//存在一个队列，当第一个变动时，会在0后启动update
-	//会去重
-	//可以手动forceUpdate
 
 	var _ = __webpack_require__(3)
 
@@ -2656,11 +2658,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
-	var Watcher = __webpack_require__(18)
+	var Watcher = __webpack_require__(17)
 
 	var Class = _.Class
 
@@ -2711,12 +2713,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Observer
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var _ = __webpack_require__(3)
-	var Data = __webpack_require__(17)
+	var Data = __webpack_require__(16)
 
 	var arrayMethods = [
 	  'push',
@@ -2795,7 +2797,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2829,7 +2831,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2838,8 +2840,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	var _ = __webpack_require__(3)
-	var elements = __webpack_require__(24)
-	var Dom = __webpack_require__(25)
+	var elements = __webpack_require__(23)
+	var Dom = __webpack_require__(24)
 
 	module.exports = {
 	  block:true,
@@ -2866,7 +2868,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
@@ -3168,6 +3170,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    attrsString += ' ' + TAG_ID + '="' + this.patId + '"'
 
+	    if (tagName == 'input') {
+	      return '<' + tagName + attrsString + ' />'
+	    }
+
 	    var childHtml = ''
 	    _.each(this.childNodes, function(child) {
 	      childHtml += child.mountView(view)
@@ -3394,7 +3400,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3405,7 +3411,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
-	var Element = __webpack_require__(24)
+	var Element = __webpack_require__(23)
 
 	var createElement = Element.createElement
 	var createTextNode = Element.createTextNode
@@ -3629,7 +3635,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)

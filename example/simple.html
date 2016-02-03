@@ -17,6 +17,9 @@
 <!--支持传入模板-->
 <script type="javascript/template" id="J_tmpl">
 <div class="container4 line">
+
+  <input type="text" t-model='text' value=""/>
+
   {{text}}111
   <div t-for="item in lists" id="{{item.name}}">
     {{item.text}}---{{text}}

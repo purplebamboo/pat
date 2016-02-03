@@ -1,8 +1,3 @@
-//处理批量的问题
-//存在一个队列，当第一个变动时，会在0后启动update
-//会去重
-//可以手动forceUpdate
-
 var _ = require('../util/index.js')
 
 //全局唯一的队列

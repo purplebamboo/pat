@@ -297,6 +297,10 @@ var Element = Node.extend({
 
     attrsString += ' ' + TAG_ID + '="' + this.patId + '"'
 
+    if (tagName == 'input') {
+      return '<' + tagName + attrsString + ' />'
+    }
+
     var childHtml = ''
     _.each(this.childNodes, function(child) {
       childHtml += child.mountView(view)
