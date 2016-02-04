@@ -193,9 +193,9 @@ exports.replace = function (target, el) {
  * @param {String} attr
  */
 
-exports.clone = function (node) {
-  return node.cloneNode(true)
-}
+// exports.clone = function (node) {
+//   return node.cloneNode(true)
+// }
 
 
 /**

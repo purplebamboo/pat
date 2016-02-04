@@ -3,7 +3,7 @@ var Queue = require('./queue.js')
 
 var watcherId = 1
 
-function getWatcherId(){
+function wid(){
   return watcherId ++
 }
 
@@ -16,29 +16,18 @@ function Watcher(view, expression, callback) {
   this.scope = view.$data
   this.last = null
   this.current = null
-  //是否已经取过第一次值了，意味着不再需要检测针对defineproperty依赖了
-  this.hasFirstGetValued = false
-  this.id = getWatcherId()
+  this.__depend = false //是否已经做过属性依赖的检测了
+  this.id = wid()
 }
 
+//当前正在解析的watcher,全局只有唯一的一个
 Watcher.currentTarget = null
-
-Watcher.prototype.removeDirective = function(dir) {
-  var dirs = this.__directives
-  var index = _.indexOf(dirs,dir)
-
-  if (index != -1) {
-    dirs.splice(index,1)
-  }
-
-}
 
 
 Watcher.prototype.applyFilter = function(value, filterName) {
 
   if (!filterName) return value
 
-  //从rootview拿filter
   var filter = this.__view.$rootView.__filters[filterName]
   if (filter) {
     return filter.call(this.__view.$rootView, value, this.scope)
@@ -48,38 +37,27 @@ Watcher.prototype.applyFilter = function(value, filterName) {
 
 Watcher.prototype.getValue = function() {
   if (!this.expression) return ''
-    //取值很容易出错，需要给出错误提示
   var value
-
+  //取值很容易出错，需要给出错误提示
   try {
-
-    if (!this.hasFirstGetValued) Watcher.currentTarget = this
+    if (!this.__depend) Watcher.currentTarget = this
     value = new Function('_scope', '_that', 'return ' + this.expression)(this.scope, this)
-    if (!this.hasFirstGetValued) Watcher.currentTarget = null
+    if (!this.__depend) Watcher.currentTarget = null
   } catch (e) {
 
-    if (!this.hasFirstGetValued) Watcher.currentTarget = null
+    if (!this.__depend) Watcher.currentTarget = null
     if (process.env.NODE_ENV != 'production') _.log('error when watcher get the value,please check your expression: "' + this.expression + '"', e)
   }
 
-  this.hasFirstGetValued = true
+  this.__depend = true
   return value
 }
-
-//使用队列更新
-// Watcher.prototype.batchCheck = function() {
-//   //每个rootview有自己的执行队列
-//   var batchQueue = this.__view.$rootView.batchQueue
-//   if (!batchQueue) batchQueue = this.__view.$rootView.batchQueue = new watchersQueue()
-
-//   batchQueue.push(this)
-
-// }
 
 
 Watcher.prototype.check = function() {
   var self = this
 
+  //用户自己的watcher先执行完
   if (this.isUserWatcher) {
     this.current = this.getValue()
     if (this.last != this.current) {
@@ -87,13 +65,11 @@ Watcher.prototype.check = function() {
         callback(self.last, self.current)
       })
     }
-
     this.last = this.current
 
   }else{
-
+    //系统watcher加入异步批量队列
     Queue.update(this)
-    //this.batchCheck()
   }
 
 }
@@ -108,11 +84,9 @@ Watcher.prototype.batchCheck = function() {
     //directive自己判断要不要更新
     if (dir.shoudUpdate(last, current)) {
       //调用父级view的hook
-      //self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
+      self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
       dir.update && dir.update(current)
-      //使用queue去批量更新
-      //watchersQueue.batchUpdate(dir)
-      //self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
+      self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
     }
   })
 

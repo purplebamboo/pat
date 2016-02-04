@@ -5,6 +5,25 @@ var config = require('../config.js')
 
 var noop = function() {}
 
+
+var singgleCloseTags = {
+  'area': true,
+  'base': true,
+  'br': true,
+  'col': true,
+  'embed': true,
+  'hr': true,
+  'img': true,
+  'input': true,
+  'keygen': true,
+  'link': true,
+  'meta': true,
+  'param': true,
+  'source': true,
+  'track': true,
+  'wbr': true
+}
+
 PAT_ID = 1
 
 TAG_ID = config.tagId
@@ -27,9 +46,10 @@ var Node = Class.extend({
 
     html = this.deleted ? self.mountDeleted(view) : self.mountHtml(view)
 
-    // view.$rootView.on('afterMount',function(){
-    // })
-    self.mounted = true
+    //view.$rootView.on('afterMount',function(){
+      self.mounted = true
+    //})
+
     return html
   },
   //软删除的节点，会在页面上存在一个注释，方便确认位置
@@ -286,18 +306,21 @@ var Element = Node.extend({
 
   },
   mountHtml: function(view) {
-    //todo 不闭合标签
     var tagName = this.tagName
     var attrsString = ''
 
     _.each(this.attributes, function(attr) {
-      //需要判断整数的情况
+      //如果不是debug某事跳过指令属性
+      if (!config.debug && ~attr.name.indexOf(config.prefix)) {
+        return
+      }
+      //todo 需要判断整数的情况
       attrsString += [' ', attr.name, '="', attr.value, '" '].join('')
     })
 
     attrsString += ' ' + TAG_ID + '="' + this.patId + '"'
 
-    if (tagName == 'input') {
+    if (singgleCloseTags[tagName]) {
       return '<' + tagName + attrsString + ' />'
     }
 

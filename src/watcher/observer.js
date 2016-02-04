@@ -33,7 +33,7 @@ var Observer = Class.extend({
   depend:function(){
     var watchers = this.watchers
     _.each(watchers,function(watcher){
-      watcher.hasFirstGetValued = false
+      watcher.__depend = false
       watcher.getValue()
     })
   },

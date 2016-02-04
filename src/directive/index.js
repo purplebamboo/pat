@@ -34,18 +34,18 @@ var Directive = Class.extend({
   shoudUpdate:function(last,current){
     return last !== current
   },
+  initialize:noop,
   bind:noop,
   unbind:noop,
   update:noop,
   destroy:function() {
-
     this.unbind()
     this.__watcher = null
     this.describe = null
     this.el = null
     this.view = null
     this.uid = null
-
+    this.isDestroyed = true
   }
 })
 
@@ -91,7 +91,7 @@ module.exports = {
 
     return false
   },
-  //新加入一个directive定义
+  //新增一个directive定义
   newDirective:function(key,options) {
     directives[key] = options
     this.publicDirectives[key] = Directive.extend(options)

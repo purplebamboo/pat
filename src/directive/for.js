@@ -145,7 +145,7 @@ module.exports = {
           rootView:self.view.$rootView
         })
         //增加依赖，这样父级值改变了也会自动改变子view的属性
-        self.view.dependViews.push(newViewMap[name])
+        self.view.__dependViews.push(newViewMap[name])
       }
       newViewLists.push(newViewMap[name])
 
@@ -253,7 +253,7 @@ module.exports = {
       }else{
         child.$el.remove()
       }
-      _.findAndRemove(self.view.dependViews,child)
+      _.findAndRemove(self.view.__dependViews,child)
       child.$destroy()
       //self.view.$rootView.fire('afterDeleteBlock',[],self)
     })
@@ -293,7 +293,7 @@ module.exports = {
     }
 
     _.each(oldViewLists,function(oldView){
-      if (oldView && oldView._destroyed !== true) {
+      if (oldView && oldView.isDestroyed !== true) {
         lists.push(oldView.$el)
       }
     })

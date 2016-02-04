@@ -57,6 +57,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var config = __webpack_require__(1)
 	var Compile = __webpack_require__(2)
 	var Watcher = __webpack_require__(17)
+	var Queue = __webpack_require__(18)
 	var Directive = __webpack_require__(8)
 	var Parser = __webpack_require__(9)
 	var Dom = __webpack_require__(24)
@@ -64,6 +65,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Element = __webpack_require__(23)
 	var Event = __webpack_require__(25)
 	var _ = __webpack_require__(3)
+
+
 
 	var VID = 0
 
@@ -79,7 +82,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var View = function (options) {
 
-	  //需要绑定的节点，必须,可以是
+	  //需要绑定的节点，必须,可以是virtual dom
 	  this.$el = _.query(options.el)
 
 	  if (("development") != 'production' && !this.$el) {
@@ -89,18 +92,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.$data = options.data || {}
 	  //保存根view,没有的话就是自己
 	  this.$rootView = options.rootView ? options.rootView : this
-	  //模板，可选
+	  //模板
 	  this.__template = options.template
-	  this.skipinject = options.skipinject
-	  this.dependViews = []
+	  //依赖的子view,当此view的一级key更新时，需要同步更新子view的一级key
+	  this.__dependViews = []
 	  //所有指令观察对象
 	  this.__watchers = {}
-	  //用户自定义的观察对象
+	  //用户自定义的观察对象，不会进入队列，会立即执行
 	  this.__userWatchers = {}
-	  //所有过滤器
+	  //过滤器
 	  this.__filters = options.filters || {}
 	  //唯一标识
 	  this.__vid = options.vid || vid()
+	  //是否已经渲染到了页面中
+	  this.__rendered = false
 
 	  //记录初始化时间，debug模式下才会打出来
 	  if (("development") != 'production' && this.$rootView == this) {
@@ -130,38 +135,56 @@ return /******/ (function(modules) { // webpackBootstrap
 	    el = Dom.transfer(this.__template)
 	  }
 
-	  if (!this.skipinject) {
-	    this.$inject()
-	  }
+	  //注入get set
+	  this.$data = this.$inject(this.$data)
+	  //增加特殊联动依赖
+	  this.__depend()
+
 
 	  this.fire('beforeCompile')
+	  //开始解析编译
 	  this.$compile(el)
 	  this.fire('afterCompile')
 
 	  //如果模板，最后一次性的加到dom里
-	  if (this.__template) this.$el.innerHTML = el.mountView(this)
+	  if (this.__template){
+	    this.$el.innerHTML = el.mountView(this)
+	    this.__rendered = true
+	  }
+
+	  //如果是虚拟dom，调用方法写到页面上
+	  if (this.$el.__VD__) {
+	    //todo
+	  }
 
 	  this.fire('afterMount')
 	}
 
-	//注入get set
-	View.prototype.$inject = function(){
-	  var oriData = this.$data
-	  this.$data = Data.inject(this.$data)
 
-	  //增加对一级key的watcher,这样当用户改变了这个值以后，通知子view也去改变这个值。
-	  //达到联动的目的
+	//增加对一级key的watcher,这样当用户改变了这个值以后，通知子view也去改变这个值。
+	//达到联动的目的。
+	//这个主要用在for这种会创建子scope的指令上。
+	View.prototype.__depend = function(){
 	  var self = this
-	  _.each(oriData,function(val,key){
-
+	  _.each(this.$data.__ori__,function(val,key){
 	    self.$watch(key,function(){
-	      _.each(self.dependViews,function(view){
+
+	      if (!self.__dependViews) return
+	      _.each(self.__dependViews,function(view){
 	        view.$data[key] = self.$data[key]
 	      })
-
 	    })
 	  })
+	}
 
+
+
+	View.prototype.$inject = function(data){
+	  return Data.inject(data)
+	}
+
+	View.prototype.$flushUpdate = function(){
+	  return Queue.flushUpdate()
 	}
 
 
@@ -169,58 +192,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  Compile.parse(el,this)
 	}
 
-	// //开始脏检测，在digest上面再封装一层，可以检测如果当前已有进行中的就延迟执行
-	// //外部用户使用这个方法，也就是一个rootview去脏检测，如果有其他rootview在digest，就延迟
-	// View.prototype.$apply = function(fn) {
-	//   if (View._isDigesting) {
-	//     setTimeout(_.bind(arguments.callee,this),0)
-	//     return
-	//   }
-
-	//   View._isDigesting = true
-	//   //记录脏检测时间，debug模式下才会打出来
-	//   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
-	//     _.time('view[' + this.__vid + ']-digest:')
-	//   }
-
-	//   fn && fn.call(this)
-	//   this.$digest()
-
-	//   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
-	//     _.timeEnd('view[' + this.__vid + ']-digest:')
-	//   }
-
-	//   View._isDigesting = false
-
-	// }
-
-	// //开始脏检测，这个方法只有内部可以使用
-	// View.prototype.$digest = function() {
-	//   //先检查用户自定义的watcher,这样用户的定义可以先执行完
-	//   this.__userWatchers && _.each(this.__userWatchers,function(watcher){
-	//     watcher.check()
-	//   })
-
-	//   this.__watchers && _.each(this.__watchers,function(watcher){
-	//     watcher.check()
-	//   })
-	// }
 
 	/**
 	 * 销毁view
-	 * @param  {boolean} destroyRoot 是否销毁绑定的根节点
 	 */
-	View.prototype.$destroy = function(destroyRoot) {
+	View.prototype.$destroy = function() {
 	  _.each(this.__watchers,function(watcher){
 	    //通知watch销毁，watch会负责销毁对应的directive
 	    //而对于针对的seter getter  会在下次更新时去掉这些引用
 	    watcher.destroy()
 	  })
-	  destroyRoot ? _.remove(this.$el) : (this.$el.innerHTML = '')
 
-	  // if (this.$el.nodeType == -1) {
-	  //   this.$el.remove()
-	  // }
+	  if (this.$el.innerHTML) {
+	    this.$el.innerHTML = ''
+	  }
 
 	  this.$el = null
 	  this.$data = null
@@ -229,7 +214,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.__watchers = null
 	  this.__userWatchers = null
 	  this.__filters = null
-	  this._destroyed = true
+	  this.isDestroyed = true
 	}
 
 
@@ -274,16 +259,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	}
 
-
+	//创建节点接口
 	View.createElement = Element.createElement
 	View.createTextNode = Element.createTextNode
 
-
-
-
-	View._isDigesting = false
-
-	//暴露基本对象接口
+	//暴露底层对象
 	View.Parser = Parser
 	View.Dom = Dom
 	View.Directive = Directive
@@ -327,16 +307,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	var config = __webpack_require__(1)
 
 	/**
-	 * 绑定directive
+	 * 绑定directive，初始化指令
 	 * @param  {object} describe 描述信息
 	 */
 	function _bindDir(describe) {
 	  var dirInstance, watcher, view, value
-
-	  //如果不是debug模式，可以把属性删除了.
-	  // if (!config.debug && describe.el && describe.el.removeAttribute) {
-	  //   describe.el.removeAttribute(describe.name)
-	  // }
 
 
 	  view = describe.view
@@ -346,45 +321,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //先去watch池子里找,value可以作为key
 	  watcher = view.__watchers[describe.value]
 
-	  if (watcher) {
-	    //使用老的watcher，如果是一次性的，就不需要加入对应的指令池
-	    if (!describe.oneTime) {
-	      watcher.__directives.push(dirInstance)
-	    }
-
-	  }else{
-	    //新建一个watch
+	  if (!watcher){
 	    watcher = new Watcher(view, describe.expression)
-	    //看是不是一次性的，新的watch需要加入view的watch池子
-	    if (!describe.oneTime) {
-	      watcher.__directives.push(dirInstance)
-	      view.__watchers[describe.value] = watcher
-	    }
+	    view.__watchers[describe.value] = watcher
+	  }
+
+	  //看是不是一次性的，一次性的不需要加入到watcher的指令池，不需要更新
+	  if (!describe.oneTime) {
+	    watcher.__directives.push(dirInstance)
 	  }
 
 	  dirInstance.__watcher = watcher
+	  //执行初始化，如果有的话
 	  dirInstance.initialize && dirInstance.initialize()
-	  //执行绑定
-	  //dirInstance.bind(describe.args)
 	  //todo... 这边获取值可以缓存住,优化
+	  //第一次取值，会通过get set绑定好数据依赖
 	  value = watcher.getValue()
 	  //赋值
 	  watcher.last = value
-	  //首次自动调用bind
+	  //调用bind
 	  dirInstance.bind(value)
-	  //dirInstance.update(value)
 
 	  return dirInstance
 	}
 
 	//解析属性，解析出directive，这个只针对element
 	function _compileDirective(el,view,attributes) {
-	  var attrs, describe, skipChildren, childNodes,blockDirectiveCount,isCurViewRoot
+	  var attrs, describe, skipChildren, childNodes,isCurViewRoot
 
 
 	  isCurViewRoot = el === view.$el ? true : false
 
-	  blockDirectiveCount = 0
 	  attributes = attributes || []
 
 	  var describes = [],blockDescribes = []
@@ -407,14 +374,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  /**
 	   * 策略是：
-	   * 1. 如果有block并且block没有解析，那么就可以交给子集的block指令去解析，它会负责解析自己的区块
-	   * 2. 如果有block并且block已经解析过了，那么证明block的解析已经由父级view完成，那么只需要解析剩余的其他指令就可以了
+	   * 1. 如果有block并且不是在根节点上，那么就可以交给子block指令去解析，它会负责解析自己的区块
+	   * 2. 如果有block但是是在根节点上，那么证明block的解析已经由父级view完成，那么只需要解析剩余的其他指令就可以了
 	   * 3. 没有block那么就正常解析普通就行。
 	   */
 
 	  if (!isCurViewRoot && blockDescribes.length) {
 	    //只管第一个block
-	    //el.isBlockBind = true
 	    _bindDir(blockDescribes[0])
 	    return
 	  }
@@ -446,7 +412,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  oneTime = token.oneTime
 
-	  //对于普通的文本节点作为 一次性的不需要更新
+	  //针对变量类型的 文本进行指令解析，区分html和text
 	  if (token.type === parser.TextTemplateParserTypes.binding) {
 
 	    _bindDir({
@@ -455,7 +421,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      view: view,
 	      expression: parseExpression(token.value),
 	      oneTime:oneTime,
-	      //html:token.html,
 	      directive: token.html ? 'html' : 'text',
 	      el: el
 	    })
@@ -466,19 +431,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.parse = function(el,view) {
 
 	  if (!_.isElement(el)) return
+
 	  //对于文本节点采用比较特殊的处理
 	  if (el.nodeType == 3 && _.trim(el.data)) {
 	    _compileTextNode(el, view)
 	  }
 
-	  //编译普通节点
+	  //普通节点
 	  if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
 	    _compileDirective(el, view, _.toArray(el.attributes))
 	  }
 
-	  //编译集合节点
+	  //集合节点
 	  if ((el.nodeType == -1)) {
-	    //todo  只保留block节点
 	    _compileDirective(el, view, _.toArray(el.attributes))
 	  }
 
@@ -713,9 +678,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {String} attr
 	 */
 
-	exports.clone = function (node) {
-	  return node.cloneNode(true)
-	}
+	// exports.clone = function (node) {
+	//   return node.cloneNode(true)
+	// }
 
 
 	/**
@@ -1109,18 +1074,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  shoudUpdate:function(last,current){
 	    return last !== current
 	  },
+	  initialize:noop,
 	  bind:noop,
 	  unbind:noop,
 	  update:noop,
 	  destroy:function() {
-
 	    this.unbind()
 	    this.__watcher = null
 	    this.describe = null
 	    this.el = null
 	    this.view = null
 	    this.uid = null
-
+	    this.isDestroyed = true
 	  }
 	})
 
@@ -1166,7 +1131,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    return false
 	  },
-	  //新加入一个directive定义
+	  //新增一个directive定义
 	  newDirective:function(key,options) {
 	    directives[key] = options
 	    this.publicDirectives[key] = Directive.extend(options)
@@ -1237,8 +1202,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *   name:'sk-bind',
 	 *   value:'test.text',
 	 *   args:[], //参数数组
+	 *   priority:3000, //指令的优先级，值越大，绑定时优先级越高
 	 *   oneTime:false, //是否是一次性指令，不会响应数据变化
-	 *   html:false, //是否支持html格式，也就是不会被转义
 	 *   block:false, //是否是block类型的指令
 	 *   isInterpolationRegx: true //是否是插值
 	 *
@@ -1266,7 +1231,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      directive: 'bind',
 	      args: [name],
 	      oneTime: false,
-	      html: false,
 	      block:false,
 	      expression: exports.token2expression(tokens),
 	      isInterpolationRegx: true //标识一下是插值
@@ -1291,7 +1255,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    directive: directive,
 	    args: args || [],
 	    oneTime: false,
-	    html: false,
 	    block: dirOptions.block,
 	    priority: dirOptions.priority,
 	    expression: exports.parseExpression(value)
@@ -1716,7 +1679,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      this.childView = new this.view.constructor({
 	        el:newVdNode,
-	        skipinject:true,
+	        //skipinject:true,
 	        data:this.view.$data,
 	        rootView:this.view.$rootView
 	      })
@@ -1913,7 +1876,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          rootView:self.view.$rootView
 	        })
 	        //增加依赖，这样父级值改变了也会自动改变子view的属性
-	        self.view.dependViews.push(newViewMap[name])
+	        self.view.__dependViews.push(newViewMap[name])
 	      }
 	      newViewLists.push(newViewMap[name])
 
@@ -2021,7 +1984,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }else{
 	        child.$el.remove()
 	      }
-	      _.findAndRemove(self.view.dependViews,child)
+	      _.findAndRemove(self.view.__dependViews,child)
 	      child.$destroy()
 	      //self.view.$rootView.fire('afterDeleteBlock',[],self)
 	    })
@@ -2061,7 +2024,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    _.each(oldViewLists,function(oldView){
-	      if (oldView && oldView._destroyed !== true) {
+	      if (oldView && oldView.isDestroyed !== true) {
 	        lists.push(oldView.$el)
 	      }
 	    })
@@ -2203,7 +2166,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    //有些已经失效的watcher先去掉
 	    ob.unique()
-	    //watchers = removeDeleted(watchers)
 
 	    //如果是对象需要特殊处理
 	    if (_.isObject(newVal)) {
@@ -2375,61 +2337,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.define = define
 
-	// exports.defineProperty = function(obj,key){
-
-	//   //var watchers = [] //保存 针对当前这个key依赖的watchers
-
-	//   var ob = new Observer()
-	//   var val = obj[key]
-
-	//   Object.defineProperty(obj, key, {
-	//     enumerable: true,
-	//     configurable: true,
-	//     get: function() {
-	//       //找到正在交互的watch
-	//       //var kkk = key
-	//       // var currentTarget = Watcher.currentTarget
-	//       // if (currentTarget && _.indexOf(watchers,currentTarget) == -1) {
-	//       //   watchers.unshift(currentTarget)
-	//       // }
-	//       ob.addWatcher()
-
-	//       if (_.isArray(val) && !val.__ob__) {
-	//         val.__ob__ = ob
-	//       }
-
-	//       return val
-	//     },
-	//     set: function(newVal) {
-	//       if (newVal === val) {
-	//         return
-	//       }
-
-	//       //有些已经失效的watcher先去掉
-	//       ob.unique()
-	//       //watchers = removeDeleted(watchers)
-
-	//       val = newVal
-
-	//       //如果是对象需要特殊处理
-	//       if (_.isObject(newVal)) {
-	//         exports.inject(newVal)
-	//         //依赖的watcher需要重新get一遍值
-	//         //还要考虑scope有没有改变
-	//         ob.depend()
-	//         // _.each(watchers,function(watcher){
-	//         //   watcher.hasFirstGetValued = false
-	//         //   watcher.getValue()
-	//         // })
-	//       }
-
-	//       ob.notify()
-	//       // _.each(watchers,function(watcher){
-	//       //   watcher.check()
-	//       // })
-	//     }
-	//   })
-	// }
 
 	exports.inject = function(data) {
 	  var newData = null
@@ -2446,8 +2353,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  if (_.isPlainObject(data)) {
-	    //newData = {}
-	    //_.assign(newData,data)
 	    newData = exports.define(data)
 	    //检测对象的值，需要再递归的去inject
 	    _.each(data,function(value,key){
@@ -2469,7 +2374,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var watcherId = 1
 
-	function getWatcherId(){
+	function wid(){
 	  return watcherId ++
 	}
 
@@ -2482,29 +2387,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.scope = view.$data
 	  this.last = null
 	  this.current = null
-	  //是否已经取过第一次值了，意味着不再需要检测针对defineproperty依赖了
-	  this.hasFirstGetValued = false
-	  this.id = getWatcherId()
+	  this.__depend = false //是否已经做过属性依赖的检测了
+	  this.id = wid()
 	}
 
+	//当前正在解析的watcher,全局只有唯一的一个
 	Watcher.currentTarget = null
-
-	Watcher.prototype.removeDirective = function(dir) {
-	  var dirs = this.__directives
-	  var index = _.indexOf(dirs,dir)
-
-	  if (index != -1) {
-	    dirs.splice(index,1)
-	  }
-
-	}
 
 
 	Watcher.prototype.applyFilter = function(value, filterName) {
 
 	  if (!filterName) return value
 
-	  //从rootview拿filter
 	  var filter = this.__view.$rootView.__filters[filterName]
 	  if (filter) {
 	    return filter.call(this.__view.$rootView, value, this.scope)
@@ -2514,38 +2408,27 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	Watcher.prototype.getValue = function() {
 	  if (!this.expression) return ''
-	    //取值很容易出错，需要给出错误提示
 	  var value
-
+	  //取值很容易出错，需要给出错误提示
 	  try {
-
-	    if (!this.hasFirstGetValued) Watcher.currentTarget = this
+	    if (!this.__depend) Watcher.currentTarget = this
 	    value = new Function('_scope', '_that', 'return ' + this.expression)(this.scope, this)
-	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
+	    if (!this.__depend) Watcher.currentTarget = null
 	  } catch (e) {
 
-	    if (!this.hasFirstGetValued) Watcher.currentTarget = null
+	    if (!this.__depend) Watcher.currentTarget = null
 	    if (true) _.log('error when watcher get the value,please check your expression: "' + this.expression + '"', e)
 	  }
 
-	  this.hasFirstGetValued = true
+	  this.__depend = true
 	  return value
 	}
-
-	//使用队列更新
-	// Watcher.prototype.batchCheck = function() {
-	//   //每个rootview有自己的执行队列
-	//   var batchQueue = this.__view.$rootView.batchQueue
-	//   if (!batchQueue) batchQueue = this.__view.$rootView.batchQueue = new watchersQueue()
-
-	//   batchQueue.push(this)
-
-	// }
 
 
 	Watcher.prototype.check = function() {
 	  var self = this
 
+	  //用户自己的watcher先执行完
 	  if (this.isUserWatcher) {
 	    this.current = this.getValue()
 	    if (this.last != this.current) {
@@ -2553,13 +2436,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        callback(self.last, self.current)
 	      })
 	    }
-
 	    this.last = this.current
 
 	  }else{
-
+	    //系统watcher加入异步批量队列
 	    Queue.update(this)
-	    //this.batchCheck()
 	  }
 
 	}
@@ -2574,11 +2455,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //directive自己判断要不要更新
 	    if (dir.shoudUpdate(last, current)) {
 	      //调用父级view的hook
-	      //self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
+	      self.__view.$rootView.fire('beforeDirectiveUpdate', dir, last, current)
 	      dir.update && dir.update(current)
-	      //使用queue去批量更新
-	      //watchersQueue.batchUpdate(dir)
-	      //self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
+	      self.__view.$rootView.fire('afterDirectiveUpdate', dir, last, current)
 	    }
 	  })
 
@@ -2607,20 +2486,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	//全局唯一的队列
 	var queue = []
-	//正在等待更新的watcher
+	  //正在等待更新的watcher
 	var waiting = {}
 
 	var isWating = false
 	var isUpdating = false
 
 
-	function flushUpdate(){
+	function flushUpdate() {
+
+	  if (!isWating && !isUpdating) return
 
 	  isUpdating = true
 
-	  _.each(queue,function(watcher){
+	  _.each(queue, function(watcher) {
 	    //如果watcher本身已经被销毁了（比如if,for的view destroy），就不需要再check了
-	    if(!watcher.isDestroyed) watcher.batchCheck()
+	    if (!watcher.isDestroyed) watcher.batchCheck()
 	    waiting[watcher.id] = null
 	  })
 
@@ -2652,15 +2533,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	}
 
-
-
-
-
-
-
-
-
-
+	exports.flushUpdate = flushUpdate
 
 /***/ },
 /* 19 */
@@ -2701,7 +2574,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  depend:function(){
 	    var watchers = this.watchers
 	    _.each(watchers,function(watcher){
-	      watcher.hasFirstGetValued = false
+	      watcher.__depend = false
 	      watcher.getValue()
 	    })
 	  },
@@ -2883,6 +2756,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var noop = function() {}
 
+
+	var singgleCloseTags = {
+	  'area': true,
+	  'base': true,
+	  'br': true,
+	  'col': true,
+	  'embed': true,
+	  'hr': true,
+	  'img': true,
+	  'input': true,
+	  'keygen': true,
+	  'link': true,
+	  'meta': true,
+	  'param': true,
+	  'source': true,
+	  'track': true,
+	  'wbr': true
+	}
+
 	PAT_ID = 1
 
 	TAG_ID = config.tagId
@@ -2905,9 +2797,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    html = this.deleted ? self.mountDeleted(view) : self.mountHtml(view)
 
-	    // view.$rootView.on('afterMount',function(){
-	    // })
-	    self.mounted = true
+	    //view.$rootView.on('afterMount',function(){
+	      self.mounted = true
+	    //})
+
 	    return html
 	  },
 	  //软删除的节点，会在页面上存在一个注释，方便确认位置
@@ -3164,18 +3057,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  },
 	  mountHtml: function(view) {
-	    //todo 不闭合标签
 	    var tagName = this.tagName
 	    var attrsString = ''
 
 	    _.each(this.attributes, function(attr) {
-	      //需要判断整数的情况
+	      //如果不是debug某事跳过指令属性
+	      if (!config.debug && ~attr.name.indexOf(config.prefix)) {
+	        return
+	      }
+	      //todo 需要判断整数的情况
 	      attrsString += [' ', attr.name, '="', attr.value, '" '].join('')
 	    })
 
 	    attrsString += ' ' + TAG_ID + '="' + this.patId + '"'
 
-	    if (tagName == 'input') {
+	    if (singgleCloseTags[tagName]) {
 	      return '<' + tagName + attrsString + ' />'
 	    }
 

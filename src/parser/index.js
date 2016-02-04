@@ -58,8 +58,8 @@ var interpolationRegx = new RegExp(
  *   name:'sk-bind',
  *   value:'test.text',
  *   args:[], //参数数组
+ *   priority:3000, //指令的优先级，值越大，绑定时优先级越高
  *   oneTime:false, //是否是一次性指令，不会响应数据变化
- *   html:false, //是否支持html格式，也就是不会被转义
  *   block:false, //是否是block类型的指令
  *   isInterpolationRegx: true //是否是插值
  *
@@ -87,7 +87,6 @@ exports.parseDirective = function(attr) {
       directive: 'bind',
       args: [name],
       oneTime: false,
-      html: false,
       block:false,
       expression: exports.token2expression(tokens),
       isInterpolationRegx: true //标识一下是插值
@@ -112,7 +111,6 @@ exports.parseDirective = function(attr) {
     directive: directive,
     args: args || [],
     oneTime: false,
-    html: false,
     block: dirOptions.block,
     priority: dirOptions.priority,
     expression: exports.parseExpression(value)

@@ -40,7 +40,7 @@ module.exports = {
 
       this.childView = new this.view.constructor({
         el:newVdNode,
-        skipinject:true,
+        //skipinject:true,
         data:this.view.$data,
         rootView:this.view.$rootView
       })

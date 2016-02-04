@@ -8,16 +8,11 @@ var parseExpression = parser.parseExpression
 var config = require('./config')
 
 /**
- * 绑定directive
+ * 绑定directive，初始化指令
  * @param  {object} describe 描述信息
  */
 function _bindDir(describe) {
   var dirInstance, watcher, view, value
-
-  //如果不是debug模式，可以把属性删除了.
-  // if (!config.debug && describe.el && describe.el.removeAttribute) {
-  //   describe.el.removeAttribute(describe.name)
-  // }
 
 
   view = describe.view
@@ -27,45 +22,37 @@ function _bindDir(describe) {
   //先去watch池子里找,value可以作为key
   watcher = view.__watchers[describe.value]
 
-  if (watcher) {
-    //使用老的watcher，如果是一次性的，就不需要加入对应的指令池
-    if (!describe.oneTime) {
-      watcher.__directives.push(dirInstance)
-    }
-
-  }else{
-    //新建一个watch
+  if (!watcher){
     watcher = new Watcher(view, describe.expression)
-    //看是不是一次性的，新的watch需要加入view的watch池子
-    if (!describe.oneTime) {
-      watcher.__directives.push(dirInstance)
-      view.__watchers[describe.value] = watcher
-    }
+    view.__watchers[describe.value] = watcher
+  }
+
+  //看是不是一次性的，一次性的不需要加入到watcher的指令池，不需要更新
+  if (!describe.oneTime) {
+    watcher.__directives.push(dirInstance)
   }
 
   dirInstance.__watcher = watcher
+  //执行初始化，如果有的话
   dirInstance.initialize && dirInstance.initialize()
-  //执行绑定
-  //dirInstance.bind(describe.args)
   //todo... 这边获取值可以缓存住,优化
+  //第一次取值，会通过get set绑定好数据依赖
   value = watcher.getValue()
   //赋值
   watcher.last = value
-  //首次自动调用bind
+  //调用bind
   dirInstance.bind(value)
-  //dirInstance.update(value)
 
   return dirInstance
 }
 
 //解析属性，解析出directive，这个只针对element
 function _compileDirective(el,view,attributes) {
-  var attrs, describe, skipChildren, childNodes,blockDirectiveCount,isCurViewRoot
+  var attrs, describe, skipChildren, childNodes,isCurViewRoot
 
 
   isCurViewRoot = el === view.$el ? true : false
 
-  blockDirectiveCount = 0
   attributes = attributes || []
 
   var describes = [],blockDescribes = []
@@ -88,14 +75,13 @@ function _compileDirective(el,view,attributes) {
 
   /**
    * 策略是：
-   * 1. 如果有block并且block没有解析，那么就可以交给子集的block指令去解析，它会负责解析自己的区块
-   * 2. 如果有block并且block已经解析过了，那么证明block的解析已经由父级view完成，那么只需要解析剩余的其他指令就可以了
+   * 1. 如果有block并且不是在根节点上，那么就可以交给子block指令去解析，它会负责解析自己的区块
+   * 2. 如果有block但是是在根节点上，那么证明block的解析已经由父级view完成，那么只需要解析剩余的其他指令就可以了
    * 3. 没有block那么就正常解析普通就行。
    */
 
   if (!isCurViewRoot && blockDescribes.length) {
     //只管第一个block
-    //el.isBlockBind = true
     _bindDir(blockDescribes[0])
     return
   }
@@ -127,7 +113,7 @@ function _compileTextNode(el, view) {
 
   oneTime = token.oneTime
 
-  //对于普通的文本节点作为 一次性的不需要更新
+  //针对变量类型的 文本进行指令解析，区分html和text
   if (token.type === parser.TextTemplateParserTypes.binding) {
 
     _bindDir({
@@ -136,7 +122,6 @@ function _compileTextNode(el, view) {
       view: view,
       expression: parseExpression(token.value),
       oneTime:oneTime,
-      //html:token.html,
       directive: token.html ? 'html' : 'text',
       el: el
     })
@@ -147,19 +132,19 @@ function _compileTextNode(el, view) {
 exports.parse = function(el,view) {
 
   if (!_.isElement(el)) return
+
   //对于文本节点采用比较特殊的处理
   if (el.nodeType == 3 && _.trim(el.data)) {
     _compileTextNode(el, view)
   }
 
-  //编译普通节点
+  //普通节点
   if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
     _compileDirective(el, view, _.toArray(el.attributes))
   }
 
-  //编译集合节点
+  //集合节点
   if ((el.nodeType == -1)) {
-    //todo  只保留block节点
     _compileDirective(el, view, _.toArray(el.attributes))
   }
 

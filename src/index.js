@@ -1,6 +1,7 @@
 var config = require('./config.js')
 var Compile = require('./compile.js')
 var Watcher = require('./watcher/index.js')
+var Queue = require('./watcher/queue.js')
 var Directive = require('./directive/index.js')
 var Parser = require('./parser/index.js')
 var Dom = require('./parser/dom.js')
@@ -8,6 +9,8 @@ var Data = require('./data/index.js')
 var Element = require('./elements/index.js')
 var Event = require('./event')
 var _ = require('./util')
+
+
 
 var VID = 0
 
@@ -23,7 +26,7 @@ function vid(){
  */
 var View = function (options) {
 
-  //需要绑定的节点，必须,可以是
+  //需要绑定的节点，必须,可以是virtual dom
   this.$el = _.query(options.el)
 
   if (process.env.NODE_ENV != 'production' && !this.$el) {
@@ -33,18 +36,20 @@ var View = function (options) {
   this.$data = options.data || {}
   //保存根view,没有的话就是自己
   this.$rootView = options.rootView ? options.rootView : this
-  //模板，可选
+  //模板
   this.__template = options.template
-  this.skipinject = options.skipinject
-  this.dependViews = []
+  //依赖的子view,当此view的一级key更新时，需要同步更新子view的一级key
+  this.__dependViews = []
   //所有指令观察对象
   this.__watchers = {}
-  //用户自定义的观察对象
+  //用户自定义的观察对象，不会进入队列，会立即执行
   this.__userWatchers = {}
-  //所有过滤器
+  //过滤器
   this.__filters = options.filters || {}
   //唯一标识
   this.__vid = options.vid || vid()
+  //是否已经渲染到了页面中
+  this.__rendered = false
 
   //记录初始化时间，debug模式下才会打出来
   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
@@ -74,38 +79,56 @@ View.prototype._init = function() {
     el = Dom.transfer(this.__template)
   }
 
-  if (!this.skipinject) {
-    this.$inject()
-  }
+  //注入get set
+  this.$data = this.$inject(this.$data)
+  //增加特殊联动依赖
+  this.__depend()
+
 
   this.fire('beforeCompile')
+  //开始解析编译
   this.$compile(el)
   this.fire('afterCompile')
 
   //如果模板，最后一次性的加到dom里
-  if (this.__template) this.$el.innerHTML = el.mountView(this)
+  if (this.__template){
+    this.$el.innerHTML = el.mountView(this)
+    this.__rendered = true
+  }
+
+  //如果是虚拟dom，调用方法写到页面上
+  if (this.$el.__VD__) {
+    //todo
+  }
 
   this.fire('afterMount')
 }
 
-//注入get set
-View.prototype.$inject = function(){
-  var oriData = this.$data
-  this.$data = Data.inject(this.$data)
 
-  //增加对一级key的watcher,这样当用户改变了这个值以后，通知子view也去改变这个值。
-  //达到联动的目的
+//增加对一级key的watcher,这样当用户改变了这个值以后，通知子view也去改变这个值。
+//达到联动的目的。
+//这个主要用在for这种会创建子scope的指令上。
+View.prototype.__depend = function(){
   var self = this
-  _.each(oriData,function(val,key){
-
+  _.each(this.$data.__ori__,function(val,key){
     self.$watch(key,function(){
-      _.each(self.dependViews,function(view){
+
+      if (!self.__dependViews) return
+      _.each(self.__dependViews,function(view){
         view.$data[key] = self.$data[key]
       })
-
     })
   })
+}
 
+
+
+View.prototype.$inject = function(data){
+  return Data.inject(data)
+}
+
+View.prototype.$flushUpdate = function(){
+  return Queue.flushUpdate()
 }
 
 
@@ -113,58 +136,20 @@ View.prototype.$compile = function(el) {
   Compile.parse(el,this)
 }
 
-// //开始脏检测，在digest上面再封装一层，可以检测如果当前已有进行中的就延迟执行
-// //外部用户使用这个方法，也就是一个rootview去脏检测，如果有其他rootview在digest，就延迟
-// View.prototype.$apply = function(fn) {
-//   if (View._isDigesting) {
-//     setTimeout(_.bind(arguments.callee,this),0)
-//     return
-//   }
-
-//   View._isDigesting = true
-//   //记录脏检测时间，debug模式下才会打出来
-//   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
-//     _.time('view[' + this.__vid + ']-digest:')
-//   }
-
-//   fn && fn.call(this)
-//   this.$digest()
-
-//   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
-//     _.timeEnd('view[' + this.__vid + ']-digest:')
-//   }
-
-//   View._isDigesting = false
-
-// }
-
-// //开始脏检测，这个方法只有内部可以使用
-// View.prototype.$digest = function() {
-//   //先检查用户自定义的watcher,这样用户的定义可以先执行完
-//   this.__userWatchers && _.each(this.__userWatchers,function(watcher){
-//     watcher.check()
-//   })
-
-//   this.__watchers && _.each(this.__watchers,function(watcher){
-//     watcher.check()
-//   })
-// }
 
 /**
  * 销毁view
- * @param  {boolean} destroyRoot 是否销毁绑定的根节点
  */
-View.prototype.$destroy = function(destroyRoot) {
+View.prototype.$destroy = function() {
   _.each(this.__watchers,function(watcher){
     //通知watch销毁，watch会负责销毁对应的directive
     //而对于针对的seter getter  会在下次更新时去掉这些引用
     watcher.destroy()
   })
-  destroyRoot ? _.remove(this.$el) : (this.$el.innerHTML = '')
 
-  // if (this.$el.nodeType == -1) {
-  //   this.$el.remove()
-  // }
+  if (this.$el.innerHTML) {
+    this.$el.innerHTML = ''
+  }
 
   this.$el = null
   this.$data = null
@@ -173,7 +158,7 @@ View.prototype.$destroy = function(destroyRoot) {
   this.__watchers = null
   this.__userWatchers = null
   this.__filters = null
-  this._destroyed = true
+  this.isDestroyed = true
 }
 
 
@@ -218,16 +203,11 @@ View.prototype.$watch = function(expression,callback){
 
 }
 
-
+//创建节点接口
 View.createElement = Element.createElement
 View.createTextNode = Element.createTextNode
 
-
-
-
-View._isDigesting = false
-
-//暴露基本对象接口
+//暴露底层对象
 View.Parser = Parser
 View.Dom = Dom
 View.Directive = Directive

@@ -33,7 +33,6 @@ var defineSetProxy = function(obs,_key){
 
     //有些已经失效的watcher先去掉
     ob.unique()
-    //watchers = removeDeleted(watchers)
 
     //如果是对象需要特殊处理
     if (_.isObject(newVal)) {
@@ -205,61 +204,6 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
 
 exports.define = define
 
-// exports.defineProperty = function(obj,key){
-
-//   //var watchers = [] //保存 针对当前这个key依赖的watchers
-
-//   var ob = new Observer()
-//   var val = obj[key]
-
-//   Object.defineProperty(obj, key, {
-//     enumerable: true,
-//     configurable: true,
-//     get: function() {
-//       //找到正在交互的watch
-//       //var kkk = key
-//       // var currentTarget = Watcher.currentTarget
-//       // if (currentTarget && _.indexOf(watchers,currentTarget) == -1) {
-//       //   watchers.unshift(currentTarget)
-//       // }
-//       ob.addWatcher()
-
-//       if (_.isArray(val) && !val.__ob__) {
-//         val.__ob__ = ob
-//       }
-
-//       return val
-//     },
-//     set: function(newVal) {
-//       if (newVal === val) {
-//         return
-//       }
-
-//       //有些已经失效的watcher先去掉
-//       ob.unique()
-//       //watchers = removeDeleted(watchers)
-
-//       val = newVal
-
-//       //如果是对象需要特殊处理
-//       if (_.isObject(newVal)) {
-//         exports.inject(newVal)
-//         //依赖的watcher需要重新get一遍值
-//         //还要考虑scope有没有改变
-//         ob.depend()
-//         // _.each(watchers,function(watcher){
-//         //   watcher.hasFirstGetValued = false
-//         //   watcher.getValue()
-//         // })
-//       }
-
-//       ob.notify()
-//       // _.each(watchers,function(watcher){
-//       //   watcher.check()
-//       // })
-//     }
-//   })
-// }
 
 exports.inject = function(data) {
   var newData = null
@@ -276,8 +220,6 @@ exports.inject = function(data) {
   }
 
   if (_.isPlainObject(data)) {
-    //newData = {}
-    //_.assign(newData,data)
     newData = exports.define(data)
     //检测对象的值，需要再递归的去inject
     _.each(data,function(value,key){
