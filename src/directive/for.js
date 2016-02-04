@@ -2,6 +2,8 @@ var _ = require('../util')
 var parser = require('../parser')
 var parseExpression = parser.parseExpression
 var Data = require('../data/index.js')
+var Config = require('../config.js')
+
 
 //差异更新的几种类型
 var UPDATE_TYPES = {
@@ -34,6 +36,7 @@ module.exports = {
         this.iterator = _.trim(itMatch[1])
         this.alias = _.trim(itMatch[2])
       } else {
+        this.iterator = Config.defaultIterator //默认的key
         this.alias = _.trim(inMatch[1])
       }
       //修改观察者对应的expression

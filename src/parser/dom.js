@@ -7,12 +7,22 @@
 var _ = require('../util/index.js')
 var parser = require('./index.js')
 var Element = require('../elements/index.js')
+var Config = require('../config.js')
+
+
+
+
+var delimiters = Config.delimiters
+var blockStartReg = new RegExp(delimiters[0] + '\\#([^(]*)\\((.*?)\\)' + delimiters[1],'g')
+var blockStartRegFalse = new RegExp(delimiters[0] + '\\^([^(]*)\\((.*?)\\)' + delimiters[1],'g')
+var blockEndReg = new RegExp(delimiters[0] + '\\/(.*?)' + delimiters[1],'g')
 
 var createElement = Element.createElement
 var createTextNode = Element.createTextNode
 
 TAG_RE = parser.TAG_RE
 TEXT_NODE = 'text'
+
 
 /**
  * 收集模板中的各种Tag
@@ -206,11 +216,28 @@ function getStructure(tags, pointer, pair) {
 }
 
 
+//对template做一次正则替换，以支持mustache的一些写法
+function _normalize(template){
+
+  var newTpl = template
+
+  newTpl = newTpl.replace(blockStartReg,'<template t-$1="$2">')
+  newTpl = newTpl.replace(blockStartRegFalse,'<template t-$1="!($2)">')
+  newTpl = newTpl.replace(blockEndReg,'</template>')
+
+  return newTpl
+
+}
+
+
 exports.transfer = function(template) {
 
   if (_.isObject(template) && template.__VD__) {
     return template
   }
+
+  template = _normalize(template)
+
   var structure = []
   var result,rootElement
 

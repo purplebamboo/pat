@@ -305,9 +305,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	exports.prefix = 't'
-	exports.tagId = 'pat-id'
+	exports.tagId = 'p-id'
 	exports.delimiters = ['{{','}}']
 	exports.unsafeDelimiters = ['{{{','}}}']
+
+	exports.defaultIterator = '__INDEX__'
 
 	exports.debug = false
 
@@ -1768,6 +1770,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var parser = __webpack_require__(9)
 	var parseExpression = parser.parseExpression
 	var Data = __webpack_require__(16)
+	var Config = __webpack_require__(1)
+
 
 	//差异更新的几种类型
 	var UPDATE_TYPES = {
@@ -1800,6 +1804,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.iterator = _.trim(itMatch[1])
 	        this.alias = _.trim(itMatch[2])
 	      } else {
+	        this.iterator = Config.defaultIterator //默认的key
 	        this.alias = _.trim(inMatch[1])
 	      }
 	      //修改观察者对应的expression
@@ -3412,12 +3417,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
 	var Element = __webpack_require__(23)
+	var Config = __webpack_require__(1)
+
+
+
+
+	var delimiters = Config.delimiters
+	var blockStartReg = new RegExp(delimiters[0] + '\\#([^(]*)\\((.*?)\\)' + delimiters[1],'g')
+	var blockStartRegFalse = new RegExp(delimiters[0] + '\\^([^(]*)\\((.*?)\\)' + delimiters[1],'g')
+	var blockEndReg = new RegExp(delimiters[0] + '\\/(.*?)' + delimiters[1],'g')
 
 	var createElement = Element.createElement
 	var createTextNode = Element.createTextNode
 
 	TAG_RE = parser.TAG_RE
 	TEXT_NODE = 'text'
+
 
 	/**
 	 * 收集模板中的各种Tag
@@ -3611,11 +3626,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
+	//对template做一次正则替换，以支持mustache的一些写法
+	function _normalize(template){
+
+	  var newTpl = template
+
+	  newTpl = newTpl.replace(blockStartReg,'<template t-$1="$2">')
+	  newTpl = newTpl.replace(blockStartRegFalse,'<template t-$1="!($2)">')
+	  newTpl = newTpl.replace(blockEndReg,'</template>')
+
+	  return newTpl
+
+	}
+
+
 	exports.transfer = function(template) {
 
 	  if (_.isObject(template) && template.__VD__) {
 	    return template
 	  }
+
+	  template = _normalize(template)
+
 	  var structure = []
 	  var result,rootElement
 

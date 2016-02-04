@@ -21,13 +21,21 @@
   <input type="text" t-model='text' value=""/>
 
   {{text}}111
-  <div t-for="item in lists" id="{{item.name}}">
-    {{item.text}}---{{text}}
-  </div>
 
-  <template t-if="key == 11">
+  {{#for(item in lists)}}
+    <div id="{{item.name}}">
+      {{item.text}}---{{text}}
+    </div>
+  {{/for}}
+
+  {{#if(key == 11)}}
     <div id="{{key}}">{{{word2}}}</div>
-  </template>
+  {{/if}}
+
+  {{^if(key == 11)}}
+    <div id="{{key}}">{{{text}}}</div>
+  {{/if}}
+
 </div>
 </script>
 
