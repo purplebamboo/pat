@@ -32,7 +32,33 @@ function getPatId() {
   return PAT_ID++
 }
 
-var Node = Class.extend({
+//一些dom的操作，会抛出事件
+var domProp = {
+  domBefore:function(el,target){
+    this.view.$rootView.fire('beforeAddBlock',[el],this)
+    _.before(el,target)
+    this.view.$rootView.fire('afetrAddBlock',[el],this)
+  },
+  domAfter:function(el,target){
+    this.view.$rootView.fire('beforeAddBlock',[el],this)
+    _.after(el,target)
+    this.view.$rootView.fire('afetrAddBlock',[el],this)
+  },
+  domReplace:function(target,el){
+    this.view.$rootView.fire('beforeAddBlock',[el],this)
+    this.view.$rootView.fire('beforeDeleteBlock',[target],this)
+    _.replace(target,el)
+    this.view.$rootView.fire('afterDeleteBlock',[target],this)
+    this.view.$rootView.fire('afetrAddBlock',[el],this)
+  },
+  domRemove:function(element){
+    this.view.$rootView.fire('beforeDeleteBlock',[element],this)
+    _.remove(element)
+    this.view.$rootView.fire('afterDeleteBlock',[element],this)
+  }
+}
+
+var Node = Class.extend(domProp,{
   __VD__:true,
   init: function() {
 
@@ -167,12 +193,12 @@ var Node = Class.extend({
       //对于collection要特殊处理
       if (dstEl.nodeType == -1) {
         for (var i = 0,l = dstEl.childNodes.length; i < l; i++) {
-          _.before(dstEl.childNodes[i].getElement(),this.getElement())
+          this.domBefore(dstEl.childNodes[i].getElement(),this.getElement())
         }
-        _.remove(this.getElement())
+        this.domRemove(this.getElement())
 
       }else{
-        _.replace(this.getElement(),dstEl.getElement())
+        this.domReplace(this.getElement(),dstEl.getElement())
       }
       //dstEl.remove()
     }else{
@@ -180,9 +206,9 @@ var Node = Class.extend({
       var mountHtml = dstEl.mountView(this.view)
       var nodes = _.string2nodes(mountHtml)
       for (var i = 0,l = nodes.length; i < l; i++) {
-        _.before(nodes[0],this.getElement())
+        this.domBefore(nodes[0],this.getElement())
       }
-      _.remove(this.getElement())
+      this.domRemove(this.getElement())
     }
 
     return dstEl
@@ -204,17 +230,17 @@ var Node = Class.extend({
 
       if (this.nodeType == -1) {
         for (var i = 0,l = this.childNodes.length; i < l; i++) {
-          _.before(this.childNodes[i].getElement(),dstNode)
+          this.domBefore(this.childNodes[i].getElement(),dstNode)
         }
       }else{
-        _.before(this.element,dstNode)
+        this.domBefore(this.element,dstNode)
       }
 
     }else{
       var mountHtml = this.mountView(dstEl.view)
       var nodes = _.string2nodes(mountHtml)
       for (var i = 0,l = nodes.length; i < l; i++) {
-        _.before(nodes[0],dstEl.getElement())
+        this.domBefore(nodes[0],dstEl.getElement())
       }
     }
   },
@@ -234,10 +260,10 @@ var Node = Class.extend({
     if (this.getElement()){
       if (this.nodeType == -1) {
         for (var i = 0,l = this.childNodes.length; i < l; i++) {
-          _.after(this.childNodes[i].getElement(),dstNode)
+          this.domAfter(this.childNodes[i].getElement(),dstNode)
         }
       }else{
-        _.after(this.element,dstNode)
+        this.domAfter(this.element,dstNode)
       }
 
     }else{
@@ -245,7 +271,7 @@ var Node = Class.extend({
       var nodes = _.string2nodes(mountHtml)
 
       for (var i = 0,l = nodes.length; i < l; i++) {
-        _.after(nodes[0],dstNode)
+        this.domAfter(nodes[0],dstNode)
       }
     }
 
@@ -262,10 +288,10 @@ var Node = Class.extend({
     //软删除的话不是真的删除，而是加一个占位符
     if (softDeleted) {
       var deletedNode = _.string2node(this.mountDeleted())
-      _.replace(this.getElement(),deletedNode)
+      this.domReplace(this.getElement(),deletedNode)
       this.element = deletedNode
     }else{
-      _.remove(this.getElement())
+      this.domRemove(this.getElement())
     }
   }
 })
@@ -416,7 +442,7 @@ var Collection = Element.extend({
     if (!this.getElement()) return
     //软删除的话不是真的删除，而是加一个占位符
     var deletedNode = _.string2node(this.mountDeleted())
-    _.replace(this.getElement(),deletedNode)
+    this.domReplace(this.getElement(),deletedNode)
     this.element = deletedNode
     this.childNodes.shift()
     //挨个删除子节点，这个是硬删除，没必要留着了。有个位置留着就行
