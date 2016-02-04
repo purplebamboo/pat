@@ -68,6 +68,11 @@ module.exports = {
     return new Function('$scope', 'return $scope.' + key + '="' + val + '"')(this.view.$data)
   },
   update: function(value) {
+
+    if (value === undefined || value === null) {
+      value = ''
+    }
+
     this.curValue = value
     this.el.value = value
   },
