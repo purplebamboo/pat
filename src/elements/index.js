@@ -42,12 +42,16 @@ var Node = Class.extend({
 
     self = this
     self.view = view
+
+    //mountView被认为只有在一次性生成dom放到页面上才会使用
+    //所以这里可以直接认为有了patId后就已经生成了dom,可以拿到dom
     self.mountId()
 
     html = this.deleted ? self.mountDeleted(view) : self.mountHtml(view)
 
-    //view.$rootView.on('afterMount',function(){
-      self.mounted = true
+    //view.on('afterMount',function(){
+
+    //self.mounted = true
     //})
 
     return html
@@ -75,10 +79,10 @@ var Node = Class.extend({
     })
   },
   getElement: function() {
-    if (!this.patId || !this.view) return
-
-    if (this.element) return this.element
     var self = this
+
+    if (!self.patId || !self.view) return
+    if (self.element) return self.element
 
     self.element = _.queryPatId(self.view.$rootView.$el,self.patId)
     return self.element
@@ -153,18 +157,33 @@ var Node = Class.extend({
       this.remove(true)
     }
 
-    //这里比较特殊，会先改真实dom
-    if (this.getElement()) {
+    this.parentNode._findAndSplice(this, dstEl)
+
+    //如果我还不在dom上直接返回
+    if (!this.getElement()) return
+
+    //看对方在不在dom上
+    if (dstEl.getElement()) {
+      //对于collection要特殊处理
+      if (dstEl.nodeType == -1) {
+        for (var i = 0,l = dstEl.childNodes.length; i < l; i++) {
+          _.before(dstEl.childNodes[i].getElement(),this.getElement())
+        }
+        _.remove(this.getElement())
+
+      }else{
+        _.replace(this.getElement(),dstEl.getElement())
+      }
+      //dstEl.remove()
+    }else{
       //挨个的拿人家的子节点，替换
       var mountHtml = dstEl.mountView(this.view)
       var nodes = _.string2nodes(mountHtml)
       for (var i = 0,l = nodes.length; i < l; i++) {
-        _.before(nodes[0],this.element)
+        _.before(nodes[0],this.getElement())
       }
-      _.remove(this.element)
+      _.remove(this.getElement())
     }
-
-    this.parentNode._findAndSplice(this, dstEl)
 
     return dstEl
   },
@@ -175,12 +194,22 @@ var Node = Class.extend({
     dstEl.parentNode.childNodes.splice(index,0,this)
     this.parentNode = dstEl.parentNode
 
-    //没有在dom上不需要操作
-    if (!dstEl.mounted) return
+    //如果对方不在dom上，就没必要操作
+    if (!dstEl.getElement()) return
+
+    var dstNode = dstEl.nodeType == -1 ? dstEl.endElement : dstEl.getElement()
 
     //如果自己在dom上
-    if (this.mounted && this.getElement()){
-      _.before(this.element,dstEl.getElement())
+    if (this.getElement()){
+
+      if (this.nodeType == -1) {
+        for (var i = 0,l = this.childNodes.length; i < l; i++) {
+          _.before(this.childNodes[i].getElement(),dstNode)
+        }
+      }else{
+        _.before(this.element,dstNode)
+      }
+
     }else{
       var mountHtml = this.mountView(dstEl.view)
       var nodes = _.string2nodes(mountHtml)
@@ -197,17 +226,26 @@ var Node = Class.extend({
     dstEl.parentNode.childNodes.splice(index,0,this)
     this.parentNode = dstEl.parentNode
 
-    //没有在dom上不需要操作
-    if (!dstEl.mounted) return
+    //如果对方不在dom上，就没必要操作
+    if (!dstEl.getElement()) return
 
+    var dstNode = dstEl.nodeType == -1 ? dstEl.endElement : dstEl.getElement()
     //如果自己在dom上
-    if (this.mounted && this.getElement()){
-      _.after(this.element,dstEl.getElement())
+    if (this.getElement()){
+      if (this.nodeType == -1) {
+        for (var i = 0,l = this.childNodes.length; i < l; i++) {
+          _.after(this.childNodes[i].getElement(),dstNode)
+        }
+      }else{
+        _.after(this.element,dstNode)
+      }
+
     }else{
       var mountHtml = this.mountView(dstEl.view)
       var nodes = _.string2nodes(mountHtml)
+
       for (var i = 0,l = nodes.length; i < l; i++) {
-        _.after(nodes[0],dstEl.getElement())
+        _.after(nodes[0],dstNode)
       }
     }
 
@@ -220,20 +258,15 @@ var Node = Class.extend({
       this.parentNode._findAndSplice(this)
     }
 
-    if (!this.mounted || !this.getElement()) return
+    if (!this.getElement()) return
     //软删除的话不是真的删除，而是加一个占位符
     if (softDeleted) {
       var deletedNode = _.string2node(this.mountDeleted())
-      _.replace(this.element,deletedNode)
+      _.replace(this.getElement(),deletedNode)
       this.element = deletedNode
     }else{
-      _.remove(this.element)
+      _.remove(this.getElement())
     }
-
-
-  },
-  destroy: function() {
-
   }
 })
 
@@ -270,7 +303,7 @@ var Element = Node.extend({
       this.attributes.push(attr)
     }
     //修改真实dom
-    if (!this.mounted || !this.getElement()) return
+    if (!this.getElement()) return
     var element = this.getElement()
 
     this.view.$rootView.fire('beforeUpdateAttribute', [element], this)
@@ -297,7 +330,7 @@ var Element = Node.extend({
       this.attributes.splice(index, 1)
     }
     //修改真实dom
-    if (!this.mounted || !this.getElement()) return
+    if (!this.getElement()) return
 
     var element = this.getElement()
     this.view.$rootView.fire('beforeRemoveAttribute', [element], key, this)
@@ -330,12 +363,6 @@ var Element = Node.extend({
     })
 
     return '<' + tagName + attrsString + '>' + childHtml + '</' + tagName + '>'
-  },
-  append: function() {
-
-  },
-  preapend: function() {
-
   }
 })
 
@@ -350,8 +377,6 @@ var Collection = Element.extend({
     this.tagName = options.tagName
     this.attributes = options.attributes
     this.childNodes = options.childNodes
-    //this.startNode = this.childNodes[0]
-    //this.endNode = this.childNodes[this.childNodes.length-1]
   },
   mountHtml:function(view){
     var childHtml = ''
@@ -361,16 +386,11 @@ var Collection = Element.extend({
 
     return childHtml
   },
+
   getElement: function() {
     if (!this.patId || !this.view) return
 
     if (this.element) return this.element
-
-    //删除的情况下直接返回占位的节点
-    if (this.deleted) {
-      this.element = _.queryPatId(this.view.$rootView.$el,this.patId)
-      return this.element
-    }
 
     //否则返回第一个子节点
     var startElement = this.first().getElement()
@@ -385,28 +405,7 @@ var Collection = Element.extend({
     }
     return startElement
   },
-  // replace: function(dstEl) {
-  //   //如果没有删除，那就先软删除自己
-  //   if (!this.deleted) {
-  //     this.remove(true)
-  //   }
-
-  //   if (this.getElement()) {
-  //     //挨个的拿人家的子节点，替换
-  //     var mountHtml = dstEl.mountView(this.view)
-  //     var nodes = _.string2nodes(mountHtml)
-  //     //var firstNode = nodes[0]
-  //     for (var i = 0,l = nodes.length; i < l; i++) {
-  //       _.before(nodes[0],this.element)
-  //     }
-  //     _.remove(this.element)
-  //   }
-
-  //   this.parentNode._findAndSplice(this, dstEl)
-  // },
   remove: function(softDeleted) {
-
-    var element = this.getElement()
 
     if (softDeleted) {
       this.deleted = true
@@ -414,10 +413,10 @@ var Collection = Element.extend({
       this.parentNode._findAndSplice(this)
     }
 
-    if (!this.mounted) return
+    if (!this.getElement()) return
     //软删除的话不是真的删除，而是加一个占位符
     var deletedNode = _.string2node(this.mountDeleted())
-    _.replace(element,deletedNode)
+    _.replace(this.getElement(),deletedNode)
     this.element = deletedNode
     this.childNodes.shift()
     //挨个删除子节点，这个是硬删除，没必要留着了。有个位置留着就行
@@ -439,10 +438,9 @@ var TextNode = Node.extend({
     this.oneTime = true
   },
   html: function(text) {
-    //if (this.oneTime) return
     this.data = text
-      //修改真实dom
-    if (!this.mounted || !this.getElement()) return
+    //修改真实dom
+    if (!this.getElement()) return
     this.getElement().innerHTML = text
   },
   mountHtml: function(view) {
@@ -458,10 +456,6 @@ var TextNode = Node.extend({
     }
 
     return '<span ' + TAG_ID + '="' + this.patId + '">' + this.data + '</span>'
-  },
-  append: function() {},
-  preapend: function() {
-
   }
 })
 

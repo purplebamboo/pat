@@ -50,35 +50,40 @@ module.exports = {
     this.oldViewMap = {}
     this.oldViewLists = []
     this.__node = this.el.clone()
+
+    this.orikeys = []
+
+    var ori = this.view.$data.__ori__
+    //需要把当前的数据复制过来
+    for (var oriKey in ori) {
+      if (ori.hasOwnProperty(oriKey)) {
+        this.orikeys.push(oriKey)
+      }
+    }
+
   },
   bind: function(value) {
 
-    // this.start = _.createAnchor('for-start')
-    // this.end = _.createAnchor('for-end')
-    // _.replace(this.el, this.end)
-    // _.before(this.start, this.end)
-
-    // this.__node = new Node(this.el)
-    // //检测当前循环的是不是template,这个时候的处理需要比较复杂的运算
-    // this.__isFrag = this.__node.isFrag
-
-    //初次渲染时需要判断
-    //如果是没数据，那么就加一个占位符，空在那边方便以后定位
-    //if (!value || value.length == 0) {
-     // this.el.remove(true)
-    //}
+    var self = this
 
     this.startNode = this.el
     //第一次直接软删除，作为定位
     this.startNode.remove(true)
-    //var name = this._generateKey()
-
-    // this.oldViewMap = {
-    //   name:
-    // }
-    // this.oldViewLists = []
+    this.isUpdated = false
 
     this.update(value)
+
+    //父view触发后，通知子view也fire
+    self.view.on('afterMount',function(){
+      self._fireChilds()
+    })
+
+  },
+  _fireChilds:function(){
+    //触发子view的事件
+    _.each(this.oldViewLists,function(view){
+      view.fire('afterMount')
+    })
 
   },
   _generateKey: function() {
@@ -92,7 +97,7 @@ module.exports = {
     var self = this
     var data,newNode,name,ori
     var curKey = '__pat_key__'
-    //var isListsArray = _.isArray(newLists)
+
 
     _.each(newLists, function(item, key) {
 
@@ -101,32 +106,20 @@ module.exports = {
       if (name && oldViewMap[name] && oldViewMap[name].$data[self.alias] === item) {
         newViewMap[name] = oldViewMap[name]
         //发现可以复用，就直接更新view就行
-        //当然要注意重新assign父级数据,如果上一级数据变化了，这里才能脏检测到改变
-        //_.assign(oldViewMap[name].$data,self.view.$data)
         //key需要重新赋值,会自动做出defineproperty的监听改变
         if(self.iterator) oldViewMap[name].$data[self.iterator] = key
-
-        //oldViewMap[name].$digest()
 
       } else {
         //否则需要新建新的view
         data = {}
-        ori = self.view.$data.__ori__
-        //需要把当前的数据复制过来
-        for (var oriKey in ori) {
-          if (ori.hasOwnProperty(oriKey)) {
-            data[oriKey] = self.view.$data[oriKey]
-          }
-        }
+
+        _.each(self.orikeys,function(oriKey){
+          data[oriKey] = self.view.$data[oriKey]
+        })
 
         if(self.iterator) data[self.iterator] = key
 
         data[self.alias] = item
-
-        //注入get set
-        // for(var key in data){
-        //   Data.defineProperty(data,key)
-        // }
 
         data = Data.define(data)
 
@@ -140,10 +133,10 @@ module.exports = {
         newViewMap[name] = new self.view.constructor({
           el: newNode,
           data: data,
-          skipinject:true,
           vid:name,
           rootView:self.view.$rootView
         })
+        newViewMap[name].orikeys = self.orikeys
         //增加依赖，这样父级值改变了也会自动改变子view的属性
         self.view.__dependViews.push(newViewMap[name])
       }
@@ -193,7 +186,6 @@ module.exports = {
             fromIndex: prevChild._mountIndex,
             toIndex: null
           })
-          //prevChild.$destroy()
         }
 
         //新增加的节点，也组装差异对象放到队列里
@@ -260,18 +252,18 @@ module.exports = {
 
     //保存一个复用的老的view队列
     var oldNodeLists = this._generateOldLists()
-    //this.end = oldNodeLists[oldNodeLists.length - 1] || this.startNode
 
     //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入
-    var insertFn = this._insertChildAt
     for (var k = 0; k < updates.length; k++) {
       update = updates[k];
       switch (update.type) {
         case UPDATE_TYPES.INSERT_MARKUP:
-          insertFn.call(this,update.markup, update.toIndex,oldNodeLists);
+          this.handleInsertMarkup(update,oldNodeLists)
+          //insertFn.call(this,update.markup, update.toIndex,oldNodeLists);
           break;
         case UPDATE_TYPES.MOVE_EXISTING:
-          insertFn.call(this,initialChildren[update.name], update.toIndex,oldNodeLists);
+          this._insertChildAt.call(this,initialChildren[update.name], update.toIndex,oldNodeLists);
+          //update.fire('afterMount')
           break;
         case UPDATE_TYPES.REMOVE_NODE:
           // 什么都不需要做，因为上面已经帮忙删除掉了
@@ -280,12 +272,19 @@ module.exports = {
     }
 
   },
+  handleInsertMarkup:function(update,oldNodeLists){
+    var insertFn = this._insertChildAt
+    insertFn.call(this,update.markup, update.toIndex,oldNodeLists)
+    //对于更新，需要fire事件
+    if (this.isUpdated) {
+      this.newViewMap[update.name] && this.newViewMap[update.name].fire('afterMount') //触发事件
+    }
+
+  },
   _generateOldLists:function(){
 
-    //if () {};
 
     var oldViewLists = this.oldViewLists
-    //var oldViewMap = this.oldViewMap
     var lists = []
 
     if (this.startNode.deleted) {
@@ -298,24 +297,12 @@ module.exports = {
       }
     })
 
-    // var start = this.startNode
-    // var end = this.end
-
-    // lists.push(start)
-
-    // while(start && start !== end){
-    //   start = start.next()
-    //   lists.push(start)
-    // }
-
     return lists
 
   },
   //用于把一个node插入到指定位置，通过之前的占位节点去找
   _insertChildAt:function(newNode,toIndex,oldNodeLists){
     var self = this
-
-    //var oldNodeLists = self._generateOldLists()
 
     var start = this.startNode
     var end = oldNodeLists[oldNodeLists.length - 1]
@@ -324,8 +311,6 @@ module.exports = {
       toIndex = toIndex + 1
     }
 
-    //var index = 0
-    //var nextNode = oldNodeLists[index + 1]
     nextNode = oldNodeLists[toIndex]
     if (nextNode) {
       newNode.before(nextNode)
@@ -333,45 +318,11 @@ module.exports = {
     }else{
       newNode.after(end)
       oldNodeLists.push(newNode)
-      //this.end = newNode
     }
-
-    // var hasFound = false
-
-    // while(start){
-
-    //   if (start == end) break
-
-    //   if (nextNode && start === nextNode) {
-    //     index ++
-    //     nextNode = oldNodeLists[index]
-    //   }
-
-    //   if (toIndex == index) {
-    //     //self.view.$rootView.fire('beforeAddBlock',[],self)
-    //     newNode.before(start)
-    //     hasFound = true
-    //     //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-    //     break
-    //   }
-    //   start = start.next()
-    // }
-    // //没找到,那就直接放到最后了
-    // if (!hasFound) {
-    //   //var endNode = this.startNode.parentNode.last()
-    //   //self.view.$rootView.fire('beforeAddBlock',[],self)
-    //   //this.startNode
-    //   newNode.after(end)
-    //   this.end = newNode
-    //   //end = newNode
-    //   //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-    // }
   },
   update: function(newLists) {
     //策略，先删除以前的，再使用最新的，找出最小差异更新
     //参考reactjs的差异算法
-    //
-    //this.startNode.remove(true)
 
     this._generateNewChildren(newLists)
 
@@ -386,6 +337,8 @@ module.exports = {
       this.startNode.remove()
       this.startNode = this.oldViewLists[0].$el
     }
+
+    this.isUpdated = true
   },
   unbind: function() {
     _.each(this.oldViewMap,function(view){

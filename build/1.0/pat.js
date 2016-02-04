@@ -150,14 +150,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (this.__template){
 	    this.$el.innerHTML = el.mountView(this)
 	    this.__rendered = true
+	    this.fire('afterMount')
 	  }
 
 	  //如果是虚拟dom，调用方法写到页面上
-	  if (this.$el.__VD__) {
-	    //todo
-	  }
-
-	  this.fire('afterMount')
+	  // if (this.$el.__VD__) {
+	  //   //todo
+	  // }
+	  //this.fire('afterMount')
 	}
 
 
@@ -1545,7 +1545,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 12 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(3)
+
 
 	Util = {
 	  bindEvent: (function() {
@@ -1602,14 +1605,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var val = Util.getInputValue(self.el.getElement())
 	      var key = self.describe.value
 
-	      if (val != self.curValue) {
-	        //这边其实有个坑，如果这个t-modle是在一个for循环语句里，这里修改的只会是当前的scope里面的属性值
-	        //这样从父级脏检测的话，父级老的值会把当前的值冲掉。就会是没有改变。这个还没想好怎么做
+	      if (val == self.curValue) return
 
-	        //需要检查下 需不需要从父级开始改，判断是不是item开头
-	        self.setValue(key, val)
-	        //需要整个rootview脏检测,使用$apply防止脏检测冲突
-	        //self.view.$rootView.$apply()
+	      //看下是不是改的一级key,是的话就需要从rootView开始改
+	      if (self.view.orikeys && _.inArray(self.view.orikeys,key)) {
+	        self.setValue(key, val,self.view.$rootView.$data)
+	      }else{
+	        self.setValue(key, val,self.view.$data)
 	      }
 	    }
 
@@ -1620,13 +1622,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.update(value)
 
 	  },
-	  setValue: function(key, val) {
-	    return new Function('$scope', 'return $scope.' + key + '="' + val + '"')(this.view.$data)
+	  setValue: function(key, val,scope) {
+	    return new Function('$scope', 'return $scope.' + key + '="' + val + '"')(scope)
 	  },
 	  update: function(value) {
+	    if (value === undefined || value === null) {
+	      value = ''
+	    }
 	    this.curValue = value
 	    this.el.setAttribute('value',value)
-	    //.getElement().value = value
 	  },
 	  unbind: function() {
 	    Util.unbindEvent(this.el.getElement(), 'blur',self.blurFn)
@@ -1651,40 +1655,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return true
 	  },
 	  bind:function(value) {
+	    var self = this
 
-	    this.oriEl = this.el.clone()
+	    self.oriEl = self.el.clone()
 	    if (!!value){
-	      this.childView = new this.view.constructor({
-	        el:this.el,
-	        data:this.view.$data,
-	        skipinject:true,
-	        rootView:this.view.$rootView
+	      self.childView = new self.view.constructor({
+	        el:self.el,
+	        data:self.view.$data,
+	        rootView:self.view.$rootView
 	      })
 
-	      this.bound = true
+	      self.view.on('afterMount',function(){
+	        self.childView.fire('afterMount') //触发事件
+	      })
+
+	      self.bound = true
 	    }else{
 	      //软删除
-	      this.el.remove(true)
-	      this.bound = false
+	      self.el.remove(true)
+	      self.bound = false
 	    }
 	  },
 	  update:function(value){
-	    //子view先开始脏检测
-	    //this.childView && this.childView.$digest()
 	    //if 不能使用watch的简单的对比值，而是看结果是true还是false
-	    //为true并且 上一次是销毁不是绑定
 	    if (!!value && this.bound == false) {
 	      //生成新的view
 	      var newVdNode = this.oriEl.clone()
 
 	      this.childView = new this.view.constructor({
 	        el:newVdNode,
-	        //skipinject:true,
+	        //template:newVdNode,
 	        data:this.view.$data,
 	        rootView:this.view.$rootView
 	      })
-
 	      this.el.replace(newVdNode)
+	      this.childView.fire('afterMount') //触发事件
+
 	      this.el = newVdNode
 	      this.bound = true
 	    }
@@ -1695,11 +1701,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.childView.$destroy()
 	      this.bound = false
 	    }
-
 	  },
 	  unbind:function(){
-	    //this.childView && this.childView.$destroy()
-	    //_.remove(this.placeholder)
+	    this.childView && this.childView.$destroy()
 	  }
 	}
 
@@ -1781,35 +1785,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.oldViewMap = {}
 	    this.oldViewLists = []
 	    this.__node = this.el.clone()
+
+	    this.orikeys = []
+
+	    var ori = this.view.$data.__ori__
+	    //需要把当前的数据复制过来
+	    for (var oriKey in ori) {
+	      if (ori.hasOwnProperty(oriKey)) {
+	        this.orikeys.push(oriKey)
+	      }
+	    }
+
 	  },
 	  bind: function(value) {
 
-	    // this.start = _.createAnchor('for-start')
-	    // this.end = _.createAnchor('for-end')
-	    // _.replace(this.el, this.end)
-	    // _.before(this.start, this.end)
-
-	    // this.__node = new Node(this.el)
-	    // //检测当前循环的是不是template,这个时候的处理需要比较复杂的运算
-	    // this.__isFrag = this.__node.isFrag
-
-	    //初次渲染时需要判断
-	    //如果是没数据，那么就加一个占位符，空在那边方便以后定位
-	    //if (!value || value.length == 0) {
-	     // this.el.remove(true)
-	    //}
+	    var self = this
 
 	    this.startNode = this.el
 	    //第一次直接软删除，作为定位
 	    this.startNode.remove(true)
-	    //var name = this._generateKey()
-
-	    // this.oldViewMap = {
-	    //   name:
-	    // }
-	    // this.oldViewLists = []
+	    this.isUpdated = false
 
 	    this.update(value)
+
+	    //父view触发后，通知子view也fire
+	    self.view.on('afterMount',function(){
+	      self._fireChilds()
+	    })
+
+	  },
+	  _fireChilds:function(){
+	    //触发子view的事件
+	    _.each(this.oldViewLists,function(view){
+	      view.fire('afterMount')
+	    })
 
 	  },
 	  _generateKey: function() {
@@ -1823,7 +1832,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var self = this
 	    var data,newNode,name,ori
 	    var curKey = '__pat_key__'
-	    //var isListsArray = _.isArray(newLists)
+
 
 	    _.each(newLists, function(item, key) {
 
@@ -1832,32 +1841,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (name && oldViewMap[name] && oldViewMap[name].$data[self.alias] === item) {
 	        newViewMap[name] = oldViewMap[name]
 	        //发现可以复用，就直接更新view就行
-	        //当然要注意重新assign父级数据,如果上一级数据变化了，这里才能脏检测到改变
-	        //_.assign(oldViewMap[name].$data,self.view.$data)
 	        //key需要重新赋值,会自动做出defineproperty的监听改变
 	        if(self.iterator) oldViewMap[name].$data[self.iterator] = key
-
-	        //oldViewMap[name].$digest()
 
 	      } else {
 	        //否则需要新建新的view
 	        data = {}
-	        ori = self.view.$data.__ori__
-	        //需要把当前的数据复制过来
-	        for (var oriKey in ori) {
-	          if (ori.hasOwnProperty(oriKey)) {
-	            data[oriKey] = self.view.$data[oriKey]
-	          }
-	        }
+
+	        _.each(self.orikeys,function(oriKey){
+	          data[oriKey] = self.view.$data[oriKey]
+	        })
 
 	        if(self.iterator) data[self.iterator] = key
 
 	        data[self.alias] = item
-
-	        //注入get set
-	        // for(var key in data){
-	        //   Data.defineProperty(data,key)
-	        // }
 
 	        data = Data.define(data)
 
@@ -1871,10 +1868,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        newViewMap[name] = new self.view.constructor({
 	          el: newNode,
 	          data: data,
-	          skipinject:true,
 	          vid:name,
 	          rootView:self.view.$rootView
 	        })
+	        newViewMap[name].orikeys = self.orikeys
 	        //增加依赖，这样父级值改变了也会自动改变子view的属性
 	        self.view.__dependViews.push(newViewMap[name])
 	      }
@@ -1924,7 +1921,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            fromIndex: prevChild._mountIndex,
 	            toIndex: null
 	          })
-	          //prevChild.$destroy()
 	        }
 
 	        //新增加的节点，也组装差异对象放到队列里
@@ -1991,18 +1987,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    //保存一个复用的老的view队列
 	    var oldNodeLists = this._generateOldLists()
-	    //this.end = oldNodeLists[oldNodeLists.length - 1] || this.startNode
 
 	    //再遍历一次，这次处理新增的节点，还有修改的节点这里也要重新插入
-	    var insertFn = this._insertChildAt
 	    for (var k = 0; k < updates.length; k++) {
 	      update = updates[k];
 	      switch (update.type) {
 	        case UPDATE_TYPES.INSERT_MARKUP:
-	          insertFn.call(this,update.markup, update.toIndex,oldNodeLists);
+	          this.handleInsertMarkup(update,oldNodeLists)
+	          //insertFn.call(this,update.markup, update.toIndex,oldNodeLists);
 	          break;
 	        case UPDATE_TYPES.MOVE_EXISTING:
-	          insertFn.call(this,initialChildren[update.name], update.toIndex,oldNodeLists);
+	          this._insertChildAt.call(this,initialChildren[update.name], update.toIndex,oldNodeLists);
+	          //update.fire('afterMount')
 	          break;
 	        case UPDATE_TYPES.REMOVE_NODE:
 	          // 什么都不需要做，因为上面已经帮忙删除掉了
@@ -2011,12 +2007,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	  },
+	  handleInsertMarkup:function(update,oldNodeLists){
+	    var insertFn = this._insertChildAt
+	    insertFn.call(this,update.markup, update.toIndex,oldNodeLists)
+	    //对于更新，需要fire事件
+	    if (this.isUpdated) {
+	      this.newViewMap[update.name] && this.newViewMap[update.name].fire('afterMount') //触发事件
+	    }
+
+	  },
 	  _generateOldLists:function(){
 
-	    //if () {};
 
 	    var oldViewLists = this.oldViewLists
-	    //var oldViewMap = this.oldViewMap
 	    var lists = []
 
 	    if (this.startNode.deleted) {
@@ -2029,24 +2032,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    })
 
-	    // var start = this.startNode
-	    // var end = this.end
-
-	    // lists.push(start)
-
-	    // while(start && start !== end){
-	    //   start = start.next()
-	    //   lists.push(start)
-	    // }
-
 	    return lists
 
 	  },
 	  //用于把一个node插入到指定位置，通过之前的占位节点去找
 	  _insertChildAt:function(newNode,toIndex,oldNodeLists){
 	    var self = this
-
-	    //var oldNodeLists = self._generateOldLists()
 
 	    var start = this.startNode
 	    var end = oldNodeLists[oldNodeLists.length - 1]
@@ -2055,8 +2046,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      toIndex = toIndex + 1
 	    }
 
-	    //var index = 0
-	    //var nextNode = oldNodeLists[index + 1]
 	    nextNode = oldNodeLists[toIndex]
 	    if (nextNode) {
 	      newNode.before(nextNode)
@@ -2064,45 +2053,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }else{
 	      newNode.after(end)
 	      oldNodeLists.push(newNode)
-	      //this.end = newNode
 	    }
-
-	    // var hasFound = false
-
-	    // while(start){
-
-	    //   if (start == end) break
-
-	    //   if (nextNode && start === nextNode) {
-	    //     index ++
-	    //     nextNode = oldNodeLists[index]
-	    //   }
-
-	    //   if (toIndex == index) {
-	    //     //self.view.$rootView.fire('beforeAddBlock',[],self)
-	    //     newNode.before(start)
-	    //     hasFound = true
-	    //     //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-	    //     break
-	    //   }
-	    //   start = start.next()
-	    // }
-	    // //没找到,那就直接放到最后了
-	    // if (!hasFound) {
-	    //   //var endNode = this.startNode.parentNode.last()
-	    //   //self.view.$rootView.fire('beforeAddBlock',[],self)
-	    //   //this.startNode
-	    //   newNode.after(end)
-	    //   this.end = newNode
-	    //   //end = newNode
-	    //   //self.view.$rootView.fire('afterAddBlock',newNode.allElements(),self)
-	    // }
 	  },
 	  update: function(newLists) {
 	    //策略，先删除以前的，再使用最新的，找出最小差异更新
 	    //参考reactjs的差异算法
-	    //
-	    //this.startNode.remove(true)
 
 	    this._generateNewChildren(newLists)
 
@@ -2117,6 +2072,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.startNode.remove()
 	      this.startNode = this.oldViewLists[0].$el
 	    }
+
+	    this.isUpdated = true
 	  },
 	  unbind: function() {
 	    _.each(this.oldViewMap,function(view){
@@ -2685,8 +2642,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 
-
-
 	module.exports = {
 	  priority: 3000,
 	  bind:function(value) {
@@ -2793,12 +2748,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    self = this
 	    self.view = view
+
+	    //mountView被认为只有在一次性生成dom放到页面上才会使用
+	    //所以这里可以直接认为有了patId后就已经生成了dom,可以拿到dom
 	    self.mountId()
 
 	    html = this.deleted ? self.mountDeleted(view) : self.mountHtml(view)
 
-	    //view.$rootView.on('afterMount',function(){
-	      self.mounted = true
+	    //view.on('afterMount',function(){
+
+	    //self.mounted = true
 	    //})
 
 	    return html
@@ -2826,10 +2785,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	  },
 	  getElement: function() {
-	    if (!this.patId || !this.view) return
-
-	    if (this.element) return this.element
 	    var self = this
+
+	    if (!self.patId || !self.view) return
+	    if (self.element) return self.element
 
 	    self.element = _.queryPatId(self.view.$rootView.$el,self.patId)
 	    return self.element
@@ -2904,18 +2863,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.remove(true)
 	    }
 
-	    //这里比较特殊，会先改真实dom
-	    if (this.getElement()) {
+	    this.parentNode._findAndSplice(this, dstEl)
+
+	    //如果我还不在dom上直接返回
+	    if (!this.getElement()) return
+
+	    //看对方在不在dom上
+	    if (dstEl.getElement()) {
+	      //对于collection要特殊处理
+	      if (dstEl.nodeType == -1) {
+	        for (var i = 0,l = dstEl.childNodes.length; i < l; i++) {
+	          _.before(dstEl.childNodes[i].getElement(),this.getElement())
+	        }
+	        _.remove(this.getElement())
+
+	      }else{
+	        _.replace(this.getElement(),dstEl.getElement())
+	      }
+	      //dstEl.remove()
+	    }else{
 	      //挨个的拿人家的子节点，替换
 	      var mountHtml = dstEl.mountView(this.view)
 	      var nodes = _.string2nodes(mountHtml)
 	      for (var i = 0,l = nodes.length; i < l; i++) {
-	        _.before(nodes[0],this.element)
+	        _.before(nodes[0],this.getElement())
 	      }
-	      _.remove(this.element)
+	      _.remove(this.getElement())
 	    }
-
-	    this.parentNode._findAndSplice(this, dstEl)
 
 	    return dstEl
 	  },
@@ -2926,12 +2900,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    dstEl.parentNode.childNodes.splice(index,0,this)
 	    this.parentNode = dstEl.parentNode
 
-	    //没有在dom上不需要操作
-	    if (!dstEl.mounted) return
+	    //如果对方不在dom上，就没必要操作
+	    if (!dstEl.getElement()) return
+
+	    var dstNode = dstEl.nodeType == -1 ? dstEl.endElement : dstEl.getElement()
 
 	    //如果自己在dom上
-	    if (this.mounted && this.getElement()){
-	      _.before(this.element,dstEl.getElement())
+	    if (this.getElement()){
+
+	      if (this.nodeType == -1) {
+	        for (var i = 0,l = this.childNodes.length; i < l; i++) {
+	          _.before(this.childNodes[i].getElement(),dstNode)
+	        }
+	      }else{
+	        _.before(this.element,dstNode)
+	      }
+
 	    }else{
 	      var mountHtml = this.mountView(dstEl.view)
 	      var nodes = _.string2nodes(mountHtml)
@@ -2948,17 +2932,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    dstEl.parentNode.childNodes.splice(index,0,this)
 	    this.parentNode = dstEl.parentNode
 
-	    //没有在dom上不需要操作
-	    if (!dstEl.mounted) return
+	    //如果对方不在dom上，就没必要操作
+	    if (!dstEl.getElement()) return
 
+	    var dstNode = dstEl.nodeType == -1 ? dstEl.endElement : dstEl.getElement()
 	    //如果自己在dom上
-	    if (this.mounted && this.getElement()){
-	      _.after(this.element,dstEl.getElement())
+	    if (this.getElement()){
+	      if (this.nodeType == -1) {
+	        for (var i = 0,l = this.childNodes.length; i < l; i++) {
+	          _.after(this.childNodes[i].getElement(),dstNode)
+	        }
+	      }else{
+	        _.after(this.element,dstNode)
+	      }
+
 	    }else{
 	      var mountHtml = this.mountView(dstEl.view)
 	      var nodes = _.string2nodes(mountHtml)
+
 	      for (var i = 0,l = nodes.length; i < l; i++) {
-	        _.after(nodes[0],dstEl.getElement())
+	        _.after(nodes[0],dstNode)
 	      }
 	    }
 
@@ -2971,20 +2964,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.parentNode._findAndSplice(this)
 	    }
 
-	    if (!this.mounted || !this.getElement()) return
+	    if (!this.getElement()) return
 	    //软删除的话不是真的删除，而是加一个占位符
 	    if (softDeleted) {
 	      var deletedNode = _.string2node(this.mountDeleted())
-	      _.replace(this.element,deletedNode)
+	      _.replace(this.getElement(),deletedNode)
 	      this.element = deletedNode
 	    }else{
-	      _.remove(this.element)
+	      _.remove(this.getElement())
 	    }
-
-
-	  },
-	  destroy: function() {
-
 	  }
 	})
 
@@ -3021,7 +3009,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.attributes.push(attr)
 	    }
 	    //修改真实dom
-	    if (!this.mounted || !this.getElement()) return
+	    if (!this.getElement()) return
 	    var element = this.getElement()
 
 	    this.view.$rootView.fire('beforeUpdateAttribute', [element], this)
@@ -3048,7 +3036,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.attributes.splice(index, 1)
 	    }
 	    //修改真实dom
-	    if (!this.mounted || !this.getElement()) return
+	    if (!this.getElement()) return
 
 	    var element = this.getElement()
 	    this.view.$rootView.fire('beforeRemoveAttribute', [element], key, this)
@@ -3081,12 +3069,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 
 	    return '<' + tagName + attrsString + '>' + childHtml + '</' + tagName + '>'
-	  },
-	  append: function() {
-
-	  },
-	  preapend: function() {
-
 	  }
 	})
 
@@ -3101,8 +3083,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.tagName = options.tagName
 	    this.attributes = options.attributes
 	    this.childNodes = options.childNodes
-	    //this.startNode = this.childNodes[0]
-	    //this.endNode = this.childNodes[this.childNodes.length-1]
 	  },
 	  mountHtml:function(view){
 	    var childHtml = ''
@@ -3112,16 +3092,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    return childHtml
 	  },
+
 	  getElement: function() {
 	    if (!this.patId || !this.view) return
 
 	    if (this.element) return this.element
-
-	    //删除的情况下直接返回占位的节点
-	    if (this.deleted) {
-	      this.element = _.queryPatId(this.view.$rootView.$el,this.patId)
-	      return this.element
-	    }
 
 	    //否则返回第一个子节点
 	    var startElement = this.first().getElement()
@@ -3136,28 +3111,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return startElement
 	  },
-	  // replace: function(dstEl) {
-	  //   //如果没有删除，那就先软删除自己
-	  //   if (!this.deleted) {
-	  //     this.remove(true)
-	  //   }
-
-	  //   if (this.getElement()) {
-	  //     //挨个的拿人家的子节点，替换
-	  //     var mountHtml = dstEl.mountView(this.view)
-	  //     var nodes = _.string2nodes(mountHtml)
-	  //     //var firstNode = nodes[0]
-	  //     for (var i = 0,l = nodes.length; i < l; i++) {
-	  //       _.before(nodes[0],this.element)
-	  //     }
-	  //     _.remove(this.element)
-	  //   }
-
-	  //   this.parentNode._findAndSplice(this, dstEl)
-	  // },
 	  remove: function(softDeleted) {
-
-	    var element = this.getElement()
 
 	    if (softDeleted) {
 	      this.deleted = true
@@ -3165,10 +3119,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.parentNode._findAndSplice(this)
 	    }
 
-	    if (!this.mounted) return
+	    if (!this.getElement()) return
 	    //软删除的话不是真的删除，而是加一个占位符
 	    var deletedNode = _.string2node(this.mountDeleted())
-	    _.replace(element,deletedNode)
+	    _.replace(this.getElement(),deletedNode)
 	    this.element = deletedNode
 	    this.childNodes.shift()
 	    //挨个删除子节点，这个是硬删除，没必要留着了。有个位置留着就行
@@ -3190,10 +3144,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.oneTime = true
 	  },
 	  html: function(text) {
-	    //if (this.oneTime) return
 	    this.data = text
-	      //修改真实dom
-	    if (!this.mounted || !this.getElement()) return
+	    //修改真实dom
+	    if (!this.getElement()) return
 	    this.getElement().innerHTML = text
 	  },
 	  mountHtml: function(view) {
@@ -3209,10 +3162,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    return '<span ' + TAG_ID + '="' + this.patId + '">' + this.data + '</span>'
-	  },
-	  append: function() {},
-	  preapend: function() {
-
 	  }
 	})
 

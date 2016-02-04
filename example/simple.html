@@ -18,18 +18,20 @@
 <script type="javascript/template" id="J_tmpl">
 <div class="container4 line">
 
-  <input type="text" t-model='text' value=""/>
+
 
   {{text}}111
 
   {{#for(item in lists)}}
     <div id="{{item.name}}">
       {{item.text}}---{{text}}
+      <input type="text" t-model='text' value=""/>
+      <input type="text" t-model='item.text' value=""/>
     </div>
   {{/for}}
 
   {{#if(key == 11)}}
-    <div id="{{key}}">{{{word2}}}</div>
+    <div id="{{key}}">{{word2}}</div>
   {{/if}}
 
   {{^if(key == 11)}}
@@ -93,7 +95,7 @@ var p2 = new Pat({
 p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
 
 p2.$data.text = '111222dddd'
-p2.$data.key = '11'
+//p2.$data.key = '11'
 
 p2.$data.lists[1].text = 'wwwww'
 

@@ -5,8 +5,6 @@
 
 var _ = require('../util')
 
-
-
 module.exports = {
   priority: 3000,
   bind:function(value) {

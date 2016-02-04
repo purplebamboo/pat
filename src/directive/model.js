@@ -1,3 +1,6 @@
+var _ = require('../util')
+
+
 Util = {
   bindEvent: (function() {
     if ('addEventListener' in window) {
@@ -53,14 +56,13 @@ module.exports = {
       var val = Util.getInputValue(self.el.getElement())
       var key = self.describe.value
 
-      if (val != self.curValue) {
-        //这边其实有个坑，如果这个t-modle是在一个for循环语句里，这里修改的只会是当前的scope里面的属性值
-        //这样从父级脏检测的话，父级老的值会把当前的值冲掉。就会是没有改变。这个还没想好怎么做
+      if (val == self.curValue) return
 
-        //需要检查下 需不需要从父级开始改，判断是不是item开头
-        self.setValue(key, val)
-        //需要整个rootview脏检测,使用$apply防止脏检测冲突
-        //self.view.$rootView.$apply()
+      //看下是不是改的一级key,是的话就需要从rootView开始改
+      if (self.view.orikeys && _.inArray(self.view.orikeys,key)) {
+        self.setValue(key, val,self.view.$rootView.$data)
+      }else{
+        self.setValue(key, val,self.view.$data)
       }
     }
 
@@ -71,13 +73,15 @@ module.exports = {
     this.update(value)
 
   },
-  setValue: function(key, val) {
-    return new Function('$scope', 'return $scope.' + key + '="' + val + '"')(this.view.$data)
+  setValue: function(key, val,scope) {
+    return new Function('$scope', 'return $scope.' + key + '="' + val + '"')(scope)
   },
   update: function(value) {
+    if (value === undefined || value === null) {
+      value = ''
+    }
     this.curValue = value
     this.el.setAttribute('value',value)
-    //.getElement().value = value
   },
   unbind: function() {
     Util.unbindEvent(this.el.getElement(), 'blur',self.blurFn)

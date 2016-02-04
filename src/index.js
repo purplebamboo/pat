@@ -94,14 +94,14 @@ View.prototype._init = function() {
   if (this.__template){
     this.$el.innerHTML = el.mountView(this)
     this.__rendered = true
+    this.fire('afterMount')
   }
 
   //如果是虚拟dom，调用方法写到页面上
-  if (this.$el.__VD__) {
-    //todo
-  }
-
-  this.fire('afterMount')
+  // if (this.$el.__VD__) {
+  //   //todo
+  // }
+  //this.fire('afterMount')
 }
 
 

@@ -12,40 +12,42 @@ module.exports = {
     return true
   },
   bind:function(value) {
+    var self = this
 
-    this.oriEl = this.el.clone()
+    self.oriEl = self.el.clone()
     if (!!value){
-      this.childView = new this.view.constructor({
-        el:this.el,
-        data:this.view.$data,
-        skipinject:true,
-        rootView:this.view.$rootView
+      self.childView = new self.view.constructor({
+        el:self.el,
+        data:self.view.$data,
+        rootView:self.view.$rootView
       })
 
-      this.bound = true
+      self.view.on('afterMount',function(){
+        self.childView.fire('afterMount') //触发事件
+      })
+
+      self.bound = true
     }else{
       //软删除
-      this.el.remove(true)
-      this.bound = false
+      self.el.remove(true)
+      self.bound = false
     }
   },
   update:function(value){
-    //子view先开始脏检测
-    //this.childView && this.childView.$digest()
     //if 不能使用watch的简单的对比值，而是看结果是true还是false
-    //为true并且 上一次是销毁不是绑定
     if (!!value && this.bound == false) {
       //生成新的view
       var newVdNode = this.oriEl.clone()
 
       this.childView = new this.view.constructor({
         el:newVdNode,
-        //skipinject:true,
+        //template:newVdNode,
         data:this.view.$data,
         rootView:this.view.$rootView
       })
-
       this.el.replace(newVdNode)
+      this.childView.fire('afterMount') //触发事件
+
       this.el = newVdNode
       this.bound = true
     }
@@ -56,10 +58,8 @@ module.exports = {
       this.childView.$destroy()
       this.bound = false
     }
-
   },
   unbind:function(){
-    //this.childView && this.childView.$destroy()
-    //_.remove(this.placeholder)
+    this.childView && this.childView.$destroy()
   }
 }
