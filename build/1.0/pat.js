@@ -411,7 +411,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  token = parseText(el.data)[0]
 
 	  oneTime = token.oneTime
-
 	  //针对变量类型的 文本进行指令解析，区分html和text
 	  if (token.type === parser.TextTemplateParserTypes.binding) {
 
@@ -896,6 +895,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.isString = function(unknow){
 	  return (Object.prototype.toString.call(unknow) === '[object String]')
+	}
+
+	exports.isNumber = function(unknow){
+	  return (Object.prototype.toString.call(unknow) === '[object Number]')
 	}
 
 	exports.each = function(enumerable, iterator) {
@@ -2381,6 +2384,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if (data.__inject__) return data
 
+	  if (_.isString(data) || _.isNumber(data)) {
+	    return data
+	  }
+
 	  if (_.isArray(data)) {
 
 	    newData = []
@@ -2400,6 +2407,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 
 	  }
+
 	  return newData
 	}
 
@@ -3413,12 +3421,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var inner
 	  var last_offset = 0
 
-	  template.replace(/<.*?>/g, function(match, offset) {
+	  template.replace(/<[^>]*>/g, function(match, offset) {
+
 	    if (offset > last_offset) {
 	      analyzeText(structure,template.slice(last_offset, offset))
 	    }
 
-	    inner = match.match(/<\/?(\w+)\ *(.*?)\ *\/?>$/)
+	    inner = match.match(/<\/?(\w+)([^>]*?)\/?>$/)
 
 	    if (!inner && ("development") != 'production') {
 	      _.error('Bad tag' + match + '.')
@@ -3499,8 +3508,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //严谨起见，避免出现多个空格的情况
 	  attrString = attrString.replace(/\ (?=\ )/g, '')
 
-	  attrs = attrString.match(/[^\ ]+=('.*?'|".*?")|[^\ ]+/g)//注意，属性里可能有引号
-
+	  attrs = attrString.match(/[^=]+=('[^']*'|"[^"]*")|[^\s]+/g)//注意，属性里可能有引号
 	  _.each(attrs,function(attr){
 	    index = attr.indexOf('=')
 	    if (~index) {
@@ -3510,7 +3518,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      name = attr
 	      value = ''
 	    }
-	    attributes[name] = value
+	    attributes[_.trim(name)] = _.trim(value)
 	  })
 
 	  return attributes
@@ -3623,7 +3631,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  structure.end = -1
 	  collectTags(structure,template)
-
 	  result = getStructure(structure,structure.length - 1)
 	  rootElement = createElement('template',{},result.found)
 

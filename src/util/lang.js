@@ -76,6 +76,10 @@ exports.isString = function(unknow){
   return (Object.prototype.toString.call(unknow) === '[object String]')
 }
 
+exports.isNumber = function(unknow){
+  return (Object.prototype.toString.call(unknow) === '[object Number]')
+}
+
 exports.each = function(enumerable, iterator) {
 
   if (exports.isArray(enumerable)) {

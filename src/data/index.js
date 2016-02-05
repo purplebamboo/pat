@@ -210,6 +210,10 @@ exports.inject = function(data) {
 
   if (data.__inject__) return data
 
+  if (_.isString(data) || _.isNumber(data)) {
+    return data
+  }
+
   if (_.isArray(data)) {
 
     newData = []
@@ -229,5 +233,6 @@ exports.inject = function(data) {
     })
 
   }
+
   return newData
 }

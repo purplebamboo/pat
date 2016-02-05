@@ -33,12 +33,13 @@ function collectTags(structure,template) {
   var inner
   var last_offset = 0
 
-  template.replace(/<.*?>/g, function(match, offset) {
+  template.replace(/<[^>]*>/g, function(match, offset) {
+
     if (offset > last_offset) {
       analyzeText(structure,template.slice(last_offset, offset))
     }
 
-    inner = match.match(/<\/?(\w+)\ *(.*?)\ *\/?>$/)
+    inner = match.match(/<\/?(\w+)([^>]*?)\/?>$/)
 
     if (!inner && process.env.NODE_ENV != 'production') {
       _.error('Bad tag' + match + '.')
@@ -119,8 +120,7 @@ function analyzeAttributes(attrString){
   //严谨起见，避免出现多个空格的情况
   attrString = attrString.replace(/\ (?=\ )/g, '')
 
-  attrs = attrString.match(/[^\ ]+=('.*?'|".*?")|[^\ ]+/g)//注意，属性里可能有引号
-
+  attrs = attrString.match(/[^=]+=('[^']*'|"[^"]*")|[^\s]+/g)//注意，属性里可能有引号
   _.each(attrs,function(attr){
     index = attr.indexOf('=')
     if (~index) {
@@ -130,7 +130,7 @@ function analyzeAttributes(attrString){
       name = attr
       value = ''
     }
-    attributes[name] = value
+    attributes[_.trim(name)] = _.trim(value)
   })
 
   return attributes
@@ -243,7 +243,6 @@ exports.transfer = function(template) {
 
   structure.end = -1
   collectTags(structure,template)
-
   result = getStructure(structure,structure.length - 1)
   rootElement = createElement('template',{},result.found)
 

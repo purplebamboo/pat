@@ -3,11 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <title>测试页面</title>
-<<<<<<< HEAD
   <script src="../build/1.0/pat.js"></script>
-=======
-  <script src="../build/0.2/pat.js"></script>
->>>>>>> master
+
   <link rel="stylesheet" type="text/css" href="./css/example.css">
 
 </head>
@@ -45,15 +42,27 @@
 </script>
 
 <script type="javascript/template" id="J_tmpl2">
-<div class="container4 line">
-  {{text}}
-</div>
+
+<i options="{
+  placement: 'bottom',
+  align: 'right',
+  offset: {
+    left:8,
+    top:8
+  },
+  elClass: 'msg msg-alert',
+  width: 125,
+  content: '图片美观且被选择较多的商品'
+}"  id="111" a=11>{{text}}</i>
+
+<span>{{t.join(',')}} </span>
+
 </script>
 
 <script type="text/javascript">
 //debug会包括更多的信息，但是只有daily版本有效果
 Pat.config({
-  debug:false
+  debug:true
 })
 
 
@@ -84,6 +93,7 @@ var p2 = new Pat({
     key:10,
     word:'hello world',
     word2:'<span class="ddd">aaa</span>',
+    t:['1','2','3','4'],
     lists:[{
       name:'1',
       text:'11111'
@@ -92,7 +102,7 @@ var p2 = new Pat({
       text:'22222'
     }]
   },
-  template:document.getElementById('J_tmpl').innerHTML
+  template:document.getElementById('J_tmpl2').innerHTML
 })
 
 p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
