@@ -210,9 +210,9 @@ exports.inject = function(data) {
 
   if (data.__inject__) return data
 
-  if (_.isString(data) || _.isNumber(data)) {
-    return data
-  }
+  // if (_.isString(data) || _.isNumber(data)) {
+  //   return data
+  // }
 
   if (_.isArray(data)) {
 
@@ -221,6 +221,7 @@ exports.inject = function(data) {
     _.each(data,function(value){
       newData.push(exports.inject(value))
     })
+    return newData
   }
 
   if (_.isPlainObject(data)) {
@@ -231,8 +232,8 @@ exports.inject = function(data) {
         newData[key] = exports.inject(value)
       }
     })
-
+    return newData
   }
 
-  return newData
+  return data
 }

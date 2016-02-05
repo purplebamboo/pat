@@ -2383,9 +2383,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if (data.__inject__) return data
 
-	  if (_.isString(data) || _.isNumber(data)) {
-	    return data
-	  }
+	  // if (_.isString(data) || _.isNumber(data)) {
+	  //   return data
+	  // }
 
 	  if (_.isArray(data)) {
 
@@ -2394,6 +2394,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _.each(data,function(value){
 	      newData.push(exports.inject(value))
 	    })
+	    return newData
 	  }
 
 	  if (_.isPlainObject(data)) {
@@ -2404,10 +2405,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        newData[key] = exports.inject(value)
 	      }
 	    })
-
+	    return newData
 	  }
 
-	  return newData
+	  return data
 	}
 
 /***/ },
