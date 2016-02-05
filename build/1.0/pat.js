@@ -3185,9 +3185,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _.each(this.attributes, function(attr) {
 	      //如果不是debug某事跳过指令属性
-	      if (!config.debug && ~attr.name.indexOf(config.prefix)) {
-	        return
-	      }
+	      if (attr.name.indexOf(config.prefix) != -1) return
+
 	      //todo 需要判断整数的情况
 	      attrsString += [' ', attr.name, '="', attr.value, '" '].join('')
 	    })
