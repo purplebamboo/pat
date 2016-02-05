@@ -3378,7 +3378,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return element
 	  },
 	  createTextNode: function(data) {
-	    if (!data) return
+	    if (!data){
+	      data = ''
+	    }
 
 	    return new TextNode({
 	      data: data
