@@ -589,7 +589,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //父级都不存在，那么子集肯定没有在dom上
 	    if (!parent) return null
 	    //之后通过遍历的方式去找注释节点
-	    result = exports.queryPatId(parentId)
+	    result = exports.queryPatId(parent,parentId)
 	  }
 
 	  return result
