@@ -2142,7 +2142,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  update: function(newLists) {
 	    //策略，先删除以前的，再使用最新的，找出最小差异更新
 	    //参考reactjs的差异算法
-
 	    this._generateNewChildren(newLists)
 
 	    this._diff()
@@ -3091,20 +3090,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  remove: function(softDeleted) {
 
+	    var lastElement = this.getElement()
+
 	    if (softDeleted) {
 	      this.deleted = true
 	    } else {
 	      this.parentNode._findAndSplice(this)
 	    }
 
-	    if (!this.getElement()) return
+	    if (!lastElement) return
 	    //软删除的话不是真的删除，而是加一个占位符
 	    if (softDeleted) {
 	      var deletedNode = _.string2node(this.mountDeleted())
-	      this.domReplace(this.getElement(),deletedNode)
+	      this.domReplace(lastElement,deletedNode)
 	      this.element = deletedNode
 	    }else{
-	      this.domRemove(this.getElement())
+	      this.domRemove(lastElement)
 	    }
 	  }
 	})
@@ -3245,23 +3246,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return startElement
 	  },
 	  remove: function(softDeleted) {
-
+	    var lastElement = this.getElement()
 	    if (softDeleted) {
 	      this.deleted = true
 	    } else {
 	      this.parentNode._findAndSplice(this)
 	    }
 
-	    if (!this.getElement()) return
+	    if (!lastElement) return
 	    //软删除的话不是真的删除，而是加一个占位符
-	    var deletedNode = _.string2node(this.mountDeleted())
-	    this.domReplace(this.getElement(),deletedNode)
-	    this.element = deletedNode
-	    this.childNodes.shift()
+	    var childNodes = this.childNodes
+	    if (softDeleted) {
+	      var deletedNode = _.string2node(this.mountDeleted())
+	      this.domReplace(lastElement,deletedNode)
+	      this.element = deletedNode
+	      //this.childNodes.shift()
+	    }
 	    //挨个删除子节点，这个是硬删除，没必要留着了。有个位置留着就行
 	    while(this.childNodes.length){
 	      this.childNodes[0].remove()
 	    }
+	    //this.childNodes = []
 	  },
 	  hasChildNodes: function() {
 	    return this.childNodes && this.childNodes.length && this.childNodes.length > 0

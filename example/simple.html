@@ -42,21 +42,13 @@
 </script>
 
 <script type="javascript/template" id="J_tmpl2">
-
-<i options="{
-  placement: 'bottom',
-  align: 'right',
-  offset: {
-    left:8,
-    top:8
-  },
-  elClass: 'msg msg-alert',
-  width: 125,
-  content: '图片美观且被选择较多的商品'
-}"  id="111" a=11>{{text}}</i>
-
-<span>{{t.join(',')}} </span>
-
+<div>
+{{#for(item in lists)}}
+  <div>
+    {{item.text}}---{{text}}
+  </div>
+{{/for}}
+</div>
 </script>
 
 <script type="text/javascript">
@@ -95,10 +87,8 @@ var p2 = new Pat({
     word2:'<span class="ddd">aaa</span>',
     t:['1','2','3','4'],
     lists:[{
-      name:'1',
       text:'11111'
     },{
-      name:'2',
       text:'22222'
     }]
   },
