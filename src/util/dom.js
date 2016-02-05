@@ -101,11 +101,11 @@ exports.queryRealDom = function(virtualDom){
     result = _query(root,pid)
   }else{//如果已经软删除了，那么页面上的就会是一个注释占位节点，这个时候通过取父级来定位
     var parentId = virtualDom.parentNode.patId
-    var parent = _query(root,pid)
+    var parent = _query(root,parentId)
     //父级都不存在，那么子集肯定没有在dom上
     if (!parent) return null
     //之后通过遍历的方式去找注释节点
-    result = exports.queryPatId(parent,parentId)
+    result = exports.queryPatId(parent,pid)
   }
 
   return result
