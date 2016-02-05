@@ -2540,7 +2540,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function flushUpdate() {
 
-	  if (!isWating && !isUpdating) return
+	  if (!isWating) return
 
 	  isUpdating = true
 

@@ -11,7 +11,7 @@ var isUpdating = false
 
 function flushUpdate() {
 
-  if (!isWating && !isUpdating) return
+  if (!isWating) return
 
   isUpdating = true
 
