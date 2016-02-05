@@ -1761,6 +1761,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  },
 	  update:function(value){
+
 	    //if 不能使用watch的简单的对比值，而是看结果是true还是false
 	    if (!!value && this.bound == false) {
 	      //生成新的view
@@ -2996,10 +2997,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.remove(true)
 	    }
 
+	    var element = this.getElement()
+
 	    this.parentNode._findAndSplice(this, dstEl)
 
 	    //如果我还不在dom上直接返回
-	    if (!this.getElement()) return
+	    if (!element) return
 
 	    //看对方在不在dom上
 	    if (dstEl.getElement()) {

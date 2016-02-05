@@ -201,10 +201,12 @@ var Node = Class.extend(domProp,{
       this.remove(true)
     }
 
+    var element = this.getElement()
+
     this.parentNode._findAndSplice(this, dstEl)
 
     //如果我还不在dom上直接返回
-    if (!this.getElement()) return
+    if (!element) return
 
     //看对方在不在dom上
     if (dstEl.getElement()) {

@@ -34,6 +34,7 @@ module.exports = {
     }
   },
   update:function(value){
+
     //if 不能使用watch的简单的对比值，而是看结果是true还是false
     if (!!value && this.bound == false) {
       //生成新的view

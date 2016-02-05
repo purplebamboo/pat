@@ -34,7 +34,7 @@
     <div id="{{key}}">{{word2}}</div>
   {{/if}}
 
-  {{^if(key == 11)}}
+  {{#if(key == 10)}}
     <div id="{{key}}">{{{text}}}</div>
   {{/if}}
 </div>
@@ -92,15 +92,15 @@ var p2 = new Pat({
       text:'22222'
     }]
   },
-  template:document.getElementById('J_tmpl2').innerHTML
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
-p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
+// p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
 
-p2.$data.text = '111222dddd'
-//p2.$data.key = '11'
+// p2.$data.text = '111222dddd'
+// //p2.$data.key = '11'
 
-p2.$data.lists[1].text = 'wwwww'
+// p2.$data.lists[1].text = 'wwwww'
 
 </script>
 </body>
