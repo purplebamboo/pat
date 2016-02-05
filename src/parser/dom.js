@@ -236,6 +236,10 @@ exports.transfer = function(template) {
     return template
   }
 
+  if (template == '') {
+    return createTextNode('')
+  }
+
   template = _normalize(template)
 
   var structure = []

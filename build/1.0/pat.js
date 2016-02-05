@@ -3629,6 +3629,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return template
 	  }
 
+	  if (template == '') {
+	    return createTextNode('')
+	  }
+
 	  template = _normalize(template)
 
 	  var structure = []
