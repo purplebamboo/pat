@@ -3428,7 +3428,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var inner
 	  var last_offset = 0
 
-	  template.replace(/<[\w]+[^>]*>/g, function(match, offset) {
+	  template.replace(/<[\w\/\s]+[^>]*>/g, function(match, offset) {
 
 	    if (offset > last_offset) {
 	      analyzeText(structure,template.slice(last_offset, offset))
