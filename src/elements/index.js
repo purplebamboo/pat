@@ -541,6 +541,9 @@ module.exports = {
   // },
   createElement: function(tag, attrs, childNodes) {
     var attributes = []
+
+    childNodes = childNodes || []
+
     _.each(attrs, function(value, key) {
       attributes.push({
         name: key,

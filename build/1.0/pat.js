@@ -3336,6 +3336,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // },
 	  createElement: function(tag, attrs, childNodes) {
 	    var attributes = []
+
+	    childNodes = childNodes || []
+
 	    _.each(attrs, function(value, key) {
 	      attributes.push({
 	        name: key,
@@ -3565,7 +3568,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var re = {
 	      found: []
 	    },
-	    tmp
+	    tmp,element
 
 	  for (var i = pointer; i >= 0; i--) {
 	    if (!tags[i].isEnd) {
@@ -3579,7 +3582,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      } else if (tags[i].tagName === TEXT_NODE) {
 	        re.found.unshift(createTextNode(tags[i].text))
 	      } else {
-	        re.found.unshift(createElement(tags[i].tagName,tags[i].attrs))
+	        element = createElement(tags[i].tagName,tags[i].attrs)
+	        element && re.found.unshift(element)
 	      }
 	    } else {
 	      tmp = getStructure(tags, i - 1, tags[i])
@@ -3596,7 +3600,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (tmp.found.length != 0) {
 	        tmp.close_tag.children = tmp.found
 	      }
-	      re.found.unshift(createElement(tmp.close_tag.tagName,tmp.close_tag.attrs,tmp.close_tag.children))
+	      element = createElement(tmp.close_tag.tagName,tmp.close_tag.attrs,tmp.close_tag.children)
+	      element && re.found.unshift(element)
 	    }
 	  }
 

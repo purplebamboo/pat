@@ -169,7 +169,7 @@ function getStructure(tags, pointer, pair) {
   var re = {
       found: []
     },
-    tmp
+    tmp,element
 
   for (var i = pointer; i >= 0; i--) {
     if (!tags[i].isEnd) {
@@ -183,7 +183,8 @@ function getStructure(tags, pointer, pair) {
       } else if (tags[i].tagName === TEXT_NODE) {
         re.found.unshift(createTextNode(tags[i].text))
       } else {
-        re.found.unshift(createElement(tags[i].tagName,tags[i].attrs))
+        element = createElement(tags[i].tagName,tags[i].attrs)
+        element && re.found.unshift(element)
       }
     } else {
       tmp = getStructure(tags, i - 1, tags[i])
@@ -200,7 +201,8 @@ function getStructure(tags, pointer, pair) {
       if (tmp.found.length != 0) {
         tmp.close_tag.children = tmp.found
       }
-      re.found.unshift(createElement(tmp.close_tag.tagName,tmp.close_tag.attrs,tmp.close_tag.children))
+      element = createElement(tmp.close_tag.tagName,tmp.close_tag.attrs,tmp.close_tag.children)
+      element && re.found.unshift(element)
     }
   }
 
