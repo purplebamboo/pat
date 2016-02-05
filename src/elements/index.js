@@ -34,27 +34,45 @@ function getPatId() {
 
 //一些dom的操作，会抛出事件
 var domProp = {
+  _normalizeDom:function(el){
+
+    var results = []
+    if (el.nodeType == 11) {
+      results = el.childNodes || []
+    }else{
+      results = [el]
+    }
+
+    return results
+  },
   domBefore:function(el,target){
-    this.view.$rootView.fire('beforeAddBlock',[el],this)
+    var els = this._normalizeDom(el)
+    this.view.$rootView.fire('beforeAddBlock',els,this)
     _.before(el,target)
-    this.view.$rootView.fire('afetrAddBlock',[el],this)
+    this.view.$rootView.fire('afetrAddBlock',els,this)
   },
   domAfter:function(el,target){
-    this.view.$rootView.fire('beforeAddBlock',[el],this)
+    var els = this._normalizeDom(el)
+
+    this.view.$rootView.fire('beforeAddBlock',els,this)
     _.after(el,target)
-    this.view.$rootView.fire('afetrAddBlock',[el],this)
+    this.view.$rootView.fire('afetrAddBlock',els,this)
   },
   domReplace:function(target,el){
-    this.view.$rootView.fire('beforeAddBlock',[el],this)
-    this.view.$rootView.fire('beforeDeleteBlock',[target],this)
+    var els = this._normalizeDom(el)
+    var targets = this._normalizeDom(target)
+
+    this.view.$rootView.fire('beforeAddBlock',els,this)
+    this.view.$rootView.fire('beforeDeleteBlock',targets,this)
     _.replace(target,el)
-    this.view.$rootView.fire('afterDeleteBlock',[target],this)
-    this.view.$rootView.fire('afetrAddBlock',[el],this)
+    this.view.$rootView.fire('afterDeleteBlock',targets,this)
+    this.view.$rootView.fire('afetrAddBlock',els,this)
   },
-  domRemove:function(element){
-    this.view.$rootView.fire('beforeDeleteBlock',[element],this)
-    _.remove(element)
-    this.view.$rootView.fire('afterDeleteBlock',[element],this)
+  domRemove:function(el){
+    var els = this._normalizeDom(el)
+    this.view.$rootView.fire('beforeDeleteBlock',els,this)
+    _.remove(el)
+    this.view.$rootView.fire('afterDeleteBlock',els,this)
   }
 }
 
@@ -110,7 +128,7 @@ var Node = Class.extend(domProp,{
     if (!self.patId || !self.view) return
     if (self.element) return self.element
 
-    self.element = _.queryPatId(self.view.$rootView.$el,self.patId)
+    self.element = _.queryRealDom(self)
     return self.element
   },
   clone: function(parentNode) {
@@ -204,10 +222,11 @@ var Node = Class.extend(domProp,{
     }else{
       //挨个的拿人家的子节点，替换
       var mountHtml = dstEl.mountView(this.view)
-      var nodes = _.string2nodes(mountHtml)
-      for (var i = 0,l = nodes.length; i < l; i++) {
-        this.domBefore(nodes[0],this.getElement())
-      }
+      var frag = _.string2frag(mountHtml)
+      // for (var i = 0,l = nodes.length; i < l; i++) {
+      //   this.domBefore(nodes[0],this.getElement())
+      // }
+      this.domBefore(frag,this.getElement())
       this.domRemove(this.getElement())
     }
 
@@ -238,10 +257,10 @@ var Node = Class.extend(domProp,{
 
     }else{
       var mountHtml = this.mountView(dstEl.view)
-      var nodes = _.string2nodes(mountHtml)
-      for (var i = 0,l = nodes.length; i < l; i++) {
-        this.domBefore(nodes[0],dstEl.getElement())
-      }
+      var frag = _.string2frag(mountHtml)
+      //for (var i = 0,l = nodes.length; i < l; i++) {
+        this.domBefore(frag,dstEl.getElement())
+      //}
     }
   },
   after:function(dstEl){
@@ -268,11 +287,10 @@ var Node = Class.extend(domProp,{
 
     }else{
       var mountHtml = this.mountView(dstEl.view)
-      var nodes = _.string2nodes(mountHtml)
-
-      for (var i = 0,l = nodes.length; i < l; i++) {
-        this.domAfter(nodes[0],dstNode)
-      }
+      var frag = _.string2frag(mountHtml)
+      //for (var i = 0,l = nodes.length; i < l; i++) {
+        this.domAfter(frag,dstNode)
+      //}
     }
 
   },

@@ -76,6 +76,42 @@ exports.queryPatId = function(root,patId){
 }
 
 
+//可以的话使用高级查找器，否则使用递归查找
+var _query = document.querySelector ? function(root,patId){
+
+  return root.querySelector('['+TAG_ID+'="' + patId + '"]')
+
+} : exports.queryPatId
+
+
+/**
+ * 通过virtual dom来查找真实的dom
+ * @param  {[type]} virtualDom [description]
+ * @return {[type]}            [description]
+ */
+exports.queryRealDom = function(virtualDom){
+  var node = null
+  var root = virtualDom.view.$rootView.$el
+  var pid = virtualDom.patId
+  var result = null
+  //需要区分两种情况，查找的节点是否已经软删除
+
+  //如果没有软删除
+  if (!virtualDom.deleted) {
+    result = _query(root,pid)
+  }else{//如果已经软删除了，那么页面上的就会是一个注释占位节点，这个时候通过取父级来定位
+    var parentId = virtualDom.parentNode.patId
+    var parent = _query(root,pid)
+    //父级都不存在，那么子集肯定没有在dom上
+    if (!parent) return null
+    //之后通过遍历的方式去找注释节点
+    result = exports.queryPatId(parentId)
+  }
+
+  return result
+}
+
+
 /**
  * Create an "anchor" for performing dom insertion/removals.
  * This is used in a number of scenarios:
@@ -156,16 +192,61 @@ exports.prepend = function (el, target) {
 }
 
 
+
+
+
+var tagHooks = {
+    area: [1, "<map>", "</map>"],
+    param: [1, "<object>", "</object>"],
+    col: [2, "<table><colgroup>", "</colgroup></table>"],
+    legend: [1, "<fieldset>", "</fieldset>"],
+    option: [1, "<select multiple='multiple'>", "</select>"],
+    thead: [1, "<table>", "</table>"],
+    tr: [2, "<table>", "</table>"],
+    td: [3, "<table><tr>", "</tr></table>"],
+    g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
+    //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
+    _default: [0, "", ""]
+}
+tagHooks.th = tagHooks.td
+tagHooks.optgroup = tagHooks.option
+tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
+// "circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use".split(',')
+//     tagHooks[tag] = tagHooks.g //处理SVG
+// })
+
+var rtagName = /<([\w:]+)/
+
 exports.string2node = function(string){
-  return exports.string2nodes(string)[0]
+  return exports.string2frag(string).childNodes[0]
 }
 
-exports.string2nodes = function(string){
-  var wrap = document.createElement('div')
+exports.string2frag = function(string){
+  var node = document.createElement('div')
+  var frag = document.createDocumentFragment()
+
   //ie8下面不支持注释节点，所以需要做出特殊处理
   //todo...
-  wrap.innerHTML = _.trim(string)
-  return wrap.childNodes
+  var tag = (rtagName.exec(string) || ["", ""])[1].toLowerCase()
+  //取得其标签名
+  var wrap = tagHooks[tag] || tagHooks._default
+  var depth = wrap[0]
+  var prefix = wrap[1]
+  var suffix = wrap[2]
+  node.innerHTML = prefix + _.trim(string) + suffix
+
+  while (depth--) {
+    node = node.lastChild
+  }
+
+  var child
+  /* eslint-disable no-cond-assign */
+  while (child = node.firstChild) {
+  /* eslint-enable no-cond-assign */
+    frag.appendChild(child)
+  }
+
+  return frag
 }
 
 
