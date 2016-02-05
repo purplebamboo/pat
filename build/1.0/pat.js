@@ -3607,7 +3607,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//对template做一次正则替换，以支持mustache的一些写法
 	function _normalize(template){
 
-	  var newTpl = template
+	  var newTpl = template + ''
 
 	  newTpl = newTpl.replace(blockStartReg,'<template t-$1="$2">')
 	  newTpl = newTpl.replace(blockStartRegFalse,'<template t-$1="!($2)">')
