@@ -147,7 +147,7 @@ View.prototype.$destroy = function() {
     watcher.destroy()
   })
 
-  if (this.$el.innerHTML) {
+  if (this.$el && this.$el.innerHTML) {
     this.$el.innerHTML = ''
   }
 

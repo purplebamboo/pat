@@ -203,7 +203,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    watcher.destroy()
 	  })
 
-	  if (this.$el.innerHTML) {
+	  if (this.$el && this.$el.innerHTML) {
 	    this.$el.innerHTML = ''
 	  }
 
@@ -3426,7 +3426,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var inner
 	  var last_offset = 0
 
-	  template.replace(/<[^>]*>/g, function(match, offset) {
+	  template.replace(/<[\w]+[^>]*>/g, function(match, offset) {
 
 	    if (offset > last_offset) {
 	      analyzeText(structure,template.slice(last_offset, offset))
