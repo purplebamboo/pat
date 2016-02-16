@@ -1,6 +1,22 @@
 // Karma configuration
 // Generated on Sat Dec 19 2015 18:49:13 GMT+0800 (CST)
 
+
+var pkg = require('../src/config.js')
+
+var version = pkg.version
+var files = [
+  'build/'+version+'/pat.js',
+  'test/lib/jquery.js',
+  'test/lib/jasmine-jquery.js',
+  'test/js/*.js'
+]
+
+var preprocessors = {}
+
+preprocessors['build/'+version+'/pat.js'] = 'coverage'
+
+
 module.exports = function(config) {
   config.set({
 
@@ -14,12 +30,7 @@ module.exports = function(config) {
 
 
     // list of files / patterns to load in the browser
-    files: [
-      'build/0.1/pat.js',
-      'test/lib/jquery.js',
-      'test/lib/jasmine-jquery.js',
-      'test/js/*.js'
-    ],
+    files: files,
 
 
     // list of files to exclude
@@ -29,9 +40,7 @@ module.exports = function(config) {
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
-    preprocessors: {
-        'build/0.1/pat.js': 'coverage'
-    },
+    preprocessors: preprocessors,
 
 
     // test results reporter to use
@@ -61,12 +70,10 @@ module.exports = function(config) {
     // enable / disable watching file and executing tests whenever any file changes
     autoWatch: true,
 
-
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     browsers: ['Chrome', 'Firefox', 'Safari'],
     //browsers: ['Chrome'],
-
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits

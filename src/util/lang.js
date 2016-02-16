@@ -29,7 +29,7 @@ exports.htmlspecialchars = function(str) {
 
   if (!exports.isString(str)) return str
 
-  str = str.replace(/&/g, '&amp;')
+  //str = str.replace(/&/g, '&amp;')
   str = str.replace(/</g, '&lt;')
   str = str.replace(/>/g, '&gt;')
   str = str.replace(/"/g, '&quot;')

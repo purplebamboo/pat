@@ -10,7 +10,7 @@ describe("[pat:directive.js]", function() {
   }
 
 
-  describe("test bind", function() {
+  describe("(test bind)", function() {
     beforeEach(function(){
       el = document.createElement('div')
       data = {
@@ -31,22 +31,26 @@ describe("[pat:directive.js]", function() {
           }
         }
       })
+
       expect($(el).find('#test').attr('class')).toEqual('pat')
       expect($(el).find('#test2').attr('class')).toEqual('pat-test')
-      expect($(el).find('#test2').attr('t')).toBe('&lt;span&gt;11&lt;/span&gt;')
+      expect($(el).find('#test2').attr('t')).toBe('<span>11</span>')
+      pat.$data.sp = '<span>22</span>'
+      pat.$apply()
+      expect($(el).find('#test2').attr('t')).toBe('&lt;span&gt;22&lt;/span&gt;')
 
     })
 
   })
 
-  describe("test if and unless", function() {
+  describe("(test if and unless)", function() {
 
     beforeEach(function(){
       el = document.createElement('div')
       data = {
         status:1,
         text:'hello world',
-        sp:'<span>11</span>'
+        sp:'<span class="span">11</span>'
       }
     })
 
@@ -59,12 +63,12 @@ describe("[pat:directive.js]", function() {
         data:data
       })
 
-      expect($(el).children().length).toBe(1)
-      expect($(el).children()[0].innerHTML).toBe('111')
+      expect($(el)[0].childNodes.length).toBe(2)
+      expect($(el)[0].childNodes[0].innerHTML).toBe('111')
 
 
       setValue('status',2)
-      expect($(el).children()[0].innerHTML).toBe('222')
+      expect($(el)[0].childNodes[1].innerHTML).toBe('222')
 
     })
 
@@ -73,12 +77,12 @@ describe("[pat:directive.js]", function() {
       pat = new Pat({
         el:el,
         data:data,
-        template:'<template t-if="status < 1">{{text}}--{{{sp}}}</template><template t-unless="status < 1">{{text}}</template>'
+        template:'<template t-if="status < 1">{{*text}}--{{{sp}}}</template><template t-unless="status < 1">{{*text}}</template>'
       })
 
-      expect($.trim($(el).html())).toEqual('hello world')
+      expect($.trim($(el).html())).toMatch('hello world')
       setValue('status',0)
-      expect($(el).find('span').html()).toBe('11')
+      expect($(el).find('.span').html()).toBe('11')
 
     })
 
@@ -86,7 +90,7 @@ describe("[pat:directive.js]", function() {
   })
 
 
-  describe("test for directive", function() {
+  describe("(test for directive)", function() {
     beforeEach(function(){
       el = document.createElement('div')
       data = {
@@ -115,11 +119,11 @@ describe("[pat:directive.js]", function() {
 
 
       expect($($(el).children()[0]).attr('id')).toBe('hello')
-      expect($($(el).children()[1]).find('span').html()).toBe('earth')
+      expect($($(el).children()[1]).find('.t2').html()).toBe('earth')
       expect($($(el).children()[1]).find('.t2').html().toLowerCase()).toEqual('earth')
 
       setValue('text','hahaha')
-      expect($($(el).children()[1]).html().toLowerCase()).toMatch('hahaha--<span')
+      expect($($(el).children()[1]).html().toLowerCase()).toMatch('hahaha')
 
 
       pat.$data.lists[0].name = 'hahaha'
@@ -172,7 +176,7 @@ describe("[pat:directive.js]", function() {
             text:'444444444'
           }]
         },
-        template:'<template class="container4" t-for="(key,item) in lists"><div id="{{key}}">{{item.name}}|{{item.text}}</div></template>'
+        template:'<template class="container4" t-for="(key,item) in lists"><div id="{{key}}">{{*item.name}}|{{*item.text}}</div></template>'
       })
 
       expect($(el).children().length).toBe(4)
@@ -181,7 +185,7 @@ describe("[pat:directive.js]", function() {
         name:'5',
         text:'5555555'
       })
-      pat.$digest()
+      pat.$apply()
 
       expect($(el).children().length).toBe(5)
 
@@ -192,7 +196,7 @@ describe("[pat:directive.js]", function() {
       pat.$data.lists.splice(1,1,{
         name:'hahaha'
       })
-      pat.$digest()
+      pat.$apply()
       expect($(el).children().length).toBe(5)
       expect($($(el).children()[1]).attr('id')).toBe('1')
       expect($($(el).children()[1]).html()).toEqual('hahaha|')
@@ -209,21 +213,31 @@ describe("[pat:directive.js]", function() {
         data:data
       })
 
-      expect($($(el).children()[1]).html().toLowerCase()).toMatch('text--<span class=')
+      expect($($(el).children()[1]).html().toLowerCase()).toMatch('text')
 
-      setValue('text','hahaha')
+      //setValue('text','hahaha')
+      pat.$data.lists.$set(1,{
+        name:'hello111',
+        text:'<span class="t2">test</span>'
+      })
       //不会变化
-      expect($($(el).children()[1]).html().toLowerCase()).toMatch('text--<span class=')
+      expect($($(el).children()[1]).html().toLowerCase()).toMatch('earth')
 
-      setValue('lists',[{name:'new',text:'item'}])
+      setValue('lists',[{
+          name:'hello',
+          text:'<span class="t1">world</span>'
+        },{
+          name:'hello111',
+          text:'<span class="t2">test</span>'
+        }])
       //全部改变数组，才会变化
-      expect($(el).find('#new').html().toLowerCase()).toEqual('hahaha--item')
+      expect($($(el).children()[1]).html().toLowerCase()).toMatch('test')
 
     })
   })
 
 
-  describe("test v-model directive", function() {
+  describe("(test v-model directive)", function() {
     beforeEach(function(){
       el = document.createElement('div')
       data = {
@@ -241,14 +255,12 @@ describe("[pat:directive.js]", function() {
 
     it("use t-model trigger update",function(){
       el.innerHTML = '<div t-for="item in lists" id="{{item.name}}">{{text}}--{{{item.text}}}</div><input type="text" t-model="lists[0].text">'
-
       pat = new Pat({
         el:el,
         data:data
       })
 
       expect($(el).find('.1').html()).toBe('world')
-
       expect($(el).find('input').val()).toBe('<span class="1">world</span>')
 
 

@@ -4,8 +4,6 @@ var Observer = require('../watcher/observer.js')
 
 require('./array.js')
 
-
-
 var defineGetProxy = function(obs,_key) {
   var ob = obs[_key]
 
@@ -52,22 +50,19 @@ var defineSetProxy = function(obs,_key){
 var define = null
 
 if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
-  var VB_ID = 0;
+  var VB_ID = 0
 
   window.execScript([
     'Function parseVB(code)',
     '\tExecuteGlobal(code)',
     'End Function'
-  ].join('\r\n'), 'VBScript');
+  ].join('\r\n'), 'VBScript')
 
   define = function(obj) {
     var buffer = [],
       className,
       command = [],
-      //key,
-      //value_through = [],
       cb_poll = {},
-      //prevent_double_call = {},
       re;
     var props = {}
     var obs = {}
@@ -82,11 +77,11 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
         '\tPublic Property Set [' + key + '](value)',
         '\t\tCall [_pro](me, "set", "' + key + '", value)',
         '\tEnd Property'
-      );
+      )
     }
 
     function defineGet(key, callback) {
-      cb_poll[key + '_get'] = callback;
+      cb_poll[key + '_get'] = callback
       buffer.push(
         '\tPublic Property Get [' + key + ']',
         '\tOn Error Resume Next', //必须优先使用set语句,否则它会误将数组当字符串返回
@@ -96,7 +91,7 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
         '\tEnd If',
         '\tOn Error Goto 0',
         '\tEnd Property'
-      );
+      )
     }
 
     function proxy(me, type, key, value) {
@@ -145,29 +140,30 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
       '\tEnd Function'
     );
 
-    buffer.push('End Class');
+    buffer.push('End Class')
 
-    buffer = buffer.join('\r\n');
+    buffer = buffer.join('\r\n')
 
-    className = 'VB' + (VB_ID++);
+    className = 'VB' + (VB_ID++)
 
-    command.push('Class ' + className + buffer);
+    command.push('Class ' + className + buffer)
     command.push([
       'Function ' + className + 'F(proxy)',
       '\tSet ' + className + 'F = (New ' + className + ')(proxy)',
       'End Function'
-    ].join('\r\n'));
+    ].join('\r\n'))
 
-    command = command.join('\r\n');
+    command = command.join('\r\n')
 
-    window['parseVB'](command);
-    re = window[className + 'F'](proxy);
+    window['parseVB'](command)
+
+    re = window[className + 'F'](proxy)
 
     re.__ori__ = obj
     re.__inject__ = true
 
 
-    return re;
+    return re
 
   }
 } else {
@@ -209,10 +205,6 @@ exports.inject = function(data) {
   var newData = null
 
   if (data.__inject__) return data
-
-  // if (_.isString(data) || _.isNumber(data)) {
-  //   return data
-  // }
 
   if (_.isArray(data)) {
 

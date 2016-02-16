@@ -53,14 +53,14 @@ var View = function (options) {
 
   //记录初始化时间，debug模式下才会打出来
   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
-    _.time('view[' + this.__vid + ']-init:')
+    _.time('view(' + this.__vid + ')[#' + this.$el.id + ']-init:')
   }
 
   //初始化
   this._init()
 
   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
-    _.timeEnd('view[' + this.__vid + ']-init:')
+    _.timeEnd('view(' + this.__vid + ')[#' + this.$el.id + ']-init:')
   }
 }
 
@@ -70,13 +70,20 @@ _.assign(View.prototype,Event)
 //初始化
 View.prototype._init = function() {
 
+
+  var virtualElement = null
   var el = this.$el
   var node,child
   this.fire('beforeMount')
 
-  if (this.__template) {
+  if (this.$el.__VD__) {
+    virtualElement = this.$el
+  }else if(this.__template){
     this.$el.innerHTML = ''
-    el = Dom.transfer(this.__template)
+    virtualElement = Dom.transfer(this.__template)
+  }else{
+    virtualElement = Dom.transfer(this.$el.innerHTML)
+    this.$el.innerHTML = ''
   }
 
   //注入get set
@@ -86,22 +93,19 @@ View.prototype._init = function() {
 
 
   this.fire('beforeCompile')
-  //开始解析编译
-  this.$compile(el)
+  //开始解析编译虚拟节点
+  this.$compile(virtualElement)
   this.fire('afterCompile')
 
-  //如果模板，最后一次性的加到dom里
-  if (this.__template){
-    this.$el.innerHTML = el.mountView(this)
-    this.__rendered = true
+  //如果不是虚拟dom，最后一次性的加到dom里
+  //对于非virtualdom的才会fire afterMount事件，其他情况需要自行处理
+  if (!this.$el.__VD__){
+    this.$el.innerHTML = virtualElement.mountView(this)
+    this.__rendered = true//一定要放在事件之前，这样检测才是已经渲染了
     this.fire('afterMount')
+  }else{
+    this.__rendered = true
   }
-
-  //如果是虚拟dom，调用方法写到页面上
-  // if (this.$el.__VD__) {
-  //   //todo
-  // }
-  //this.fire('afterMount')
 }
 
 
@@ -130,6 +134,9 @@ View.prototype.$inject = function(data){
 View.prototype.$flushUpdate = function(){
   return Queue.flushUpdate()
 }
+
+//为了兼容老的写法
+View.prototype.$apply = View.prototype.$flushUpdate
 
 
 View.prototype.$compile = function(el) {

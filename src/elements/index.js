@@ -339,6 +339,20 @@ var Element = Node.extend({
     return this.childNodes[this.childNodes.length-1]
   },
   setAttribute: function(key, value) {
+
+
+    if (value === undefined || value === null) {
+      value = ''
+    }
+
+    //不允许存在破坏节点的特殊字符
+    //todo 一些防止xss的处理
+    //还有{{{}}}的特殊处理，具有回转的效果
+    if (_.isString(value)) {
+      value = _.htmlspecialchars(value)
+      //value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    }
+
     var index = _.indexOfKey(this.attributes, 'name', key)
     var attr = {
       name: key,
@@ -350,17 +364,12 @@ var Element = Node.extend({
     } else {
       this.attributes.push(attr)
     }
+
     //修改真实dom
     if (!this.getElement()) return
     var element = this.getElement()
 
     this.view.$rootView.fire('beforeUpdateAttribute', [element], this)
-
-    //不允许存在破坏节点的特殊字符
-    //todo 一些防止xss的处理
-    if (_.isString(value)) {
-      value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    }
 
     if (_.indexOf(['value', 'checked', 'selected'], key) !== -1 && key in element) {
       element[key] = key === 'value' ? (value || '') // IE9 will set input.value to "null" for null...
@@ -391,9 +400,8 @@ var Element = Node.extend({
     var attrsString = ''
 
     _.each(this.attributes, function(attr) {
-      //如果不是debug某事跳过指令属性
+      //如果不是debug跳过指令属性
       if (attr.name.indexOf(config.prefix+'-') != -1) return
-
       //todo 需要判断整数的情况
       attrsString += [' ', attr.name, '="', attr.value, '" '].join('')
     })
@@ -438,6 +446,11 @@ var Collection = Element.extend({
     if (!this.patId || !this.view) return
 
     if (this.element) return this.element
+    //集合的软删除，需要通过自己的id去找
+    if (this.deleted) {
+      this.element = _.queryRealDom(this)
+      return this.element
+    }
 
     //否则返回第一个子节点
     var startElement = this.first().getElement()
@@ -489,6 +502,15 @@ var TextNode = Node.extend({
     this.oneTime = true
   },
   html: function(text) {
+
+    if (text === undefined || text === null) {
+      text = ''
+    }
+
+    if (_.isString(text)) {
+      text = _.htmlspecialchars(text)
+    }
+
     this.data = text
     //修改真实dom
     if (!this.getElement()) return
@@ -531,15 +553,21 @@ function getBlockAttributes(attributes){
 
 
 module.exports = {
-  // createCollection: function(attrs,childNodes) {
+  createRoot: function(childNodes) {
+    var root = new Collection({
+      tagName: 'template',
+      attributes: [],
+      childNodes: childNodes
+    })
 
-  //   return new Collection({
-  //     tagName: tag,
-  //     attributes: attributes,
-  //     childNodes: childNodes
-  //   })
-  //   //return new Collection(childNodes)
-  // },
+    root.__ROOT__ = true
+
+    childNodes && _.each(childNodes, function(child) {
+      child.parentNode = root
+    })
+
+    return root
+  },
   createElement: function(tag, attrs, childNodes) {
     var attributes = []
 

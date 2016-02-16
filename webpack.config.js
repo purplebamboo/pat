@@ -1,7 +1,8 @@
 
 var path = require('path');
 var webpack = require('webpack')
-
+var pkg = require('./src/config.js')
+var version = pkg.version
 
 //定义了一些文件夹的路径
 var ROOT_PATH = path.resolve(__dirname);
@@ -14,7 +15,7 @@ module.exports = {
   //输出的文件名 合并以后的js会命名为dst.js
   output: {
     path: BUILD_PATH,
-    filename: '1.0/pat.js',
+    filename: version + '/pat.js',
     library: 'Pat',
     libraryTarget: 'umd'
   },

@@ -74,10 +74,13 @@ module.exports = {
     this.update(value)
 
     //父view触发后，通知子view也fire
-    self.view.on('afterMount',function(){
+    if (self.view.__rendered) {
       self._fireChilds()
-    })
-
+    }else{
+      self.view.on('afterMount',function(){
+        self._fireChilds()
+      })
+    }
   },
   _fireChilds:function(){
     //触发子view的事件
@@ -237,7 +240,6 @@ module.exports = {
     }
     //删除所有需要先删除的
     _.each(deleteChildren, function(child) {
-      //self.view.$rootView.fire('beforeDeleteBlock',child.__node.allElements(),self)
       //删除
       //第一个节点不能硬删除，还要留着定位呢,先软删除
       if (child.$el == self.startNode) {
@@ -247,7 +249,6 @@ module.exports = {
       }
       _.findAndRemove(self.view.__dependViews,child)
       child.$destroy()
-      //self.view.$rootView.fire('afterDeleteBlock',[],self)
     })
 
     //保存一个复用的老的view队列

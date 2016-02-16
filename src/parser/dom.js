@@ -19,6 +19,7 @@ var blockEndReg = new RegExp(delimiters[0] + '\\/(.*?)' + delimiters[1],'g')
 
 var createElement = Element.createElement
 var createTextNode = Element.createTextNode
+var createRoot = Element.createRoot
 
 TAG_RE = parser.TAG_RE
 TEXT_NODE = 'text'
@@ -250,7 +251,7 @@ exports.transfer = function(template) {
   structure.end = -1
   collectTags(structure,template)
   result = getStructure(structure,structure.length - 1)
-  rootElement = createElement('template',{},result.found)
+  rootElement = createRoot(result.found)
 
   return rootElement
 }

@@ -109,14 +109,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  //记录初始化时间，debug模式下才会打出来
 	  if (("development") != 'production' && this.$rootView == this) {
-	    _.time('view[' + this.__vid + ']-init:')
+	    _.time('view(' + this.__vid + ')[#' + this.$el.id + ']-init:')
 	  }
 
 	  //初始化
 	  this._init()
 
 	  if (("development") != 'production' && this.$rootView == this) {
-	    _.timeEnd('view[' + this.__vid + ']-init:')
+	    _.timeEnd('view(' + this.__vid + ')[#' + this.$el.id + ']-init:')
 	  }
 	}
 
@@ -126,13 +126,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	//初始化
 	View.prototype._init = function() {
 
+
+	  var virtualElement = null
 	  var el = this.$el
 	  var node,child
 	  this.fire('beforeMount')
 
-	  if (this.__template) {
+	  if (this.$el.__VD__) {
+	    virtualElement = this.$el
+	  }else if(this.__template){
 	    this.$el.innerHTML = ''
-	    el = Dom.transfer(this.__template)
+	    virtualElement = Dom.transfer(this.__template)
+	  }else{
+	    virtualElement = Dom.transfer(this.$el.innerHTML)
+	    this.$el.innerHTML = ''
 	  }
 
 	  //注入get set
@@ -142,22 +149,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	  this.fire('beforeCompile')
-	  //开始解析编译
-	  this.$compile(el)
+	  //开始解析编译虚拟节点
+	  this.$compile(virtualElement)
 	  this.fire('afterCompile')
 
-	  //如果模板，最后一次性的加到dom里
-	  if (this.__template){
-	    this.$el.innerHTML = el.mountView(this)
-	    this.__rendered = true
+	  //如果不是虚拟dom，最后一次性的加到dom里
+	  //对于非virtualdom的才会fire afterMount事件，其他情况需要自行处理
+	  if (!this.$el.__VD__){
+	    this.$el.innerHTML = virtualElement.mountView(this)
+	    this.__rendered = true//一定要放在事件之前，这样检测才是已经渲染了
 	    this.fire('afterMount')
+	  }else{
+	    this.__rendered = true
 	  }
-
-	  //如果是虚拟dom，调用方法写到页面上
-	  // if (this.$el.__VD__) {
-	  //   //todo
-	  // }
-	  //this.fire('afterMount')
 	}
 
 
@@ -186,6 +190,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	View.prototype.$flushUpdate = function(){
 	  return Queue.flushUpdate()
 	}
+
+	//为了兼容老的写法
+	View.prototype.$apply = View.prototype.$flushUpdate
 
 
 	View.prototype.$compile = function(el) {
@@ -285,6 +292,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	exports.prefix = 't'
+
+	exports.version = '1.0'
+
+
 	exports.tagId = 'p-id'
 	exports.delimiters = ['{{','}}']
 	exports.unsafeDelimiters = ['{{{','}}}']
@@ -584,8 +595,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (!virtualDom.deleted) {
 	    result = _query(root,pid)
 	  }else{//如果已经软删除了，那么页面上的就会是一个注释占位节点，这个时候通过取父级来定位
-	    var parentId = virtualDom.parentNode.patId
-	    var parent = _query(root,parentId)
+
+	    //如果父级是root直接从容器开始找
+	    var parent
+
+	    if (virtualDom.parentNode.__ROOT__) {
+	      parent = root
+	    }else{
+	      parent = _query(root,virtualDom.parentNode.patId)
+	    }
+
+	    // var parentId = virtualDom.parentNode.patId
+	    // var parent = _query(root,parentId)
 	    //父级都不存在，那么子集肯定没有在dom上
 	    if (!parent) return null
 	    //之后通过遍历的方式去找注释节点
@@ -850,7 +871,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if (!exports.isString(str)) return str
 
-	  str = str.replace(/&/g, '&amp;')
+	  //str = str.replace(/&/g, '&amp;')
 	  str = str.replace(/</g, '&lt;')
 	  str = str.replace(/>/g, '&gt;')
 	  str = str.replace(/"/g, '&quot;')
@@ -1749,9 +1770,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        rootView:self.view.$rootView
 	      })
 
-	      self.view.on('afterMount',function(){
+	      if (self.view.__rendered) {
 	        self.childView.fire('afterMount') //触发事件
-	      })
+	      }else{
+	        self.view.on('afterMount',function(){
+	          self.childView.fire('afterMount') //触发事件
+	        })
+	      }
 
 	      self.bound = true
 	    }else{
@@ -1894,10 +1919,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.update(value)
 
 	    //父view触发后，通知子view也fire
-	    self.view.on('afterMount',function(){
+	    if (self.view.__rendered) {
 	      self._fireChilds()
-	    })
-
+	    }else{
+	      self.view.on('afterMount',function(){
+	        self._fireChilds()
+	      })
+	    }
 	  },
 	  _fireChilds:function(){
 	    //触发子view的事件
@@ -2057,7 +2085,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    //删除所有需要先删除的
 	    _.each(deleteChildren, function(child) {
-	      //self.view.$rootView.fire('beforeDeleteBlock',child.__node.allElements(),self)
 	      //删除
 	      //第一个节点不能硬删除，还要留着定位呢,先软删除
 	      if (child.$el == self.startNode) {
@@ -2067,7 +2094,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      _.findAndRemove(self.view.__dependViews,child)
 	      child.$destroy()
-	      //self.view.$rootView.fire('afterDeleteBlock',[],self)
 	    })
 
 	    //保存一个复用的老的view队列
@@ -2178,8 +2204,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	__webpack_require__(20)
 
-
-
 	var defineGetProxy = function(obs,_key) {
 	  var ob = obs[_key]
 
@@ -2226,22 +2250,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	var define = null
 
 	if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
-	  var VB_ID = 0;
+	  var VB_ID = 0
 
 	  window.execScript([
 	    'Function parseVB(code)',
 	    '\tExecuteGlobal(code)',
 	    'End Function'
-	  ].join('\r\n'), 'VBScript');
+	  ].join('\r\n'), 'VBScript')
 
 	  define = function(obj) {
 	    var buffer = [],
 	      className,
 	      command = [],
-	      //key,
-	      //value_through = [],
 	      cb_poll = {},
-	      //prevent_double_call = {},
 	      re;
 	    var props = {}
 	    var obs = {}
@@ -2256,11 +2277,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        '\tPublic Property Set [' + key + '](value)',
 	        '\t\tCall [_pro](me, "set", "' + key + '", value)',
 	        '\tEnd Property'
-	      );
+	      )
 	    }
 
 	    function defineGet(key, callback) {
-	      cb_poll[key + '_get'] = callback;
+	      cb_poll[key + '_get'] = callback
 	      buffer.push(
 	        '\tPublic Property Get [' + key + ']',
 	        '\tOn Error Resume Next', //必须优先使用set语句,否则它会误将数组当字符串返回
@@ -2270,7 +2291,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        '\tEnd If',
 	        '\tOn Error Goto 0',
 	        '\tEnd Property'
-	      );
+	      )
 	    }
 
 	    function proxy(me, type, key, value) {
@@ -2319,29 +2340,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	      '\tEnd Function'
 	    );
 
-	    buffer.push('End Class');
+	    buffer.push('End Class')
 
-	    buffer = buffer.join('\r\n');
+	    buffer = buffer.join('\r\n')
 
-	    className = 'VB' + (VB_ID++);
+	    className = 'VB' + (VB_ID++)
 
-	    command.push('Class ' + className + buffer);
+	    command.push('Class ' + className + buffer)
 	    command.push([
 	      'Function ' + className + 'F(proxy)',
 	      '\tSet ' + className + 'F = (New ' + className + ')(proxy)',
 	      'End Function'
-	    ].join('\r\n'));
+	    ].join('\r\n'))
 
-	    command = command.join('\r\n');
+	    command = command.join('\r\n')
 
-	    window['parseVB'](command);
-	    re = window[className + 'F'](proxy);
+	    window['parseVB'](command)
+
+	    re = window[className + 'F'](proxy)
 
 	    re.__ori__ = obj
 	    re.__inject__ = true
 
 
-	    return re;
+	    return re
 
 	  }
 	} else {
@@ -2383,10 +2405,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var newData = null
 
 	  if (data.__inject__) return data
-
-	  // if (_.isString(data) || _.isNumber(data)) {
-	  //   return data
-	  // }
 
 	  if (_.isArray(data)) {
 
@@ -3135,6 +3153,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return this.childNodes[this.childNodes.length-1]
 	  },
 	  setAttribute: function(key, value) {
+
+
+	    if (value === undefined || value === null) {
+	      value = ''
+	    }
+
+	    //不允许存在破坏节点的特殊字符
+	    //todo 一些防止xss的处理
+	    //还有{{{}}}的特殊处理，具有回转的效果
+	    if (_.isString(value)) {
+	      value = _.htmlspecialchars(value)
+	      //value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+	    }
+
 	    var index = _.indexOfKey(this.attributes, 'name', key)
 	    var attr = {
 	      name: key,
@@ -3146,17 +3178,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	      this.attributes.push(attr)
 	    }
+
 	    //修改真实dom
 	    if (!this.getElement()) return
 	    var element = this.getElement()
 
 	    this.view.$rootView.fire('beforeUpdateAttribute', [element], this)
-
-	    //不允许存在破坏节点的特殊字符
-	    //todo 一些防止xss的处理
-	    if (_.isString(value)) {
-	      value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-	    }
 
 	    if (_.indexOf(['value', 'checked', 'selected'], key) !== -1 && key in element) {
 	      element[key] = key === 'value' ? (value || '') // IE9 will set input.value to "null" for null...
@@ -3187,9 +3214,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var attrsString = ''
 
 	    _.each(this.attributes, function(attr) {
-	      //如果不是debug某事跳过指令属性
+	      //如果不是debug跳过指令属性
 	      if (attr.name.indexOf(config.prefix+'-') != -1) return
-
 	      //todo 需要判断整数的情况
 	      attrsString += [' ', attr.name, '="', attr.value, '" '].join('')
 	    })
@@ -3234,6 +3260,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!this.patId || !this.view) return
 
 	    if (this.element) return this.element
+	    //集合的软删除，需要通过自己的id去找
+	    if (this.deleted) {
+	      this.element = _.queryRealDom(this)
+	      return this.element
+	    }
 
 	    //否则返回第一个子节点
 	    var startElement = this.first().getElement()
@@ -3285,6 +3316,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.oneTime = true
 	  },
 	  html: function(text) {
+
+	    if (text === undefined || text === null) {
+	      text = ''
+	    }
+
+	    if (_.isString(text)) {
+	      text = _.htmlspecialchars(text)
+	    }
+
 	    this.data = text
 	    //修改真实dom
 	    if (!this.getElement()) return
@@ -3327,15 +3367,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	module.exports = {
-	  // createCollection: function(attrs,childNodes) {
+	  createRoot: function(childNodes) {
+	    var root = new Collection({
+	      tagName: 'template',
+	      attributes: [],
+	      childNodes: childNodes
+	    })
 
-	  //   return new Collection({
-	  //     tagName: tag,
-	  //     attributes: attributes,
-	  //     childNodes: childNodes
-	  //   })
-	  //   //return new Collection(childNodes)
-	  // },
+	    root.__ROOT__ = true
+
+	    childNodes && _.each(childNodes, function(child) {
+	      child.parentNode = root
+	    })
+
+	    return root
+	  },
 	  createElement: function(tag, attrs, childNodes) {
 	    var attributes = []
 
@@ -3420,6 +3466,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var createElement = Element.createElement
 	var createTextNode = Element.createTextNode
+	var createRoot = Element.createRoot
 
 	TAG_RE = parser.TAG_RE
 	TEXT_NODE = 'text'
@@ -3651,7 +3698,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  structure.end = -1
 	  collectTags(structure,template)
 	  result = getStructure(structure,structure.length - 1)
-	  rootElement = createElement('template',{},result.found)
+	  rootElement = createRoot(result.found)
 
 	  return rootElement
 	}

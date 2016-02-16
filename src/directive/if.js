@@ -22,9 +22,13 @@ module.exports = {
         rootView:self.view.$rootView
       })
 
-      self.view.on('afterMount',function(){
+      if (self.view.__rendered) {
         self.childView.fire('afterMount') //触发事件
-      })
+      }else{
+        self.view.on('afterMount',function(){
+          self.childView.fire('afterMount') //触发事件
+        })
+      }
 
       self.bound = true
     }else{

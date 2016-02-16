@@ -9,9 +9,9 @@
 </head>
 <body>
 
-<div id="test">
+<div id="test" t='&lt;span&gt;11&lt;/span&gt;'>
 
-
+ <input type="text" value="<span class="1">world</span>">
 
 </div>
 
@@ -21,27 +21,27 @@
 //   debug:false
 // })
 
-var a = {
-  a:'1111',
-  b:'2222'
-}
+// var a = {
+//   a:'1111',
+//   b:'2222'
+// }
 
-t = defineProperties(a,{
-  b:{
-    //value:'1111',
-    enumerable:true,
-    configurable: true,
-    get:function(argument) {
-      console.log('arguments======')
-      console.log(key)
-      // body...
-      //return a['a']
-    },
-    set:function(){
-      console.log('------')
-    }
-  }
-})
+// t = defineProperties(a,{
+//   b:{
+//     //value:'1111',
+//     enumerable:true,
+//     configurable: true,
+//     get:function(argument) {
+//       console.log('arguments======')
+//       console.log(key)
+//       // body...
+//       //return a['a']
+//     },
+//     set:function(){
+//       console.log('------')
+//     }
+//   }
+// })
 
 
 

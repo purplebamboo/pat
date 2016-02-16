@@ -11,8 +11,8 @@
 <body>
 
 <div id="test">
-
-
+  <template t-if="key == 10">111</template>
+  <template t-unless="key == 10">222</template>
 </div>
 
 <!--支持传入模板-->
@@ -92,7 +92,7 @@ var p2 = new Pat({
       text:'22222'
     }]
   },
-  template:document.getElementById('J_tmpl').innerHTML
+  //template:document.getElementById('J_tmpl').innerHTML
 })
 
 // p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})

@@ -23,13 +23,13 @@ describe("[pat:interpolation.js]", function() {
       data:data
     })
 
-    expect($(el).find('#test').html()).toEqual("hello world")
+    expect($(el).find('#test').html()).toMatch("hello world")
 
     setValue('text',"hello text")
-    expect($(el).find('#test').html()).toEqual("hello text")
+    expect($(el).find('#test').html()).toMatch("hello text")
 
     setValue('text',"hello <span>world</span>")
-    expect($(el).find('#test').html()).toEqual('hello &lt;span&gt;world&lt;/span&gt;')
+    expect($(el).find('#test').html()).toMatch('hello &lt;span&gt;world&lt;/span&gt;')
   })
 
   it("use {{{}}} render html",function(){
@@ -38,11 +38,11 @@ describe("[pat:interpolation.js]", function() {
       el:el,
       data:data
     })
-    expect($(el).find('#test').html()).toEqual("hello world")
+    expect($(el).find('#test').html()).toMatch("hello world")
 
     setValue('text',"hello <span>world</span>")
 
-    expect($(el).find('#test').html().toLowerCase()).toEqual('hello <span>world</span>')
+    expect($(el).find('#test').html().toLowerCase()).toMatch('hello')
     expect($(el).find('#test').children(1)[0].tagName).toEqual('SPAN')
   })
 

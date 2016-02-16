@@ -8,14 +8,12 @@ describe("[pat:parse.js]", function() {
   var Parser = Pat.Parser
 
 
-  describe("parseExpression",function(){
+  describe("(parseExpression)",function(){
     it("normal parse expression",function(){
 
       expect(Parser.parseExpression('hello + 1 + "hello"')).toEqual('_scope.hello+1+"hello"')
 
-      //special {{}}
       expect(Parser.parseExpression('hello.a + {{tt}} + "hello{{}}"')).toEqual('_scope.hello.a+{{_scope.tt}}+"hello{{}}"')
-      //complex expression
       expect(Parser.parseExpression('hello.a.slice(test.m) + "hello{{}}" ')).toEqual('_scope.hello.a.slice(_scope.test.m)+"hello{{}}"')
 
 
@@ -31,7 +29,7 @@ describe("[pat:parse.js]", function() {
   })
 
 
-  describe("parseText",function(){
+  describe("(parseText)",function(){
 
 
     it("test parse text",function(){
@@ -57,7 +55,7 @@ describe("[pat:parse.js]", function() {
     })
   })
 
-  describe("parseDirective",function(){
+  describe("(parseDirective)",function(){
     var testDiv = document.createElement('div')
     testDiv.setAttribute('id','{{test}}')
     testDiv.setAttribute('t-if','{{haha|test}}')
@@ -74,7 +72,6 @@ describe("[pat:parse.js]", function() {
         directive: 'bind',
         args: ['id'],
         oneTime: false,
-        html: false,
         block: false,
         expression: '(_scope.test)',
         isInterpolationRegx: true
@@ -94,7 +91,6 @@ describe("[pat:parse.js]", function() {
 
       expect(parsed2.directive).toBe('bind')
       expect(parsed2.block).toBe(false)
-      expect(parsed2.html).toBe(false)
       expect(parsed2.args).toEqual(["t-if"])
       expect(parsed2.expression).toEqual('(_that.applyFilter(_scope.haha,"test"))')
 
