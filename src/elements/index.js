@@ -78,7 +78,7 @@ var domProp = {
 
     var results = []
     if (el.nodeType == 11) {
-      results = el.childNodes || []
+      results = _.toArray(el.childNodes) || []
     }else{
       results = [el]
     }
