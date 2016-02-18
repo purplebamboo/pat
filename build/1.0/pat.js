@@ -3347,14 +3347,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 
+	function isBlockAttribute(name){
+	  var Directive = __webpack_require__(8)
+	  return Directive.isBlockDirective(name)
+	}
+
 
 	function getBlockAttributes(attributes){
-	  var Directive = __webpack_require__(8)
+
 	  var newAttrs = []
 	  var attr
 	  for (var i = 0; i < attributes.length; i++) {
 	    attr = attributes[i]
-	    if (Directive.isBlockDirective(attr.name)) {
+	    if (isBlockAttribute(attr.name)) {
 	      newAttrs.push(attr)
 	      break
 	    }
@@ -3384,6 +3389,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  createElement: function(tag, attrs, childNodes) {
 	    var attributes = []
+	    var hasBlock = false
 
 	    childNodes = childNodes || []
 
@@ -3392,6 +3398,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        name: key,
 	        value: value
 	      })
+
+	      if (isBlockAttribute(key)) {
+	        hasBlock = true
+	      }
 	    })
 
 	    var element = null
@@ -3400,8 +3410,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      //针对template的节点，只保留block类型的指令，并且只保留一个
 	      attributes = getBlockAttributes(attributes)
-	      //如果发现不到两个子节点，那么这个collection是没有意义的，直接，返回子节点
-	      if (childNodes && childNodes.length == 1 && childNodes[0].nodeType == 1) {
+	      //如果发现不到两个子节点，并且子节点没有block的指令
+	      //那么这个collection是没有意义的，直接，返回子节点
+	      if (childNodes && childNodes.length == 1 && childNodes[0].nodeType == 1 && !childNodes[0].hasBlock) {
 	        //属性放到子节点上
 	        childNodes[0].attributes = childNodes[0].attributes.concat(attributes)
 	        return childNodes[0]
@@ -3426,6 +3437,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    childNodes && _.each(childNodes, function(child) {
 	      child.parentNode = element
 	    })
+
+	    element.hasBlock = hasBlock
 
 	    return element
 	  },
