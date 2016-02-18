@@ -72,6 +72,24 @@ describe("[pat:directive.js]", function() {
 
     })
 
+    it("use t-if and unless with complex expression",function(){
+      el.innerHTML = '<span t-if="status == 1 && test !== 2">111</span>'
+
+      pat = new Pat({
+        el:el,
+        data:{
+          status:1,
+          test:2
+        }
+      })
+      expect($(el)[0].childNodes.length).toBe(1)
+      expect($(el)[0].childNodes[0].nodeType).toBe(8)
+
+      setValue('test',1)
+      expect($(el)[0].childNodes[0].innerHTML).toBe('111')
+
+    })
+
     it("use t-if and unless with template",function(){
 
       pat = new Pat({

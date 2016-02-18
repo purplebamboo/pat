@@ -1319,7 +1319,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var value = attr.value
 	  var match, args, tokens, directive, obj
 
-
 	  //value里面有插值的情况下，就认为是插值属性节点，普通指令不支持插值写法
 	  if (interpolationRegx.test(value)) {
 
@@ -1786,7 +1785,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  },
 	  update:function(value){
-
 	    //if 不能使用watch的简单的对比值，而是看结果是true还是false
 	    if (!!value && this.bound == false) {
 	      //生成新的view
@@ -2474,6 +2472,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Watcher.prototype.getValue = function() {
 	  if (!this.expression) return ''
 	  var value
+
 	  //取值很容易出错，需要给出错误提示
 	  try {
 	    if (!this.__depend) Watcher.currentTarget = this
@@ -3141,6 +3140,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.attributes = options.attributes
 	    this.tagName = options.tagName
 	    this.childNodes = options.childNodes
+	    this.hasBlock = options.hasBlock
 	    this.nodeType = 1
 	  },
 	  hasChildNodes: function() {
@@ -3162,10 +3162,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //不允许存在破坏节点的特殊字符
 	    //todo 一些防止xss的处理
 	    //还有{{{}}}的特殊处理，具有回转的效果
-	    if (_.isString(value)) {
-	      value = _.htmlspecialchars(value)
-	      //value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-	    }
+	    // if (_.isString(value)) {
+	    //   //value = _.htmlspecialchars(value)
+	    //   //value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+	    // }
 
 	    var index = _.indexOfKey(this.attributes, 'name', key)
 	    var attr = {
@@ -3246,6 +3246,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.tagName = options.tagName
 	    this.attributes = options.attributes
 	    this.childNodes = options.childNodes
+	    this.hasBlock = options.hasBlock
 	  },
 	  mountHtml:function(view){
 	    var childHtml = ''
@@ -3376,7 +3377,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var root = new Collection({
 	      tagName: 'template',
 	      attributes: [],
-	      childNodes: childNodes
+	      childNodes: childNodes,
+	      hasBlock:false
 	    })
 
 	    root.__ROOT__ = true
@@ -3413,8 +3415,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      //那么这个collection是没有意义的，直接，返回子节点
 	      if (childNodes && childNodes.length == 1 && childNodes[0].nodeType == 1 && !childNodes[0].hasBlock) {
 	        //属性放到子节点上
-	        childNodes[0].attributes = childNodes[0].attributes.concat(attributes)
-	        childNodes[0].hasBlock = true
+	        childNodes[0].options.attributes = childNodes[0].attributes = childNodes[0].attributes.concat(attributes)
+	        childNodes[0].options.hasBlock = childNodes[0].hasBlock = true
 
 	        return childNodes[0]
 	      }else if(!childNodes || childNodes.length == 0){
@@ -3423,7 +3425,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        element = new Collection({
 	          tagName: tag,
 	          attributes: attributes,
-	          childNodes: childNodes
+	          childNodes: childNodes,
+	          hasBlock:hasBlock
 	        })
 	      }
 
@@ -3431,7 +3434,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      element = new Element({
 	        tagName: tag,
 	        attributes: attributes,
-	        childNodes: childNodes
+	        childNodes: childNodes,
+	        hasBlock:hasBlock
 	      })
 	    }
 

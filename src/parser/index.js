@@ -70,7 +70,6 @@ exports.parseDirective = function(attr) {
   var value = attr.value
   var match, args, tokens, directive, obj
 
-
   //value里面有插值的情况下，就认为是插值属性节点，普通指令不支持插值写法
   if (interpolationRegx.test(value)) {
 

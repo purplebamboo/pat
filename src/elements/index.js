@@ -327,6 +327,7 @@ var Element = Node.extend({
     this.attributes = options.attributes
     this.tagName = options.tagName
     this.childNodes = options.childNodes
+    this.hasBlock = options.hasBlock
     this.nodeType = 1
   },
   hasChildNodes: function() {
@@ -348,10 +349,10 @@ var Element = Node.extend({
     //不允许存在破坏节点的特殊字符
     //todo 一些防止xss的处理
     //还有{{{}}}的特殊处理，具有回转的效果
-    if (_.isString(value)) {
-      value = _.htmlspecialchars(value)
-      //value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    }
+    // if (_.isString(value)) {
+    //   //value = _.htmlspecialchars(value)
+    //   //value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // }
 
     var index = _.indexOfKey(this.attributes, 'name', key)
     var attr = {
@@ -432,6 +433,7 @@ var Collection = Element.extend({
     this.tagName = options.tagName
     this.attributes = options.attributes
     this.childNodes = options.childNodes
+    this.hasBlock = options.hasBlock
   },
   mountHtml:function(view){
     var childHtml = ''
@@ -562,7 +564,8 @@ module.exports = {
     var root = new Collection({
       tagName: 'template',
       attributes: [],
-      childNodes: childNodes
+      childNodes: childNodes,
+      hasBlock:false
     })
 
     root.__ROOT__ = true
@@ -599,8 +602,8 @@ module.exports = {
       //那么这个collection是没有意义的，直接，返回子节点
       if (childNodes && childNodes.length == 1 && childNodes[0].nodeType == 1 && !childNodes[0].hasBlock) {
         //属性放到子节点上
-        childNodes[0].attributes = childNodes[0].attributes.concat(attributes)
-        childNodes[0].hasBlock = true
+        childNodes[0].options.attributes = childNodes[0].attributes = childNodes[0].attributes.concat(attributes)
+        childNodes[0].options.hasBlock = childNodes[0].hasBlock = true
 
         return childNodes[0]
       }else if(!childNodes || childNodes.length == 0){
@@ -609,7 +612,8 @@ module.exports = {
         element = new Collection({
           tagName: tag,
           attributes: attributes,
-          childNodes: childNodes
+          childNodes: childNodes,
+          hasBlock:hasBlock
         })
       }
 
@@ -617,7 +621,8 @@ module.exports = {
       element = new Element({
         tagName: tag,
         attributes: attributes,
-        childNodes: childNodes
+        childNodes: childNodes,
+        hasBlock:hasBlock
       })
     }
 
