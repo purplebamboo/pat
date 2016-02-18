@@ -533,14 +533,19 @@ var TextNode = Node.extend({
 })
 
 
+function isBlockAttribute(name){
+  var Directive = require('../directive/index.js')
+  return Directive.isBlockDirective(name)
+}
+
 
 function getBlockAttributes(attributes){
-  var Directive = require('../directive/index.js')
+
   var newAttrs = []
   var attr
   for (var i = 0; i < attributes.length; i++) {
     attr = attributes[i]
-    if (Directive.isBlockDirective(attr.name)) {
+    if (isBlockAttribute(attr.name)) {
       newAttrs.push(attr)
       break
     }
@@ -570,6 +575,7 @@ module.exports = {
   },
   createElement: function(tag, attrs, childNodes) {
     var attributes = []
+    var hasBlock = false
 
     childNodes = childNodes || []
 
@@ -578,6 +584,10 @@ module.exports = {
         name: key,
         value: value
       })
+
+      if (isBlockAttribute(key)) {
+        hasBlock = true
+      }
     })
 
     var element = null
@@ -586,8 +596,9 @@ module.exports = {
 
       //针对template的节点，只保留block类型的指令，并且只保留一个
       attributes = getBlockAttributes(attributes)
-      //如果发现不到两个子节点，那么这个collection是没有意义的，直接，返回子节点
-      if (childNodes && childNodes.length == 1 && childNodes[0].nodeType == 1) {
+      //如果发现不到两个子节点，并且子节点没有block的指令
+      //那么这个collection是没有意义的，直接，返回子节点
+      if (childNodes && childNodes.length == 1 && childNodes[0].nodeType == 1 && !childNodes[0].hasBlock) {
         //属性放到子节点上
         childNodes[0].attributes = childNodes[0].attributes.concat(attributes)
         return childNodes[0]
@@ -612,6 +623,8 @@ module.exports = {
     childNodes && _.each(childNodes, function(child) {
       child.parentNode = element
     })
+
+    element.hasBlock = hasBlock
 
     return element
   },
