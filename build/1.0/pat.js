@@ -2950,14 +2950,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var els = this._normalizeDom(el)
 	    this.view.$rootView.fire('beforeAddBlock',els,this)
 	    _.before(el,target)
-	    this.view.$rootView.fire('afetrAddBlock',els,this)
+	    this.view.$rootView.fire('afterAddBlock',els,this)
 	  },
 	  domAfter:function(el,target){
 	    var els = this._normalizeDom(el)
 
 	    this.view.$rootView.fire('beforeAddBlock',els,this)
 	    _.after(el,target)
-	    this.view.$rootView.fire('afetrAddBlock',els,this)
+	    this.view.$rootView.fire('afterAddBlock',els,this)
 	  },
 	  domReplace:function(target,el){
 	    var els = this._normalizeDom(el)
@@ -2967,7 +2967,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.view.$rootView.fire('beforeDeleteBlock',targets,this)
 	    _.replace(target,el)
 	    this.view.$rootView.fire('afterDeleteBlock',targets,this)
-	    this.view.$rootView.fire('afetrAddBlock',els,this)
+	    this.view.$rootView.fire('afterAddBlock',els,this)
 	  },
 	  domRemove:function(el){
 	    var els = this._normalizeDom(el)
