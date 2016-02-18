@@ -43,6 +43,37 @@ describe("[pat:directive.js]", function() {
 
   })
 
+  describe("(test class)", function() {
+    beforeEach(function(){
+      el = document.createElement('div')
+      data = {
+        name:'pat',
+        key:10,
+        test:2
+      }
+    })
+
+    it("use t-bind render attribute",function(){
+      pat = new Pat({
+        el:el,
+        data:data,
+        template:'<span id="test" class="a b" t-class:haha="key == 10" t-class:hello="test == 2">1111</span>'
+      })
+
+
+      expect($(el).find('#test').attr('class')).toEqual('a b haha hello')
+      setValue('key',1)
+      expect($(el).find('#test').attr('class')).toEqual('a b hello')
+      setValue('test',1)
+      expect($(el).find('#test').attr('class')).toEqual('a b')
+      setValue('key',10)
+      expect($(el).find('#test').attr('class')).toEqual('a b haha')
+
+
+    })
+
+  })
+
   describe("(test if and unless)", function() {
 
     beforeEach(function(){

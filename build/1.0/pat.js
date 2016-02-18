@@ -56,14 +56,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var config = __webpack_require__(1)
 	var Compile = __webpack_require__(2)
-	var Watcher = __webpack_require__(17)
-	var Queue = __webpack_require__(18)
+	var Watcher = __webpack_require__(18)
+	var Queue = __webpack_require__(19)
 	var Directive = __webpack_require__(8)
 	var Parser = __webpack_require__(9)
-	var Dom = __webpack_require__(24)
-	var Data = __webpack_require__(16)
-	var Element = __webpack_require__(23)
-	var Event = __webpack_require__(25)
+	var Dom = __webpack_require__(25)
+	var Data = __webpack_require__(17)
+	var Element = __webpack_require__(24)
+	var Event = __webpack_require__(26)
 	var _ = __webpack_require__(3)
 
 
@@ -310,7 +310,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var Directive = __webpack_require__(8)
-	var Watcher = __webpack_require__(17)
+	var Watcher = __webpack_require__(18)
 	var parser = __webpack_require__(9)
 	var parseDirective = parser.parseDirective
 	var parseText = parser.parseText
@@ -1156,12 +1156,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	//基础指令定义
 	var directives = {
 	  'bind':__webpack_require__(11),
-	  'model':__webpack_require__(12),
-	  'if':__webpack_require__(13),
-	  'unless':__webpack_require__(14),
-	  'for':__webpack_require__(15),
-	  'text':__webpack_require__(21),
-	  'html':__webpack_require__(22)
+	  'class':__webpack_require__(12),
+	  'model':__webpack_require__(13),
+	  'if':__webpack_require__(14),
+	  'unless':__webpack_require__(15),
+	  'for':__webpack_require__(16),
+	  'text':__webpack_require__(22),
+	  'html':__webpack_require__(23)
 	}
 	var noop = function(){}
 
@@ -1651,6 +1652,45 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
+
+	/**
+	 * 用来处理 class
+	 *
+	 * t-class:classname="expression"
+	 * 当expression为true时会 为当前节点增加class 'classname'
+	 */
+
+	var _ = __webpack_require__(3)
+
+	module.exports = {
+	  priority: 3500,
+	  bind:function(value){
+	    this.update(value)
+	  },
+	  update:function(value){
+	    var args,classname
+	    args = this.describe.args || []
+	    classname = args[0]
+
+	    if (!classname) {
+	      if (true) _.error('can not find the attribute classname,check your code。must be t-class:classname="expression"')
+	      return
+	    }
+
+	    if (value != null && value !== false) {
+	      this.el.addClass(classname)
+	    }else{
+	      this.el.removeClass(classname)
+	    }
+
+	  }
+	}
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
 	var _ = __webpack_require__(3)
 
 
@@ -1751,7 +1791,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1824,13 +1864,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var _ = __webpack_require__(3)
 
-	var _if = __webpack_require__(13)
+	var _if = __webpack_require__(14)
 
 	/**
 	 * unless 指令
@@ -1846,13 +1886,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
 	var parseExpression = parser.parseExpression
-	var Data = __webpack_require__(16)
+	var Data = __webpack_require__(17)
 	var Config = __webpack_require__(1)
 
 
@@ -2201,14 +2241,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Watcher = __webpack_require__(17)
+	var Watcher = __webpack_require__(18)
 	var _ = __webpack_require__(3)
-	var Observer = __webpack_require__(19)
+	var Observer = __webpack_require__(20)
 
-	__webpack_require__(20)
+	__webpack_require__(21)
 
 	var defineGetProxy = function(obs,_key) {
 	  var ob = obs[_key]
@@ -2437,11 +2477,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
-	var Queue = __webpack_require__(18)
+	var Queue = __webpack_require__(19)
 
 	var watcherId = 1
 
@@ -2551,7 +2591,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Watcher
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
@@ -2608,11 +2648,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.flushUpdate = flushUpdate
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
-	var Watcher = __webpack_require__(17)
+	var Watcher = __webpack_require__(18)
 
 	var Class = _.Class
 
@@ -2663,12 +2703,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Observer
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var _ = __webpack_require__(3)
-	var Data = __webpack_require__(16)
+	var Data = __webpack_require__(17)
 
 	var arrayMethods = [
 	  'push',
@@ -2747,7 +2787,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2779,7 +2819,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2788,8 +2828,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	var _ = __webpack_require__(3)
-	var elements = __webpack_require__(23)
-	var Dom = __webpack_require__(24)
+	var elements = __webpack_require__(24)
+	var Dom = __webpack_require__(25)
 
 	module.exports = {
 	  block:true,
@@ -2816,7 +2856,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
@@ -3233,7 +3273,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (!this.getElement()) return
 
-	    _addClass(classname)
+	    _addClass(this.getElement(),classname)
 
 	  },
 	  removeClass:function(classname){
@@ -3252,7 +3292,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (!this.getElement()) return
 
-	    _removeClass(classname)
+	    _removeClass(this.getElement(),classname)
 
 	  },
 	  getAttribute:function(key){
@@ -3571,7 +3611,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3582,7 +3622,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
-	var Element = __webpack_require__(23)
+	var Element = __webpack_require__(24)
 	var Config = __webpack_require__(1)
 
 
@@ -3839,7 +3879,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)

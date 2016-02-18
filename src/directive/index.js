@@ -11,6 +11,7 @@ INTERPOLATION_REGX = parser.INTERPOLATION_REGX
 //基础指令定义
 var directives = {
   'bind':require('./bind.js'),
+  'class':require('./class.js'),
   'model':require('./model.js'),
   'if':require('./if.js'),
   'unless':require('./unless.js'),

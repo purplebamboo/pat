@@ -412,7 +412,7 @@ var Element = Node.extend({
 
     if (!this.getElement()) return
 
-    _addClass(classname)
+    _addClass(this.getElement(),classname)
 
   },
   removeClass:function(classname){
@@ -431,7 +431,7 @@ var Element = Node.extend({
 
     if (!this.getElement()) return
 
-    _removeClass(classname)
+    _removeClass(this.getElement(),classname)
 
   },
   getAttribute:function(key){
