@@ -3405,7 +3405,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 
 	    var element = null
-
 	    if (tag == 'template') {
 
 	      //针对template的节点，只保留block类型的指令，并且只保留一个
@@ -3415,6 +3414,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (childNodes && childNodes.length == 1 && childNodes[0].nodeType == 1 && !childNodes[0].hasBlock) {
 	        //属性放到子节点上
 	        childNodes[0].attributes = childNodes[0].attributes.concat(attributes)
+	        childNodes[0].hasBlock = true
+
 	        return childNodes[0]
 	      }else if(!childNodes || childNodes.length == 0){
 	        return
