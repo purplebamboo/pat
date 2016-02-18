@@ -16,7 +16,7 @@ var KEY_ID = 0
 
 module.exports = {
   block: true,
-  priority: 3000,
+  priority: 4000,
   shoudUpdate: function(last, current) {
 
     var lazy = this.describe.args[0] == 'lazy' ? true : false

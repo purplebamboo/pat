@@ -80,6 +80,15 @@ module.exports = {
     if (value === undefined || value === null) {
       value = ''
     }
+
+    //不允许存在破坏节点的特殊字符
+    //todo 一些防止xss的处理
+    //还有{{{}}}的特殊处理，具有回转的效果
+    if (_.isString(value)) {
+      value = _.htmlspecialchars(value)
+      //value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    }
+
     this.curValue = value
     this.el.setAttribute('value',value)
   },

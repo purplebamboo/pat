@@ -37,15 +37,13 @@
     <div id="{{key}}">{{{text}}}</div>
   {{/if}}
 </div>
-
+<input type="text" t-model="lists[0].text">
 </script>
 
 <script type="javascript/template" id="J_tmpl2">
-  {{#for(item in lists)}}
-    {{#if(key == 10 && test !== 2)}}
-      111
-    {{/if}}
-  {{/for}}
+
+<input type="checkbox" value="{{text}}" data-linkage-parent-name="all"/>
+
 </script>
 
 <script type="text/javascript">

@@ -1733,6 +1733,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (value === undefined || value === null) {
 	      value = ''
 	    }
+
+	    //不允许存在破坏节点的特殊字符
+	    //todo 一些防止xss的处理
+	    //还有{{{}}}的特殊处理，具有回转的效果
+	    if (_.isString(value)) {
+	      value = _.htmlspecialchars(value)
+	      //value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+	    }
+
 	    this.curValue = value
 	    this.el.setAttribute('value',value)
 	  },
@@ -1753,14 +1762,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	module.exports = {
 	  block:true,
-	  priority: 3000,
+	  priority: 4000,
 	  shoudUpdate:function(last,current){
 	    //if 任何时候都是需要更新的，哪怕两次的值一样，也是需要更新的，因为你要考虑子view的更新
 	    return true
 	  },
 	  bind:function(value) {
 	    var self = this
-
 	    self.oriEl = self.el.clone()
 	    if (!!value){
 	      self.childView = new self.view.constructor({
@@ -1859,7 +1867,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = {
 	  block: true,
-	  priority: 3000,
+	  priority: 4000,
 	  shoudUpdate: function(last, current) {
 
 	    var lazy = this.describe.args[0] == 'lazy' ? true : false
@@ -2845,6 +2853,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return PAT_ID++
 	}
 
+
+	/*
+	 * Glue methods for compatiblity
+	 */
+
+	function _hasClass(el, cls) {
+	  if (el.classList) {
+	    return el.classList.contains(cls)
+	  } else if (el.className) {
+	    return _.trim(el.className).split(/\s+/).indexOf(cls) >= 0
+	  }
+	}
+
+	function _removeClass(el, cls) {
+	  if (el.classList) {
+	    el.classList.remove(cls)
+	  } else {
+	    var classes = _.trim(el.className).split(/\s+/)
+
+	    for (var i = classes.length - 1; i >= 0; i--) {
+	      if (classes[i] == cls) {
+	        classes.splice(i, 1)
+	      }
+	    }
+
+	    el.className = classes.join(' ')
+	  }
+	}
+
+	function _addClass(el, cls) {
+	  if (el.classList) {
+	    el.classList.add(cls)
+	  } else if (!_hasClass(el, cls)) {
+	    el.className += ' ' + cls
+	  }
+	}
+
+
+
+
 	//一些dom的操作，会抛出事件
 	var domProp = {
 	  _normalizeDom:function(el){
@@ -3152,6 +3200,69 @@ return /******/ (function(modules) { // webpackBootstrap
 	  last:function(){
 	    return this.childNodes[this.childNodes.length-1]
 	  },
+	  hasClass:function(classname){
+	    var index = _.indexOfKey(this.attributes, 'name', 'class')
+
+	    if (index == -1) return false
+
+	    var classStr = this.attributes[index].value
+
+	    var classes = _.trim(classStr).split(/\s+/)
+
+	    return _.indexOf(classes,classname) == -1 ? false : true
+
+	  },
+	  addClass:function(classname){
+
+	    if (!classname) return
+
+	    var classStr = this.getAttribute('class')
+	    classStr += ' ' + classname
+
+	    var index = _.indexOfKey(this.attributes, 'name', 'class')
+	    var attr = {
+	      name: 'class',
+	      value: classStr
+	    }
+
+	    if (index !== -1) {
+	      this.attributes[index] = attr
+	    } else {
+	      this.attributes.push(attr)
+	    }
+
+	    if (!this.getElement()) return
+
+	    _addClass(classname)
+
+	  },
+	  removeClass:function(classname){
+
+	    var index = _.indexOfKey(this.attributes, 'name', 'class')
+
+	    if (index == -1) return
+
+	    var classStr = this.attributes[index].value
+
+	    var classes = _.trim(classStr).split(/\s+/)
+
+	    _.findAndRemove(classes,classname)
+
+	    this.attributes[index].value = classes.join(' ')
+
+	    if (!this.getElement()) return
+
+	    _removeClass(classname)
+
+	  },
+	  getAttribute:function(key){
+	    var index = _.indexOfKey(this.attributes, 'name', key)
+	    if (index !== -1) {
+	      return this.attributes[index].value
+	    }
+
+	    return ''
+	  },
 	  setAttribute: function(key, value) {
 
 
@@ -3215,7 +3326,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _.each(this.attributes, function(attr) {
 	      //如果不是debug跳过指令属性
-	      if (attr.name.indexOf(config.prefix+'-') != -1) return
+	      if (attr.name.indexOf(config.prefix+'-') == 0) return
 	      //todo 需要判断整数的情况
 	      attrsString += [' ', attr.name, '="', attr.value, '" '].join('')
 	    })

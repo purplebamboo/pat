@@ -6,14 +6,13 @@ var _ = require('../util')
  */
 module.exports = {
   block:true,
-  priority: 3000,
+  priority: 4000,
   shoudUpdate:function(last,current){
     //if 任何时候都是需要更新的，哪怕两次的值一样，也是需要更新的，因为你要考虑子view的更新
     return true
   },
   bind:function(value) {
     var self = this
-
     self.oriEl = self.el.clone()
     if (!!value){
       self.childView = new self.view.constructor({

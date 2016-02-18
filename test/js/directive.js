@@ -37,7 +37,7 @@ describe("[pat:directive.js]", function() {
       expect($(el).find('#test2').attr('t')).toBe('<span>11</span>')
       pat.$data.sp = '<span>22</span>'
       pat.$apply()
-      expect($(el).find('#test2').attr('t')).toBe('&lt;span&gt;22&lt;/span&gt;')
+      expect($(el).find('#test2').attr('t')).toBe('<span>22</span>')
 
     })
 
@@ -56,11 +56,11 @@ describe("[pat:directive.js]", function() {
 
 
     it("use t-if and unless to make html show or destroy",function(){
-      el.innerHTML = '<span t-if="status == 1">111</span><span t-unless="status == 1">222</span>'
 
       pat = new Pat({
         el:el,
-        data:data
+        data:data,
+        template:'<span t-if="status == 1">111</span><span t-unless="status == 1">222</span>'
       })
 
       expect($(el)[0].childNodes.length).toBe(2)
@@ -72,11 +72,32 @@ describe("[pat:directive.js]", function() {
 
     })
 
+//     it("use t-if and unless with < >",function(){
+//       //el.innerHTML = '<span t-if="key > 10" >111</span>'
+
+//       pat = new Pat({
+//         el:el,
+//         data:{
+//           key:11
+//         },
+//         template:'<span t-if="key > 10" >111</span><span t-if="key < 10" >222</span>'
+//       })
+// debugger
+//       expect($(el)[0].childNodes.length).toBe(2)
+//       expect($(el)[0].childNodes[0].innerHTML).toBe('111')
+//       expect($(el)[0].childNodes[1].nodeType).toBe(8)
+
+//       setValue('key',2)
+//       expect($(el)[0].childNodes[0].nodeType).toBe(8)
+//       expect($(el)[0].childNodes[1].innerHTML).toBe('222')
+
+//     })
+
     it("use t-if and unless with complex expression",function(){
-      el.innerHTML = '<span t-if="status == 1 && test !== 2">111</span>'
 
       pat = new Pat({
         el:el,
+        template:'<span t-if="status == 1 && test !== 2">111</span>',
         data:{
           status:1,
           test:2
@@ -272,10 +293,11 @@ describe("[pat:directive.js]", function() {
     })
 
     it("use t-model trigger update",function(){
-      el.innerHTML = '<div t-for="item in lists" id="{{item.name}}">{{text}}--{{{item.text}}}</div><input type="text" t-model="lists[0].text">'
+
       pat = new Pat({
         el:el,
-        data:data
+        data:data,
+        template:'<div t-for="item in lists" id="{{item.name}}">{{text}}--{{{item.text}}}</div><input type="text" t-model="lists[0].text">'
       })
 
       expect($(el).find('.1').html()).toBe('world')
