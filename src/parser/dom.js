@@ -25,8 +25,8 @@ TAG_RE = parser.TAG_RE
 TEXT_NODE = 'text'
 
 //http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
-HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:.+?)(?:\s*=\s*(?:"[^"]+"|'[^']+'|[^'">\s]+))?)+\s*|\s*)\/?\>/g
-
+HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:[\w-:]+)(?:\s*=\s*(?:"[^"]+"|'[^']+'|[^'">\s]+))?)+\s*|\s*)\/?\>/g
+//HTML_TAG_REG = /<\/?(\w+)((?:\s+\w+(?:\s*=\s*(?:"(?:.|\n)*?"|'(?:.|\n)*?'|[^'">\s]+))?)+\s*|\s*)\/?\>/g
 /**
  * 收集模板中的各种Tag
  *
@@ -37,7 +37,7 @@ function collectTags(structure,template) {
   var last_offset = 0
 
   template.replace(HTML_TAG_REG, function(match,tagName,attrString,offset) {
-//debugger
+debugger
     if (offset > last_offset) {
       analyzeText(structure,template.slice(last_offset, offset))
     }
