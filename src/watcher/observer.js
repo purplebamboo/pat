@@ -10,7 +10,7 @@ var Observer = Class.extend({
 
     this.watchers = []
   },
-  addWatcher:function(watcher){
+  addWatcher:function(){
     var currentTarget = Watcher.currentTarget
     var watchers = this.watchers
 

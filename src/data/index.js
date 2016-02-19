@@ -15,6 +15,11 @@ var defineGetProxy = function(obs,_key) {
       ob.val.__ob__ = ob
     }
 
+    if (_.isArray(ob.val) && ob.val.__ob__ && ob.val.__ob__ != ob) {
+      ob.val = ob.val.slice()
+      ob.val.__ob__ = ob
+    }
+
     return ob.val
 
   }

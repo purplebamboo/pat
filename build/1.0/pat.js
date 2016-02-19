@@ -2261,6 +2261,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      ob.val.__ob__ = ob
 	    }
 
+	    if (_.isArray(ob.val) && ob.val.__ob__ && ob.val.__ob__ != ob) {
+	      ob.val = ob.val.slice()
+	      ob.val.__ob__ = ob
+	    }
+
 	    return ob.val
 
 	  }
@@ -2663,7 +2668,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.watchers = []
 	  },
-	  addWatcher:function(watcher){
+	  addWatcher:function(){
 	    var currentTarget = Watcher.currentTarget
 	    var watchers = this.watchers
 
@@ -3640,6 +3645,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	TAG_RE = parser.TAG_RE
 	TEXT_NODE = 'text'
 
+	//http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
+	HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:.+?)(?:\s*=\s*(?:"[^"]+"|'[^']+'|[^'">\s]+))?)+\s*|\s*)\/?\>/g
 
 	/**
 	 * 收集模板中的各种Tag
@@ -3647,30 +3654,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {String} template
 	 */
 	function collectTags(structure,template) {
-	  var inner
+	  //var inner
 	  var last_offset = 0
 
-	  template.replace(/<[\w\/\s]+[^>]*>/g, function(match, offset) {
-
+	  template.replace(HTML_TAG_REG, function(match,tagName,attrString,offset) {
+	//debugger
 	    if (offset > last_offset) {
 	      analyzeText(structure,template.slice(last_offset, offset))
 	    }
 
-	    inner = match.match(/<\/?(\w+)([^>]*?)\/?>$/)
+	    //inner = match.match(/<\/?(\w+)([^>]*?)\/?>$/)
 
-	    if (!inner && ("development") != 'production') {
+	    if (!tagName && ("development") != 'production') {
 	      _.error('Bad tag' + match + '.')
 	    }
 
 	    structure.push({
-	      tagName: inner[1].toLowerCase()
+	      tagName: tagName.toLowerCase()
 	    })
 	    structure.end++
 
 	    if (/<\/\w+/.test(match)) {
 	      structure[structure.end].isEnd = true
-	    } else if (inner[2] !== '') {
-	      structure[structure.end].attrs = analyzeAttributes(inner[2])
+	    } else if (attrString !== '') {
+	      structure[structure.end].attrs = analyzeAttributes(attrString)
 	    }
 
 	    last_offset = offset + match.length

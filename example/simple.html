@@ -37,11 +37,13 @@
     <div id="{{key}}">{{{text}}}</div>
   {{/if}}
 </div>
-<input type="text" t-model="lists[0].text">
+<input type="text" t-model="lists[0].text" />
 </script>
 
 <script type="javascript/template" id="J_tmpl2">
-  <span class="a b" t-if="a>1">1111</span>
+  {{#if(key == 11)}}
+    <div id="{{key}}">{{word2}}</div>
+  {{/if}}
 </script>
 
 <script type="text/javascript">
