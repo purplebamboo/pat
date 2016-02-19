@@ -132,11 +132,11 @@ module.exports = {
         //有点hacky,但是没办法，为了达到最小的更新，需要注入一个唯一的健值。
         name = self._generateKey()
         item[curKey] = name
-
         newViewMap[name] = new self.view.constructor({
           el: newNode,
           data: data,
           vid:name,
+          deepinject:false,
           rootView:self.view.$rootView
         })
         newViewMap[name].orikeys = self.orikeys

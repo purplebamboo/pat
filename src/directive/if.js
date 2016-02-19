@@ -18,7 +18,8 @@ module.exports = {
       self.childView = new self.view.constructor({
         el:self.el,
         data:self.view.$data,
-        rootView:self.view.$rootView
+        rootView:self.view.$rootView,
+        deepinject:false
       })
 
       if (self.view.__rendered) {
@@ -46,7 +47,8 @@ module.exports = {
         el:newVdNode,
         //template:newVdNode,
         data:this.view.$data,
-        rootView:this.view.$rootView
+        rootView:this.view.$rootView,
+        deepinject:false
       })
       this.el.replace(newVdNode)
       this.childView.fire('afterMount') //触发事件

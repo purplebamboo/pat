@@ -38,6 +38,8 @@ var View = function (options) {
   this.$rootView = options.rootView ? options.rootView : this
   //模板
   this.__template = options.template
+  //对于数据是否进行深注入，默认为true,这样当数据已经被注入了get set时，会重新复制一份
+  this.__deepinject = options.deepinject == false ? false : true
   //依赖的子view,当此view的一级key更新时，需要同步更新子view的一级key
   this.__dependViews = []
   //所有指令观察对象
@@ -87,7 +89,7 @@ View.prototype._init = function() {
   }
 
   //注入get set
-  this.$data = this.$inject(this.$data)
+  this.$data = this.$inject(this.$data,this.__deepinject)
   //增加特殊联动依赖
   this.__depend()
 
@@ -127,8 +129,8 @@ View.prototype.__depend = function(){
 
 
 
-View.prototype.$inject = function(data){
-  return Data.inject(data)
+View.prototype.$inject = function(data,deepinject){
+  return Data.inject(data,deepinject)
 }
 
 View.prototype.$flushUpdate = function(){

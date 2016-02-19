@@ -30,6 +30,7 @@ var defineSetProxy = function(obs,_key){
   var ob = obs[_key]
 
   return function(newVal) {
+
     if (newVal === ob.val) {
       return
     }
@@ -39,7 +40,7 @@ var defineSetProxy = function(obs,_key){
 
     //如果是对象需要特殊处理
     if (_.isObject(newVal)) {
-      ob.val = exports.inject(newVal)
+      ob.val = exports.inject(newVal,true)
       //依赖的watcher需要重新get一遍值
       //还要考虑scope有没有改变
       ob.depend()
@@ -203,32 +204,69 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
 
 }
 
+
+
+function _oriData(injectData){
+  var result = null,ori
+
+  result = injectData
+
+  if (_.isArray(injectData)) {
+    result = []
+    _.each(injectData,function(item,key){
+      result.push(_oriData(item))
+    })
+  }else if(_.isPlainObject(injectData)){
+    ori = injectData.__ori__
+    result = {}
+    _.each(ori,function(v,key){
+      result[key] = injectData[key]
+    })
+  }
+  //var
+  return result
+}
+
 exports.define = define
 
 
-exports.inject = function(data) {
+exports.inject = function(data,deep) {
   var newData = null
 
-  if (data.__inject__) return data
+  //对于已经注入的对象，我们需要重新复制一份新的
+  if (data.__inject__){
+
+    if (!deep) {
+      return data
+    }else{
+      data = _oriData(data)
+    }
+    //debugger
+    //data = _oriData(data)
+  }
 
   if (_.isArray(data)) {
 
     newData = []
     newData.__inject__ = true
     _.each(data,function(value){
-      newData.push(exports.inject(value))
+      newData.push(exports.inject(value,deep))
     })
     return newData
   }
 
   if (_.isPlainObject(data)) {
+    //newData = {}
     newData = exports.define(data)
     //检测对象的值，需要再递归的去inject
     _.each(data,function(value,key){
       if (_.isObject(value)) {
-        newData[key] = exports.inject(value)
+        //赋值，同时会触发set，这样就把observer的值注入好了
+        newData[key] = exports.inject(value,deep)
       }
     })
+    //newData = exports.define(newData)
+
     return newData
   }
 
