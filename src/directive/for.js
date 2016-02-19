@@ -136,7 +136,7 @@ module.exports = {
           el: newNode,
           data: data,
           vid:name,
-          deepinject:false,
+          //deepinject:false,
           rootView:self.view.$rootView
         })
         newViewMap[name].orikeys = self.orikeys

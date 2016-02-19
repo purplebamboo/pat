@@ -94,8 +94,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.$rootView = options.rootView ? options.rootView : this
 	  //模板
 	  this.__template = options.template
-	  //对于数据是否进行深注入，默认为true,这样当数据已经被注入了get set时，会重新复制一份
-	  this.__deepinject = options.deepinject == false ? false : true
+	  //对于数据是否进行深注入，默认为false, 如果是true那么当数据已经被注入了get set时，会重新复制一份注入
+	  this.__deepinject = options.deepinject == true ? true : false
 	  //依赖的子view,当此view的一级key更新时，需要同步更新子view的一级key
 	  this.__dependViews = []
 	  //所有指令观察对象
@@ -1816,8 +1816,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      self.childView = new self.view.constructor({
 	        el:self.el,
 	        data:self.view.$data,
-	        rootView:self.view.$rootView,
-	        deepinject:false
+	        rootView:self.view.$rootView
+	        //deepinject:false
 	      })
 
 	      if (self.view.__rendered) {
@@ -1845,8 +1845,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        el:newVdNode,
 	        //template:newVdNode,
 	        data:this.view.$data,
-	        rootView:this.view.$rootView,
-	        deepinject:false
+	        rootView:this.view.$rootView
+	        //deepinject:false
 	      })
 	      this.el.replace(newVdNode)
 	      this.childView.fire('afterMount') //触发事件
@@ -2031,7 +2031,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          el: newNode,
 	          data: data,
 	          vid:name,
-	          deepinject:false,
+	          //deepinject:false,
 	          rootView:self.view.$rootView
 	        })
 	        newViewMap[name].orikeys = self.orikeys
