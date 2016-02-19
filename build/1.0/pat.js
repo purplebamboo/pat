@@ -3688,7 +3688,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	TEXT_NODE = 'text'
 
 	//http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
-	HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:[\w-:]+)(?:\s*=\s*(?:"[^"]+"|'[^']+'|[^'">\s]+))?)+\s*|\s*)\/?\>/g
+	HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:[\w-:]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?)+\s*|\s*)\/?\>/g
 	//HTML_TAG_REG = /<\/?(\w+)((?:\s+\w+(?:\s*=\s*(?:"(?:.|\n)*?"|'(?:.|\n)*?'|[^'">\s]+))?)+\s*|\s*)\/?\>/g
 	/**
 	 * 收集模板中的各种Tag

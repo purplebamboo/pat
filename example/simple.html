@@ -53,6 +53,8 @@
     content: '图片美观且被选择较多的商品'
   }" >&#xe600;</i>
 
+  <img src="{{text|fff}}" alt=""/>
+
 </script>
 
 <script type="text/javascript">
@@ -97,7 +99,12 @@ var p2 = new Pat({
     },{
       name:2,
       text:'22222'
-    }]
+    }],
+    filters:{
+      fff:function(value) {
+        return value + '-我是filter带的值'
+      }
+    }
   },
   template:document.getElementById('J_tmpl2').innerHTML
 })
