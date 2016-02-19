@@ -37,7 +37,7 @@ function collectTags(structure,template) {
   var last_offset = 0
 
   template.replace(HTML_TAG_REG, function(match,tagName,attrString,offset) {
-debugger
+
     if (offset > last_offset) {
       analyzeText(structure,template.slice(last_offset, offset))
     }
