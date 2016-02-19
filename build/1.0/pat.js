@@ -2290,7 +2290,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    //如果是对象需要特殊处理
 	    if (_.isObject(newVal)) {
-	      ob.val = exports.inject(newVal,true)
+	      ob.val = exports.inject(newVal)
 	      //依赖的watcher需要重新get一遍值
 	      //还要考虑scope有没有改变
 	      ob.depend()

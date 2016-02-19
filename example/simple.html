@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <title>测试页面</title>
-  <script src="../build/1.0/pat.js"></script>
+  <script src="../build/0.2/pat.js"></script>
 
   <link rel="stylesheet" type="text/css" href="./css/example.css">
 
@@ -41,19 +41,10 @@
 </script>
 
 <script type="javascript/template" id="J_tmpl2">
-  <i class="color-c advfont icon-info" bx-name="app/exts/popover/popover" bx-options="{
-    placement: 'bottom',
-    align: 'right',
-    offset: {
-      left:8,
-      top:8
-    },
-    elClass: 'msg msg-alert',
-    width: 125,
-    content: '图片美观且被选择较多的商品'
-  }" >&#xe600;</i>
-
-  <img src="{{text|fff}}" alt=""/>
+  <select>
+    <option t-for="item in lists" value="{{item.name}}" t-bind:selected="item.name==''">
+    {{item.text}}</option>
+  </select>
 
 </script>
 
@@ -94,10 +85,10 @@ var p2 = new Pat({
     word2:'<span class="ddd">aaa</span>',
     t:['1','2','3','4'],
     lists:[{
-      name:1,
+      name:'1',
       text:'11111'
     },{
-      name:2,
+      name:'',
       text:'22222'
     }],
     filters:{
