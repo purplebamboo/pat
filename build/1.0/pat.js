@@ -94,6 +94,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.$rootView = options.rootView ? options.rootView : this
 	  //模板
 	  this.__template = options.template
+	  //对于数据是否进行深注入，默认为true,这样当数据已经被注入了get set时，会重新复制一份
+	  this.__deepinject = options.deepinject == false ? false : true
 	  //依赖的子view,当此view的一级key更新时，需要同步更新子view的一级key
 	  this.__dependViews = []
 	  //所有指令观察对象
@@ -143,7 +145,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  //注入get set
-	  this.$data = this.$inject(this.$data)
+	  this.$data = this.$inject(this.$data,this.__deepinject)
 	  //增加特殊联动依赖
 	  this.__depend()
 
@@ -183,8 +185,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
-	View.prototype.$inject = function(data){
-	  return Data.inject(data)
+	View.prototype.$inject = function(data,deepinject){
+	  return Data.inject(data,deepinject)
 	}
 
 	View.prototype.$flushUpdate = function(){
@@ -1814,7 +1816,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      self.childView = new self.view.constructor({
 	        el:self.el,
 	        data:self.view.$data,
-	        rootView:self.view.$rootView
+	        rootView:self.view.$rootView,
+	        deepinject:false
 	      })
 
 	      if (self.view.__rendered) {
@@ -1842,7 +1845,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        el:newVdNode,
 	        //template:newVdNode,
 	        data:this.view.$data,
-	        rootView:this.view.$rootView
+	        rootView:this.view.$rootView,
+	        deepinject:false
 	      })
 	      this.el.replace(newVdNode)
 	      this.childView.fire('afterMount') //触发事件
@@ -2023,11 +2027,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //有点hacky,但是没办法，为了达到最小的更新，需要注入一个唯一的健值。
 	        name = self._generateKey()
 	        item[curKey] = name
-
 	        newViewMap[name] = new self.view.constructor({
 	          el: newNode,
 	          data: data,
 	          vid:name,
+	          deepinject:false,
 	          rootView:self.view.$rootView
 	        })
 	        newViewMap[name].orikeys = self.orikeys
@@ -2276,6 +2280,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var ob = obs[_key]
 
 	  return function(newVal) {
+
 	    if (newVal === ob.val) {
 	      return
 	    }
@@ -2285,7 +2290,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    //如果是对象需要特殊处理
 	    if (_.isObject(newVal)) {
-	      ob.val = exports.inject(newVal)
+	      ob.val = exports.inject(newVal,true)
 	      //依赖的watcher需要重新get一遍值
 	      //还要考虑scope有没有改变
 	      ob.depend()
@@ -2449,32 +2454,69 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	}
 
+
+
+	function _oriData(injectData){
+	  var result = null,ori
+
+	  result = injectData
+
+	  if (_.isArray(injectData)) {
+	    result = []
+	    _.each(injectData,function(item,key){
+	      result.push(_oriData(item))
+	    })
+	  }else if(_.isPlainObject(injectData)){
+	    ori = injectData.__ori__
+	    result = {}
+	    _.each(ori,function(v,key){
+	      result[key] = injectData[key]
+	    })
+	  }
+	  //var
+	  return result
+	}
+
 	exports.define = define
 
 
-	exports.inject = function(data) {
+	exports.inject = function(data,deep) {
 	  var newData = null
 
-	  if (data.__inject__) return data
+	  //对于已经注入的对象，我们需要重新复制一份新的
+	  if (data.__inject__){
+
+	    if (!deep) {
+	      return data
+	    }else{
+	      data = _oriData(data)
+	    }
+	    //debugger
+	    //data = _oriData(data)
+	  }
 
 	  if (_.isArray(data)) {
 
 	    newData = []
 	    newData.__inject__ = true
 	    _.each(data,function(value){
-	      newData.push(exports.inject(value))
+	      newData.push(exports.inject(value,deep))
 	    })
 	    return newData
 	  }
 
 	  if (_.isPlainObject(data)) {
+	    //newData = {}
 	    newData = exports.define(data)
 	    //检测对象的值，需要再递归的去inject
 	    _.each(data,function(value,key){
 	      if (_.isObject(value)) {
-	        newData[key] = exports.inject(value)
+	        //赋值，同时会触发set，这样就把observer的值注入好了
+	        newData[key] = exports.inject(value,deep)
 	      }
 	    })
+	    //newData = exports.define(newData)
+
 	    return newData
 	  }
 
