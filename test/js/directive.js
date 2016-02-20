@@ -103,26 +103,26 @@ describe("[pat:directive.js]", function() {
 
     })
 
-//     it("use t-if and unless with < >",function(){
-//       //el.innerHTML = '<span t-if="key > 10" >111</span>'
+    it("use t-if and unless with < >",function(){
+      //el.innerHTML = '<span t-if="key > 10" >111</span>'
 
-//       pat = new Pat({
-//         el:el,
-//         data:{
-//           key:11
-//         },
-//         template:'<span t-if="key > 10" >111</span><span t-if="key < 10" >222</span>'
-//       })
-// debugger
-//       expect($(el)[0].childNodes.length).toBe(2)
-//       expect($(el)[0].childNodes[0].innerHTML).toBe('111')
-//       expect($(el)[0].childNodes[1].nodeType).toBe(8)
+      pat = new Pat({
+        el:el,
+        data:{
+          key:11
+        },
+        template:'<span t-if="key > 10" >111</span><span t-if="key < 10" >222</span>'
+      })
 
-//       setValue('key',2)
-//       expect($(el)[0].childNodes[0].nodeType).toBe(8)
-//       expect($(el)[0].childNodes[1].innerHTML).toBe('222')
+      expect($(el)[0].childNodes.length).toBe(2)
+      expect($(el)[0].childNodes[0].innerHTML).toBe('111')
+      expect($(el)[0].childNodes[1].nodeType).toBe(8)
 
-//     })
+      setValue('key',2)
+      expect($(el)[0].childNodes[0].nodeType).toBe(8)
+      expect($(el)[0].childNodes[1].innerHTML).toBe('222')
+
+    })
 
     it("use t-if and unless with complex expression",function(){
 

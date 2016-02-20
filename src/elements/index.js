@@ -502,12 +502,14 @@ var Element = Node.extend({
   mountHtml: function(view) {
     var tagName = this.tagName
     var attrsString = ''
+    var attrStr
 
     _.each(this.attributes, function(attr) {
       //如果不是debug跳过指令属性
       if (attr.name.indexOf(config.prefix+'-') == 0) return
-      //todo 需要判断整数的情况
-      attrsString += [' ', attr.name, '="', attr.value, '" '].join('')
+      //todo 需要判断整数的情况,以及没有值的情况
+      attrStr = attr.value === undefined ? attr.name : attr.name + '="' + attr.value + '"'
+      attrsString += ' ' + attrStr + ' '
     })
 
     attrsString += ' ' + TAG_ID + '="' + this.patId + '"'

@@ -2435,6 +2435,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      obs[key] = new Observer()
 	      newObj[key] = obj[key]
 	      obs[key].val = newObj[key]
+	      //obs[key].val = newObj[key]
 
 	      props[key] = {
 	        enumerable:true,
@@ -3410,12 +3411,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  mountHtml: function(view) {
 	    var tagName = this.tagName
 	    var attrsString = ''
+	    var attrStr
 
 	    _.each(this.attributes, function(attr) {
 	      //如果不是debug跳过指令属性
 	      if (attr.name.indexOf(config.prefix+'-') == 0) return
-	      //todo 需要判断整数的情况
-	      attrsString += [' ', attr.name, '="', attr.value, '" '].join('')
+	      //todo 需要判断整数的情况,以及没有值的情况
+	      attrStr = attr.value === undefined ? attr.name : attr.name + '="' + attr.value + '"'
+	      attrsString += ' ' + attrStr + ' '
 	    })
 
 	    attrsString += ' ' + TAG_ID + '="' + this.patId + '"'
@@ -3688,6 +3691,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	TEXT_NODE = 'text'
 
 	//http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
+	ATTRIBUTE_REG = /(?:[\w-:]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?/g
 	HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:[\w-:]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?)+\s*|\s*)\/?\>/g
 	//HTML_TAG_REG = /<\/?(\w+)((?:\s+\w+(?:\s*=\s*(?:"(?:.|\n)*?"|'(?:.|\n)*?'|[^'">\s]+))?)+\s*|\s*)\/?\>/g
 	/**
@@ -3784,19 +3788,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var attributes = {}
 	  var attrs,name,value,index
 	  //严谨起见，避免出现多个空格的情况
-	  attrString = attrString.replace(/\ (?=\ )/g, '')
+	  //attrString = attrString.replace(/\ (?=\ )/g, '')
 
-	  attrs = attrString.match(/[^=]+=('[^']*'|"[^"]*")|[^\s]+/g)//注意，属性里可能有引号
+	  attrs = attrString.match(ATTRIBUTE_REG)//注意，属性里可能有引号
 	  _.each(attrs,function(attr){
 	    index = attr.indexOf('=')
 	    if (~index) {
 	      name = attr.slice(0,index)
-	      value = attr.slice(index+1).replace(/^('|")/,'').replace(/('|")$/,'')
+	      value = _.trim(attr.slice(index+1).replace(/^('|")/,'').replace(/('|")$/,''))
 	    }else{
 	      name = attr
-	      value = ''
+	      value = undefined
 	    }
-	    attributes[_.trim(name)] = _.trim(value)
+	    attributes[_.trim(name)] = value
 	  })
 
 	  return attributes

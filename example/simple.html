@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <title>测试页面</title>
-  <script src="../build/0.2/pat.js"></script>
+  <script src="../build/1.0/pat.js"></script>
 
   <link rel="stylesheet" type="text/css" href="./css/example.css">
 
@@ -16,6 +16,130 @@
 
 <!--支持传入模板-->
 <script type="javascript/template" id="J_tmpl">
+<div class="block-ac-item-detail">
+    <div class="detail-line">
+      <span class="line-title">
+        发起方：
+      </span>
+      <div class="line-right">
+        <span class="color-d">
+          {{pubNick}}
+          <i class="card-icon advfont">
+            &#xe60e;
+          </i>
+        </span>
+        <div class="block-usercard clearfix">
+          <em class="arrow arrow-top">
+            <em class="arrow arrow-top"></em>
+          </em>
+          <div class="user-info">
+            <div class="info-line">
+              <span class="line-label">
+                会员等级：
+              </span>
+              <span class="line-content">
+                {{{tkLevel|level}}}
+              </span>
+            </div>
+            <div class="info-line">
+              <span class="line-label">
+                推广类目：
+              </span>
+              <span class="line-content">
+                {{pubCats.join('，')}}
+              </span>
+            </div>
+            <div class="info-line">
+              <span class="line-label">
+                推广渠道：
+              </span>
+              <span class="line-content">
+                {{pubChannel}}
+              </span>
+            </div>
+          </div>
+          <div class="user-data">
+            <div class="data-line">
+              <span class="line-label">近30天日均点击次数</span>
+              <span class="line-content">
+                <strong class="f16">{{avgClick}}</strong>及以上
+              </span>
+            </div>
+            <div class="data-line">
+              <span class="line-label">近30天日均成交笔数</span>
+              <span class="line-content">
+                <strong class="f16">{{avgAlipayNum}}</strong>
+                笔及以上
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <div class="detail-line wangwang">
+      <span class="line-title">
+        联系方式：
+      </span>
+    <div class="line-right">
+      <a class="J_aliwangwang" href="#" data-account="{{wangwangName}}"></a>
+      <span class="wangwang-name">{{wangwangName}}</span>
+    </div>
+  </div>
+    <div class="detail-line">
+      <span class="line-title">
+        招商个数：
+      </span>
+      <div class="line-right">
+        {{click}}
+      </div>
+    </div>
+    <div class="detail-line">
+      <span class="line-title">
+        报名时间：
+      </span>
+      <div class="line-right">
+        <span class="color-d">{{joinStartTime}}</span>
+        <span class="color-l">至</span>
+        <span class="color-d">{{joinEndTime}}</span>
+      </div>
+    </div>
+    <div class="detail-line">
+      <span class="line-title">
+        活动时间：
+      </span>
+      <div class="line-right">
+        <span class="color-d">{{startTime}}</span>
+        <span class="color-l">至</span>
+        <span class="color-d">{{endTime}}</span>
+      </div>
+    </div>
+
+    <div class="detail-line">
+      <span class="line-title">
+        招商商品：
+      </span>
+      <div class="line-bottom">
+        <div class="item-lists">
+          <div class="block-item-goods" t-for="(key,item) in result">
+            <div class="img-wrap">
+              <img src="{{item.pictUrl|adaptImg220}}" alt=""/>
+            </div>
+            <ul class="info">
+              <li class="title color-l">{{item.title}}</li>
+              <li class="num clearfix">
+                  <span class="fl number number-16">{{{item.zkPrice|formatNumber}}}</span>
+                  <span class="fr"><span class="color-l">当前比率：</span>{{{item.tkRate|toPercentage}}}</span>
+              </li>
+              <li class="req">
+                  <span class="color-l">招商要求：</span>比率<span class="color-brand">{{{item.reqCommRate|toPercentage}}}</span>及以上
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
 <div class="container4 line">
 
   {{text}}111
@@ -26,7 +150,9 @@
       <input type="text" t-model='text' value=""/>
       <input type="text" t-model='item.text' value=""/>
     </div>
-    <div><input type="text" t-model='text' value=""/></div>
+    <div>
+      <input type="text" t-model='text' value=""/>
+    </div>
   {{/for}}
 
   {{#if(key == 11)}}
@@ -34,17 +160,18 @@
   {{/if}}
 
   {{#if(key == 10)}}
-    <div id="{{key}}">{{{text}}}</div>
+    <div id="{{key}}">{{text}}</div>
   {{/if}}
 </div>
 <input type="text" t-model="lists[0].text" />
+
 </script>
 
 <script type="javascript/template" id="J_tmpl2">
-  <select>
-    <option t-for="item in lists" value="{{item.name}}" t-bind:selected="item.name==''">
-    {{item.text}}</option>
-  </select>
+
+  {{#if(key == 11)}}
+    <div id="{{key}}">{{word2}}</div>
+  {{/if}}
 
 </script>
 
@@ -97,7 +224,7 @@ var p2 = new Pat({
       }
     }
   },
-  template:document.getElementById('J_tmpl2').innerHTML
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 // p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
