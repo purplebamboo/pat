@@ -185,7 +185,8 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
       obs[key] = new Observer()
       newObj[key] = obj[key]
       obs[key].val = newObj[key]
-      //obs[key].val = newObj[key]
+      obs[key].key = key
+      obs[key].parentVal = newObj
 
       props[key] = {
         enumerable:true,

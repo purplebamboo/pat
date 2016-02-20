@@ -312,12 +312,37 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var Directive = __webpack_require__(8)
+	var Data = __webpack_require__(17)
 	var Watcher = __webpack_require__(18)
 	var parser = __webpack_require__(9)
 	var parseDirective = parser.parseDirective
 	var parseText = parser.parseText
 	var parseExpression = parser.parseExpression
 	var config = __webpack_require__(1)
+
+
+
+	function _handelUnregisterKey(describe){
+	  var expression = describe.expression
+	  var view = describe.view
+	  var match = expression.match(/_scope\.([\w]+)/)
+	  var key,newObj
+	  if (!match || !match[1]) return
+
+	  key = match[1]
+	  newObj = {}
+
+	  if (!_.hasKey(view.$data.__ori__,key)) {
+	    newObj[key] = ''
+	    _.each(view.$data.__ori__,function(v,k){
+	      newObj[k] = view.$data[k]
+	    })
+
+	    view.$data = Data.inject(newObj)
+	  }
+
+	}
+
 
 	/**
 	 * 绑定directive，初始化指令
@@ -330,6 +355,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  view = describe.view
 	  dirInstance = Directive.create(describe)
 
+	  //这里需要做一个特殊处理，就是如果expression是单独的一级key并且data里面不存在，我们需要重新赋值data
+	  _handelUnregisterKey(describe)
 
 	  //先去watch池子里找,value可以作为key
 	  watcher = view.__watchers[describe.value]
@@ -2435,7 +2462,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      obs[key] = new Observer()
 	      newObj[key] = obj[key]
 	      obs[key].val = newObj[key]
-	      //obs[key].val = newObj[key]
+	      obs[key].key = key
+	      obs[key].parentVal = newObj
 
 	      props[key] = {
 	        enumerable:true,
@@ -2717,6 +2745,32 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (currentTarget && _.indexOf(watchers,currentTarget) == -1) {
 	      watchers.unshift(currentTarget)
+	      //进行属性检查，如果发现会调用不存在的key,就重新改造自己
+	      this.checkUnregisterKey(currentTarget)
+	    }
+	  },
+	  getKeyReg:function(){
+
+	    if (!this.keyReg){
+	      return new RegExp(this.key + '\\.([\\w]+)')
+	    }
+	    return this.keyReg
+	  },
+	  checkUnregisterKey:function(watcher){
+	    if (!_.isPlainObject(this.val) || !this.parentVal) return
+	      //'a.b'.match(/\.([\w]+)/)
+	     // 'a["b"]'.match(/\[("[^"]*"|'[^']*')\]/g)
+
+	    var expression = watcher.expression
+	    //todo  多个key需要处理
+	    var childKeyMatch = expression.match(this.getKeyReg())
+	    if (!childKeyMatch || !childKeyMatch[1]) return
+	    var childKey = childKeyMatch[1]
+	    var oriValue = this.val.__ori__
+	    //如果不存在这个key,就需要做出特殊的处理
+	    if (!_.hasKey(this.val,childKey)) {
+	      oriValue[childKey] = ''
+	      this.parentVal[this.key] = oriValue
 	    }
 
 	  },
