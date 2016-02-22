@@ -12,11 +12,13 @@ var defineGetProxy = function(obs,_key) {
     ob.addWatcher()
 
     if (_.isArray(ob.val) && !ob.val.__ob__) {
+      ob.val.__inject__ = true
       ob.val.__ob__ = ob
     }
-
+    //当用户赋值了一个inject过的数组，那么这边的__ob__需要改掉，不然还用的以前的ob就更新不了了
     if (_.isArray(ob.val) && ob.val.__ob__ && ob.val.__ob__ != ob) {
       ob.val = ob.val.slice()
+      ob.val.__inject__ = true
       ob.val.__ob__ = ob
     }
 
@@ -31,6 +33,19 @@ var defineSetProxy = function(obs,_key){
 
   return function(newVal) {
 
+    // if (_.isObject(newVal)) {
+    //   newVal = exports.inject(newVal)
+
+    //   newVal.__parentVal__ = newVal.__parentVal__ || []
+    //   //_.findAndReplaceOrAdd()
+    //   if (_.indexOf(newVal.__parentVal__,ob.owner) == -1) {
+    //     newVal.__parentVal__.push(ob.owner)
+    //   }
+
+    // }
+
+
+    //todo 有时两个值一样，但是还是需要去修改__parentVal__
     if (newVal === ob.val) {
       return
     }
@@ -41,6 +56,10 @@ var defineSetProxy = function(obs,_key){
     //如果是对象需要特殊处理
     if (_.isObject(newVal)) {
       ob.val = exports.inject(newVal)
+
+      //ob.val.__parentVal__ = ob.val.__parentVal__ || []
+      //ob.val.__parentVal__.push(ob.owner)
+      //_.findAndReplace(ob.val.__parentVal__,oriData,self.$data)
       //依赖的watcher需要重新get一遍值
       //还要考虑scope有没有改变
       ob.depend()
@@ -112,6 +131,10 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
       if (obj.hasOwnProperty && !obj.hasOwnProperty(key)) continue
       obs[key] = new Observer()
       obs[key].val = obj[key]
+      obs[key].key = key
+      //可能存在多个parentVal
+      //obs[key].parentVal = obs[key].parentVal || []
+      //obs[key].parentVal.push(newObj)
 
       props[key] = {
         enumerable: true,
@@ -137,6 +160,7 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
     buffer.push("\tPublic [" + '__pat_key__' + "]")
     buffer.push("\tPublic [" + '__ori__' + "]")
     buffer.push("\tPublic [" + '__inject__' + "]")
+    //buffer.push("\tPublic [" + '__parentVal__' + "]")
 
     buffer.unshift(
       '\r\n\tPrivate [_acc], [_pro]',
@@ -181,12 +205,21 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
 
     for (var key in obj) {
 
-      if (!obj.hasOwnProperty(key)) continue
+      if (!obj.hasOwnProperty(key) || hasSpecialKey(key)) continue
       obs[key] = new Observer()
       newObj[key] = obj[key]
+
       obs[key].val = newObj[key]
       obs[key].key = key
-      obs[key].parentVal = newObj
+      //obs[key].owner = newObj
+      //可能存在多个parentVal
+      // if (_.isObject(obs[key].val) && obs[key].val.__inject__) {
+      //   debugger
+      //   obs[key].val.__parentVal__ = obs[key].val.__parentVal__ || []
+      //   obs[key].val.__parentVal__.push(newObj)
+      // }
+      // obs[key].__parentVal__ = obs[key].__parentVal__ || []
+      // obs[key].__parentVal__.push(newObj)
 
       props[key] = {
         enumerable:true,
@@ -206,7 +239,9 @@ if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
 
 }
 
-
+function hasSpecialKey(key){
+  return _.indexOf(['__ori__','__inject__'],key) != -1
+}
 
 function _oriData(injectData){
   var result = null,ori
@@ -251,8 +286,20 @@ exports.inject = function(data,deep) {
 
     newData = []
     newData.__inject__ = true
+    var tmpl
     _.each(data,function(value){
-      newData.push(exports.inject(value,deep))
+      // tmpl = value
+      // if(_.isObject(value)){
+      //   tmpl = exports.inject(value,deep)
+      //   tmpl.__parentVal__ = tmpl.__parentVal__ || []
+      //   //_.findAndReplaceOrAdd(tmpl.__parentVal__,)
+      //   if (_.indexOf(tmpl.__parentVal__,newData) == -1) {
+      //     tmpl.__parentVal__.push(newData)
+      //   }
+      //   //tmpl.__parentVal__.push(newData)
+      // }
+      tmpl = exports.inject(value,deep)
+      newData.push(tmpl)
     })
     return newData
   }

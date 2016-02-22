@@ -146,6 +146,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  //注入get set
 	  this.$data = this.$inject(this.$data,this.__deepinject)
+
 	  //增加特殊联动依赖
 	  this.__depend()
 
@@ -173,15 +174,83 @@ return /******/ (function(modules) { // webpackBootstrap
 	View.prototype.__depend = function(){
 	  var self = this
 	  _.each(this.$data.__ori__,function(val,key){
-	    self.$watch(key,function(){
+	    // self.$watch(key,function(){
+	    //   if (!self.__dependViews) return
+	    //   _.each(self.__dependViews,function(view){
+	    //     view.$data[key] = self.$data[key]
+	    //   })
+	    // })
+	    self.__dependWatch(key)
+	  })
+	}
 
-	      if (!self.__dependViews) return
-	      _.each(self.__dependViews,function(view){
-	        view.$data[key] = self.$data[key]
-	      })
+	View.prototype.__dependWatch = function(key){
+	  var self = this
+
+	  self.$watch(key,function(){
+	    if (!self.__dependViews) return
+	    _.each(self.__dependViews,function(view){
+	      view.$data[key] = self.$data[key]
 	    })
 	  })
 	}
+
+
+	//用于给当前的view增加几个新的key
+	// View.prototype.__addData = function(newdata){
+	//   var self = this
+	//   var newObj = self.$data.__ori__
+	//   var hasUnregister = false
+	//   var newKeys = []
+	//   _.each(newdata,function(value,key){
+
+	//     if (!_.hasKey(newObj,key)) {
+	//       newObj[key] = value
+	//       //view.$data.__ori__[key] = value
+	//       newKeys.push(key)
+	//       //self.__dependWatch(key)
+	//       //hasUnregister = true
+	//       // _.each(view.$data.__ori__,function(v,k){
+	//       //   newObj[k] = view.$data[k]
+	//       // })
+	//     }
+	//   })
+
+	//   if (newKeys.length == 0) return
+
+	//   var oriData = self.$data
+	//   self.$data = Data.define(newObj)
+
+	//   //需要把之前的watcher全部再get一遍，建立新的依赖关系
+	//   // _.each(oriData.__ori__,function(value,key){
+	//   //   oriData.$data[key].__ob__.depend()
+	//   //   self.$data[key] = oriData[key]
+	//   // })
+	//   _.each(oriData.__ori__,function(value,key){
+	//     //oriData.$data[key].__ob__.depend()
+	//     if (_.indexOf(newKeys,key) == -1) {
+	//       oriData[key].__parentVal__ && _.findAndReplace(oriData[key].__parentVal__,oriData,self.$data)
+	//       self.$data[key] = oriData[key]
+	//     }else{
+	//       self.$data[key] = self.$inject(value)
+	//     }
+	//   })
+
+	//   _.each(this.__watchers,function(watcher){
+	//     watcher.__depend = false
+	//     watcher.getValue()
+	//   })
+
+	//   //通知依赖的子view也要更新key
+	//   self.__dependViews && _.each(self.__dependViews,function(view){
+	//     view.__addData(newdata)
+	//   })
+	//   //添加key联动
+	//   _.each(newKeys,function(key){
+	//     self.__dependWatch(key)
+	//   })
+
+	// }
 
 
 
@@ -322,26 +391,30 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
-	function _handelUnregisterKey(describe){
-	  var expression = describe.expression
-	  var view = describe.view
-	  var match = expression.match(/_scope\.([\w]+)/)
-	  var key,newObj
-	  if (!match || !match[1]) return
+	// function _handelUnregisterKey(describe){
+	//   var expression = describe.expression
+	//   var view = describe.view
+	//   var match = expression.match(/_scope\.([\w]+)/)
+	//   var key,newObj
+	//   if (!match || !match[1]) return
 
-	  key = match[1]
-	  newObj = {}
+	//   key = match[1]
+	//   newObj = {}
+	//   newObj[key] = ''
 
-	  if (!_.hasKey(view.$data.__ori__,key)) {
-	    newObj[key] = ''
-	    _.each(view.$data.__ori__,function(v,k){
-	      newObj[k] = view.$data[k]
-	    })
+	//   //从最顶级开始添加
+	//   view.$rootView.__addData(newObj)
 
-	    view.$data = Data.inject(newObj)
-	  }
+	//   // if (!_.hasKey(view.$data.__ori__,key)) {
+	//   //   newObj[key] = ''
+	//   //   _.each(view.$data.__ori__,function(v,k){
+	//   //     newObj[k] = view.$data[k]
+	//   //   })
 
-	}
+	//   //   view.$data = Data.inject(newObj)
+	//   // }
+
+	// }
 
 
 	/**
@@ -356,7 +429,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  dirInstance = Directive.create(describe)
 
 	  //这里需要做一个特殊处理，就是如果expression是单独的一级key并且data里面不存在，我们需要重新赋值data
-	  _handelUnregisterKey(describe)
+	  //_handelUnregisterKey(describe)
 
 	  //先去watch池子里找,value可以作为key
 	  watcher = view.__watchers[describe.value]
@@ -1023,6 +1096,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var index = exports.indexOf(array,value)
 	  if (~index) {
 	    array.splice(index,1)
+	  }
+	}
+
+	exports.findAndReplace = function(array,value,newValue){
+	  var index = exports.indexOf(array,value)
+	  if (~index) {
+	    array.splice(index,1,newValue)
+	  }
+	}
+
+	exports.findAndReplaceOrAdd = function(array,value,newValue){
+	  var index = exports.indexOf(array,value)
+	  if (~index) {
+	    array.splice(index,1,newValue)
+	  }else{
+	    array.push(newValue)
 	  }
 	}
 
@@ -2045,8 +2134,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if(self.iterator) data[self.iterator] = key
 
 	        data[self.alias] = item
-
-	        data = Data.define(data)
+	//debu
+	        //data = Data.define(data)
 
 
 	        newNode = self.__node.clone()
@@ -2054,6 +2143,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //有点hacky,但是没办法，为了达到最小的更新，需要注入一个唯一的健值。
 	        name = self._generateKey()
 	        item[curKey] = name
+
 	        newViewMap[name] = new self.view.constructor({
 	          el: newNode,
 	          data: data,
@@ -2289,11 +2379,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ob.addWatcher()
 
 	    if (_.isArray(ob.val) && !ob.val.__ob__) {
+	      ob.val.__inject__ = true
 	      ob.val.__ob__ = ob
 	    }
-
+	    //当用户赋值了一个inject过的数组，那么这边的__ob__需要改掉，不然还用的以前的ob就更新不了了
 	    if (_.isArray(ob.val) && ob.val.__ob__ && ob.val.__ob__ != ob) {
 	      ob.val = ob.val.slice()
+	      ob.val.__inject__ = true
 	      ob.val.__ob__ = ob
 	    }
 
@@ -2308,6 +2400,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  return function(newVal) {
 
+	    // if (_.isObject(newVal)) {
+	    //   newVal = exports.inject(newVal)
+
+	    //   newVal.__parentVal__ = newVal.__parentVal__ || []
+	    //   //_.findAndReplaceOrAdd()
+	    //   if (_.indexOf(newVal.__parentVal__,ob.owner) == -1) {
+	    //     newVal.__parentVal__.push(ob.owner)
+	    //   }
+
+	    // }
+
+
+	    //todo 有时两个值一样，但是还是需要去修改__parentVal__
 	    if (newVal === ob.val) {
 	      return
 	    }
@@ -2318,6 +2423,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //如果是对象需要特殊处理
 	    if (_.isObject(newVal)) {
 	      ob.val = exports.inject(newVal)
+
+	      //ob.val.__parentVal__ = ob.val.__parentVal__ || []
+	      //ob.val.__parentVal__.push(ob.owner)
+	      //_.findAndReplace(ob.val.__parentVal__,oriData,self.$data)
 	      //依赖的watcher需要重新get一遍值
 	      //还要考虑scope有没有改变
 	      ob.depend()
@@ -2389,6 +2498,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (obj.hasOwnProperty && !obj.hasOwnProperty(key)) continue
 	      obs[key] = new Observer()
 	      obs[key].val = obj[key]
+	      obs[key].key = key
+	      //可能存在多个parentVal
+	      //obs[key].parentVal = obs[key].parentVal || []
+	      //obs[key].parentVal.push(newObj)
 
 	      props[key] = {
 	        enumerable: true,
@@ -2414,6 +2527,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    buffer.push("\tPublic [" + '__pat_key__' + "]")
 	    buffer.push("\tPublic [" + '__ori__' + "]")
 	    buffer.push("\tPublic [" + '__inject__' + "]")
+	    //buffer.push("\tPublic [" + '__parentVal__' + "]")
 
 	    buffer.unshift(
 	      '\r\n\tPrivate [_acc], [_pro]',
@@ -2458,12 +2572,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    for (var key in obj) {
 
-	      if (!obj.hasOwnProperty(key)) continue
+	      if (!obj.hasOwnProperty(key) || hasSpecialKey(key)) continue
 	      obs[key] = new Observer()
 	      newObj[key] = obj[key]
+
 	      obs[key].val = newObj[key]
 	      obs[key].key = key
-	      obs[key].parentVal = newObj
+	      //obs[key].owner = newObj
+	      //可能存在多个parentVal
+	      // if (_.isObject(obs[key].val) && obs[key].val.__inject__) {
+	      //   debugger
+	      //   obs[key].val.__parentVal__ = obs[key].val.__parentVal__ || []
+	      //   obs[key].val.__parentVal__.push(newObj)
+	      // }
+	      // obs[key].__parentVal__ = obs[key].__parentVal__ || []
+	      // obs[key].__parentVal__.push(newObj)
 
 	      props[key] = {
 	        enumerable:true,
@@ -2483,7 +2606,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	}
 
-
+	function hasSpecialKey(key){
+	  return _.indexOf(['__ori__','__inject__'],key) != -1
+	}
 
 	function _oriData(injectData){
 	  var result = null,ori
@@ -2528,8 +2653,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    newData = []
 	    newData.__inject__ = true
+	    var tmpl
 	    _.each(data,function(value){
-	      newData.push(exports.inject(value,deep))
+	      // tmpl = value
+	      // if(_.isObject(value)){
+	      //   tmpl = exports.inject(value,deep)
+	      //   tmpl.__parentVal__ = tmpl.__parentVal__ || []
+	      //   //_.findAndReplaceOrAdd(tmpl.__parentVal__,)
+	      //   if (_.indexOf(tmpl.__parentVal__,newData) == -1) {
+	      //     tmpl.__parentVal__.push(newData)
+	      //   }
+	      //   //tmpl.__parentVal__.push(newData)
+	      // }
+	      tmpl = exports.inject(value,deep)
+	      newData.push(tmpl)
 	    })
 	    return newData
 	  }
@@ -2729,7 +2866,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var Watcher = __webpack_require__(18)
-
+	var Data = __webpack_require__(17)
 	var Class = _.Class
 
 
@@ -2746,34 +2883,50 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (currentTarget && _.indexOf(watchers,currentTarget) == -1) {
 	      watchers.unshift(currentTarget)
 	      //进行属性检查，如果发现会调用不存在的key,就重新改造自己
-	      this.checkUnregisterKey(currentTarget)
+	      //this.checkUnregisterKey(currentTarget)
 	    }
 	  },
-	  getKeyReg:function(){
+	  // getKeyReg:function(){
 
-	    if (!this.keyReg){
-	      return new RegExp(this.key + '\\.([\\w]+)')
-	    }
-	    return this.keyReg
-	  },
-	  checkUnregisterKey:function(watcher){
-	    if (!_.isPlainObject(this.val) || !this.parentVal) return
-	      //'a.b'.match(/\.([\w]+)/)
-	     // 'a["b"]'.match(/\[("[^"]*"|'[^']*')\]/g)
+	  //   if (!this.keyReg){
+	  //     return new RegExp(this.key + '\\.([\\w]+)')
+	  //   }
+	  //   return this.keyReg
+	  // },
+	  // checkUnregisterKey:function(watcher){
 
-	    var expression = watcher.expression
-	    //todo  多个key需要处理
-	    var childKeyMatch = expression.match(this.getKeyReg())
-	    if (!childKeyMatch || !childKeyMatch[1]) return
-	    var childKey = childKeyMatch[1]
-	    var oriValue = this.val.__ori__
-	    //如果不存在这个key,就需要做出特殊的处理
-	    if (!_.hasKey(this.val,childKey)) {
-	      oriValue[childKey] = ''
-	      this.parentVal[this.key] = oriValue
-	    }
+	  //   if (!_.isPlainObject(this.val) || !this.val.__parentVal__) return
+	  //     //'a.b'.match(/\.([\w]+)/)
+	  //    // 'a["b"]'.match(/\[("[^"]*"|'[^']*')\]/g)
 
-	  },
+	  //   var expression = watcher.expression
+	  //   //todo  多个key需要处理
+	  //   var childKeyMatch = expression.match(this.getKeyReg())
+	  //   if (!childKeyMatch || !childKeyMatch[1]) return
+	  //   var childKey = childKeyMatch[1]
+	  //   var oriValue = this.val.__ori__
+	  //   var injectOriValue = null
+	  //   var self = this
+	  //   //如果不存在这个key,就需要做出特殊的处理
+	  //   if (_.hasKey(this.val,childKey)) return
+
+	  //   oriValue[childKey] = ''
+
+	  //   injectOriValue = Data.inject(oriValue)
+
+	  //   _.each(self.val.__parentVal__,function(pValue){
+
+	  //     if (_.isPlainObject(pValue)) {
+	  //       pValue[self.key] = injectOriValue
+	  //     }
+
+	  //     if (_.isArray(pValue)) {
+	  //       _.findAndReplace(pValue,self.val,injectOriValue)
+	  //     }
+	  //   })
+	  //   //this.parentVal[this.key] = oriValue
+
+	  // },
 	  unique:function(){
 	    var watchers = this.watchers
 	    var newWatchers = []

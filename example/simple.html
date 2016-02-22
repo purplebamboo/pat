@@ -46,8 +46,10 @@
 
 <script type="javascript/template" id="J_tmpl2">
   {{haha}}
-  <div id="{{test.name}}">{{test.hell}}</div>
 
+  {{#for(item in lists)}}
+  <div id="{{item.name}}">{{item.hell}}2222</div>
+  {{/for}}
 </script>
 
 <script type="text/javascript">
@@ -85,14 +87,11 @@ var p2 = new Pat({
     test:{
       name:111
     },
-    word:'hello world',
-    word2:'<span class="ddd">aaa</span>',
-    t:['1','2','3','4'],
     lists:[{
       name:'1',
       text:'11111'
     },{
-      name:'',
+      name:'2',
       text:'22222'
     }]
   },

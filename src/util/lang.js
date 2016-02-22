@@ -155,6 +155,22 @@ exports.findAndRemove = function(array,value){
   }
 }
 
+exports.findAndReplace = function(array,value,newValue){
+  var index = exports.indexOf(array,value)
+  if (~index) {
+    array.splice(index,1,newValue)
+  }
+}
+
+exports.findAndReplaceOrAdd = function(array,value,newValue){
+  var index = exports.indexOf(array,value)
+  if (~index) {
+    array.splice(index,1,newValue)
+  }else{
+    array.push(newValue)
+  }
+}
+
 
 exports.indexOfKey = function(arrayObject,key,value){
   if (arrayObject === null) return -1

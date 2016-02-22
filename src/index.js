@@ -90,6 +90,7 @@ View.prototype._init = function() {
 
   //注入get set
   this.$data = this.$inject(this.$data,this.__deepinject)
+
   //增加特殊联动依赖
   this.__depend()
 
@@ -117,15 +118,83 @@ View.prototype._init = function() {
 View.prototype.__depend = function(){
   var self = this
   _.each(this.$data.__ori__,function(val,key){
-    self.$watch(key,function(){
+    // self.$watch(key,function(){
+    //   if (!self.__dependViews) return
+    //   _.each(self.__dependViews,function(view){
+    //     view.$data[key] = self.$data[key]
+    //   })
+    // })
+    self.__dependWatch(key)
+  })
+}
 
-      if (!self.__dependViews) return
-      _.each(self.__dependViews,function(view){
-        view.$data[key] = self.$data[key]
-      })
+View.prototype.__dependWatch = function(key){
+  var self = this
+
+  self.$watch(key,function(){
+    if (!self.__dependViews) return
+    _.each(self.__dependViews,function(view){
+      view.$data[key] = self.$data[key]
     })
   })
 }
+
+
+//用于给当前的view增加几个新的key
+// View.prototype.__addData = function(newdata){
+//   var self = this
+//   var newObj = self.$data.__ori__
+//   var hasUnregister = false
+//   var newKeys = []
+//   _.each(newdata,function(value,key){
+
+//     if (!_.hasKey(newObj,key)) {
+//       newObj[key] = value
+//       //view.$data.__ori__[key] = value
+//       newKeys.push(key)
+//       //self.__dependWatch(key)
+//       //hasUnregister = true
+//       // _.each(view.$data.__ori__,function(v,k){
+//       //   newObj[k] = view.$data[k]
+//       // })
+//     }
+//   })
+
+//   if (newKeys.length == 0) return
+
+//   var oriData = self.$data
+//   self.$data = Data.define(newObj)
+
+//   //需要把之前的watcher全部再get一遍，建立新的依赖关系
+//   // _.each(oriData.__ori__,function(value,key){
+//   //   oriData.$data[key].__ob__.depend()
+//   //   self.$data[key] = oriData[key]
+//   // })
+//   _.each(oriData.__ori__,function(value,key){
+//     //oriData.$data[key].__ob__.depend()
+//     if (_.indexOf(newKeys,key) == -1) {
+//       oriData[key].__parentVal__ && _.findAndReplace(oriData[key].__parentVal__,oriData,self.$data)
+//       self.$data[key] = oriData[key]
+//     }else{
+//       self.$data[key] = self.$inject(value)
+//     }
+//   })
+
+//   _.each(this.__watchers,function(watcher){
+//     watcher.__depend = false
+//     watcher.getValue()
+//   })
+
+//   //通知依赖的子view也要更新key
+//   self.__dependViews && _.each(self.__dependViews,function(view){
+//     view.__addData(newdata)
+//   })
+//   //添加key联动
+//   _.each(newKeys,function(key){
+//     self.__dependWatch(key)
+//   })
+
+// }
 
 
 

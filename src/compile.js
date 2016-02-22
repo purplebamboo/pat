@@ -10,26 +10,30 @@ var config = require('./config')
 
 
 
-function _handelUnregisterKey(describe){
-  var expression = describe.expression
-  var view = describe.view
-  var match = expression.match(/_scope\.([\w]+)/)
-  var key,newObj
-  if (!match || !match[1]) return
+// function _handelUnregisterKey(describe){
+//   var expression = describe.expression
+//   var view = describe.view
+//   var match = expression.match(/_scope\.([\w]+)/)
+//   var key,newObj
+//   if (!match || !match[1]) return
 
-  key = match[1]
-  newObj = {}
+//   key = match[1]
+//   newObj = {}
+//   newObj[key] = ''
 
-  if (!_.hasKey(view.$data.__ori__,key)) {
-    newObj[key] = ''
-    _.each(view.$data.__ori__,function(v,k){
-      newObj[k] = view.$data[k]
-    })
+//   //从最顶级开始添加
+//   view.$rootView.__addData(newObj)
 
-    view.$data = Data.inject(newObj)
-  }
+//   // if (!_.hasKey(view.$data.__ori__,key)) {
+//   //   newObj[key] = ''
+//   //   _.each(view.$data.__ori__,function(v,k){
+//   //     newObj[k] = view.$data[k]
+//   //   })
 
-}
+//   //   view.$data = Data.inject(newObj)
+//   // }
+
+// }
 
 
 /**
@@ -44,7 +48,7 @@ function _bindDir(describe) {
   dirInstance = Directive.create(describe)
 
   //这里需要做一个特殊处理，就是如果expression是单独的一级key并且data里面不存在，我们需要重新赋值data
-  _handelUnregisterKey(describe)
+  //_handelUnregisterKey(describe)
 
   //先去watch池子里找,value可以作为key
   watcher = view.__watchers[describe.value]
