@@ -243,7 +243,7 @@ exports.transfer = function(template) {
   }
 
   if (template == '') {
-    return createTextNode('')
+    return createRoot([createTextNode('')],false)
   }
 
   template = _normalize(template)

@@ -143,6 +143,7 @@ function _compileTextNode(el, view) {
   token = parseText(el.data)[0]
 
   oneTime = token.oneTime
+
   //针对变量类型的 文本进行指令解析，区分html和text
   if (token.type === parser.TextTemplateParserTypes.binding) {
 

@@ -524,6 +524,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  token = parseText(el.data)[0]
 
 	  oneTime = token.oneTime
+
 	  //针对变量类型的 文本进行指令解析，区分html和text
 	  if (token.type === parser.TextTemplateParserTypes.binding) {
 
@@ -3781,7 +3782,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	module.exports = {
-	  createRoot: function(childNodes) {
+	  createRoot: function(childNodes,notRoot) {
 	    var root = new Collection({
 	      tagName: 'template',
 	      attributes: [],
@@ -3789,7 +3790,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      hasBlock:false
 	    })
 
-	    root.__ROOT__ = true
+	    if (!notRoot) {
+	      root.__ROOT__ = true
+	    }
+
 
 	    childNodes && _.each(childNodes, function(child) {
 	      child.parentNode = root
@@ -4116,7 +4120,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  if (template == '') {
-	    return createTextNode('')
+	    return createRoot([createTextNode('')],false)
 	  }
 
 	  template = _normalize(template)

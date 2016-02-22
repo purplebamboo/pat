@@ -665,7 +665,7 @@ function getBlockAttributes(attributes){
 
 
 module.exports = {
-  createRoot: function(childNodes) {
+  createRoot: function(childNodes,notRoot) {
     var root = new Collection({
       tagName: 'template',
       attributes: [],
@@ -673,7 +673,10 @@ module.exports = {
       hasBlock:false
     })
 
-    root.__ROOT__ = true
+    if (!notRoot) {
+      root.__ROOT__ = true
+    }
+
 
     childNodes && _.each(childNodes, function(child) {
       child.parentNode = root
