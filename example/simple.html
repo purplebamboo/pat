@@ -47,8 +47,13 @@
 <script type="javascript/template" id="J_tmpl2">
 
   {{#for(item in lists)}}
-  <div id="{{item.name}}">{{{item.hell}}}2222</div>
+  ＝＝＝
+  <div id="{{item.name}}">{{{item.tt}}}2222</div>
   {{/for}}
+</script>
+
+<script type="javascript/template" id="J_tmpl3">
+  <span t-if="status == 1 && test !== 2">111</span>
 </script>
 
 <script type="text/javascript">
@@ -83,9 +88,13 @@ var p2 = new Pat({
   data:{
     text:'hello',
     key:10,
-    test:{
-      name:111
-    },
+    name:'111',
+    status:1,
+    test:2,
+    // test:{
+    //   name:111
+    // },
+    sp:'<span>11</span>',
     lists:[{
       name:'1',
       text:'11111',

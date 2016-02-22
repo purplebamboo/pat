@@ -145,7 +145,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  //注入get set
-	  this.$data = this.$inject(this.$data,this.__deepinject)
+	  this.$data = View.$inject(this.$data,this.__deepinject)
 
 	  //增加特殊联动依赖
 	  this.__depend()
@@ -159,7 +159,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //如果不是虚拟dom，最后一次性的加到dom里
 	  //对于非virtualdom的才会fire afterMount事件，其他情况需要自行处理
 	  if (!this.$el.__VD__){
-	    this.$el.innerHTML = virtualElement.mountView(this)
+	    this.$el.innerHTML = ''
+	    this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
+	    //this.$el.innerHTML = virtualElement.mountView(this)
 	    this.__rendered = true//一定要放在事件之前，这样检测才是已经渲染了
 	    this.fire('afterMount')
 	  }else{
@@ -252,10 +254,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// }
 
-
-
-	View.prototype.$inject = function(data,deepinject){
+	View.$inject = function(data,deepinject){
 	  return Data.inject(data,deepinject)
+	}
+
+	View.$normalize = function(injectData){
+	  return Data.normalize(injectData)
 	}
 
 	View.prototype.$flushUpdate = function(){
@@ -799,7 +803,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 
-
+	exports.isIe8 = function(){
+	  return /MSIE\ [678]/.test(window.navigator.userAgent)
+	}
 
 
 
@@ -833,24 +839,35 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var node = document.createElement('div')
 	  var frag = document.createDocumentFragment()
 
-	  //ie8下面不支持注释节点，所以需要做出特殊处理
-	  //todo...
 	  var tag = (rtagName.exec(string) || ["", ""])[1].toLowerCase()
 	  //取得其标签名
 	  var wrap = tagHooks[tag] || tagHooks._default
 	  var depth = wrap[0]
 	  var prefix = wrap[1]
 	  var suffix = wrap[2]
+
+	  //ie8下面不支持注释节点，所以需要做出特殊处理
+	  if (exports.isIe8()) {
+	    string = string.replace(/\<\!--([\w-\d]+)--\>/g,'<div id="__PAT__COMMENT">$1</div>')
+	  }
+
 	  node.innerHTML = prefix + _.trim(string) + suffix
 
 	  while (depth--) {
 	    node = node.lastChild
 	  }
 
+	  //替换回来
+	  if (exports.isIe8()) {
+	    exports.walk(node,function(dom){
+	      if (dom.getAttribute && dom.getAttribute('id') == '__PAT__COMMENT') {
+	        exports.replace(dom,document.createComment(_.trim(dom.innerHTML)))
+	      }
+	    })
+	  }
+
 	  var child
-	  /* eslint-disable no-cond-assign */
 	  while (child = node.firstChild) {
-	  /* eslint-enable no-cond-assign */
 	    frag.appendChild(child)
 	  }
 
@@ -2442,7 +2459,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var define = null
 
-	if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
+	if (_.isIe8()) {
 	  var VB_ID = 0
 
 	  window.execScript([
@@ -2625,7 +2642,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ori = injectData.__ori__
 	    result = {}
 	    _.each(ori,function(v,key){
-	      result[key] = injectData[key]
+	      result[key] = _oriData(injectData[key])
 	    })
 	  }
 	  //var
@@ -2634,6 +2651,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.define = define
 
+
+	exports.normalize = _oriData
 
 	exports.inject = function(data,deep) {
 	  var newData = null
@@ -3098,7 +3117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      value = ''
 	    }
 	    //compile html 得到一个带有根node的节点,根node就是collection节点
-	    var el = Dom.transfer(value)
+	    var el = Dom.transfer(value,true)
 	    el.parentNode = this.el.parentNode
 	    //elements
 	    //var newCollection = elements.createElement('template',{},el.childNodes)
@@ -3158,7 +3177,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (el.classList) {
 	    return el.classList.contains(cls)
 	  } else if (el.className) {
-	    return _.trim(el.className).split(/\s+/).indexOf(cls) >= 0
+	    return _.indexOf(_.trim(el.className).split(/\s+/),cls) >= 0
 	  }
 	}
 

@@ -41,7 +41,7 @@ function _hasClass(el, cls) {
   if (el.classList) {
     return el.classList.contains(cls)
   } else if (el.className) {
-    return _.trim(el.className).split(/\s+/).indexOf(cls) >= 0
+    return _.indexOf(_.trim(el.className).split(/\s+/),cls) >= 0
   }
 }
 

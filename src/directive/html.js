@@ -18,7 +18,7 @@ module.exports = {
       value = ''
     }
     //compile html 得到一个带有根node的节点,根node就是collection节点
-    var el = Dom.transfer(value)
+    var el = Dom.transfer(value,true)
     el.parentNode = this.el.parentNode
     //elements
     //var newCollection = elements.createElement('template',{},el.childNodes)

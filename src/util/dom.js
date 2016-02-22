@@ -201,7 +201,9 @@ exports.prepend = function (el, target) {
   }
 }
 
-
+exports.isIe8 = function(){
+  return /MSIE\ [678]/.test(window.navigator.userAgent)
+}
 
 
 
@@ -235,24 +237,35 @@ exports.string2frag = function(string){
   var node = document.createElement('div')
   var frag = document.createDocumentFragment()
 
-  //ie8下面不支持注释节点，所以需要做出特殊处理
-  //todo...
   var tag = (rtagName.exec(string) || ["", ""])[1].toLowerCase()
   //取得其标签名
   var wrap = tagHooks[tag] || tagHooks._default
   var depth = wrap[0]
   var prefix = wrap[1]
   var suffix = wrap[2]
+
+  //ie8下面不支持注释节点，所以需要做出特殊处理
+  if (exports.isIe8()) {
+    string = string.replace(/\<\!--([\w-\d]+)--\>/g,'<div id="__PAT__COMMENT">$1</div>')
+  }
+
   node.innerHTML = prefix + _.trim(string) + suffix
 
   while (depth--) {
     node = node.lastChild
   }
 
+  //替换回来
+  if (exports.isIe8()) {
+    exports.walk(node,function(dom){
+      if (dom.getAttribute && dom.getAttribute('id') == '__PAT__COMMENT') {
+        exports.replace(dom,document.createComment(_.trim(dom.innerHTML)))
+      }
+    })
+  }
+
   var child
-  /* eslint-disable no-cond-assign */
   while (child = node.firstChild) {
-  /* eslint-enable no-cond-assign */
     frag.appendChild(child)
   }
 

@@ -218,11 +218,11 @@ describe("[pat:directive.js]", function() {
         data:data,
         template:'<template t-for="item in lists" id="{{item.name}}">{{text}}--{{{*item.text}}}</template>'
       })
-
       expect($(el).find('.t1').html()).toBe('world')
       expect($(el).find('.t2').html()).toBe('earth')
       //测试一次性是否有效
-      setValue('lists[0].text','hahaha')
+      pat.$data.lists[0].text = 'hahaha'
+      //setValue('lists[0].text','hahaha')
       expect($(el).find('.t1').html()).toBe('world')
 
     })

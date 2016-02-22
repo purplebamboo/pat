@@ -74,7 +74,7 @@ var defineSetProxy = function(obs,_key){
 
 var define = null
 
-if (/MSIE\ [678]/.test(window.navigator.userAgent)) {
+if (_.isIe8()) {
   var VB_ID = 0
 
   window.execScript([
@@ -257,7 +257,7 @@ function _oriData(injectData){
     ori = injectData.__ori__
     result = {}
     _.each(ori,function(v,key){
-      result[key] = injectData[key]
+      result[key] = _oriData(injectData[key])
     })
   }
   //var
@@ -266,6 +266,8 @@ function _oriData(injectData){
 
 exports.define = define
 
+
+exports.normalize = _oriData
 
 exports.inject = function(data,deep) {
   var newData = null
