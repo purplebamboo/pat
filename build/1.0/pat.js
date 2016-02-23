@@ -2536,7 +2536,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    for (var key in props) {
-	      if (!props.hasOwnProperty(key)) continue
+	      if (!props.hasOwnProperty(key) || hasSpecialKey(key)) continue
 	      if (props[key]['set'] || props[key]['get']) {
 	        if (props[key]['set']) {
 	          defineSet(key, props[key]['set']);
@@ -2655,7 +2655,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function hasSpecialKey(key){
-	  return _.indexOf(['__ori__','__inject__'],key) != -1
+	  return _.indexOf(['__ori__','__inject__','__pat_key__'],key) != -1
 	}
 
 	function _oriData(injectData){
