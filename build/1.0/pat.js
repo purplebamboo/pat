@@ -3663,7 +3663,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var element = this.getElement()
 	    this.view.$rootView.fire('beforeRemoveAttribute', [element], key, this)
-	    node.removeAttribute(key)
+	    element.removeAttribute(key)
 	    this.view.$rootView.fire('afterRemoveAttribute', [element], key, this)
 
 	  },

@@ -495,7 +495,7 @@ var Element = Node.extend({
 
     var element = this.getElement()
     this.view.$rootView.fire('beforeRemoveAttribute', [element], key, this)
-    node.removeAttribute(key)
+    element.removeAttribute(key)
     this.view.$rootView.fire('afterRemoveAttribute', [element], key, this)
 
   },
