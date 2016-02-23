@@ -2519,7 +2519,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    for (var key in obj) {
-	      if (obj.hasOwnProperty && !obj.hasOwnProperty(key)) continue
+	      if ((obj.hasOwnProperty && !obj.hasOwnProperty(key)) || hasSpecialKey(key)) continue
 	      obs[key] = new Observer()
 	      obs[key].val = obj[key]
 	      obs[key].key = key
@@ -2536,7 +2536,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    for (var key in props) {
-	      if (!props.hasOwnProperty(key) || hasSpecialKey(key)) continue
+	      if (!props.hasOwnProperty(key)) continue
 	      if (props[key]['set'] || props[key]['get']) {
 	        if (props[key]['set']) {
 	          defineSet(key, props[key]['set']);
