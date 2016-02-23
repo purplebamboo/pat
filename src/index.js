@@ -88,8 +88,10 @@ View.prototype._init = function() {
     this.$el.innerHTML = ''
   }
 
+
   //注入get set
   this.$data = View.$inject(this.$data,this.__deepinject)
+
 
   //增加特殊联动依赖
   this.__depend()

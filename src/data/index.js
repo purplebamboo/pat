@@ -92,6 +92,7 @@ if (_.isIe8()) {
     var props = {}
     var obs = {}
 
+//obj['init'] = ''
 
     function defineSet(key, callback) {
       cb_poll[key + '_set'] = callback;
@@ -157,16 +158,37 @@ if (_.isIe8()) {
 
     }
 
+    // buffer.push(
+    //   '\tPublic Property Set [init2](value)',
+    //   '\t\tSet [init] = value',
+    //   '\tEnd Property'
+    //   // '\tPublic Property Get [_pro]()',
+    //   // '\t\t[_pro] = [__pro__]',
+    //   // '\tEnd Property'
+    // )
+
+    buffer.push("\tPublic [" + '_pro' + "]")
+    //buffer.push("\tPrivate [" + '_prott' + "]")
     buffer.push("\tPublic [" + '__pat_key__' + "]")
     buffer.push("\tPublic [" + '__ori__' + "]")
     buffer.push("\tPublic [" + '__inject__' + "]")
     //buffer.push("\tPublic [" + '__parentVal__' + "]")
 
+    // buffer.unshift(
+    //   //'\r\n\tPrivate [_acc], [_pro]',
+    //   '\tPrivate Sub Class_Initialize',
+    //   '\t\tSet [_pro] = ""',
+    //   '\tEnd Sub'
+    //   // '\tPublic Default Function [self]()',
+    //   // '\t\tSet [_pro] = ""',
+    //   // '\t\tSet [self] = me',
+    //   // '\tEnd Function'
+    // );
+
     buffer.unshift(
-      '\r\n\tPrivate [_acc], [_pro]',
-      '\tPublic Default Function [self](proxy)',
+      '\tPublic Function [init](proxy)',
       '\t\tSet [_pro] = proxy',
-      '\t\tSet [self] = me',
+      '\t\tSet [init] = me',
       '\tEnd Function'
     );
 
@@ -179,7 +201,10 @@ if (_.isIe8()) {
     command.push('Class ' + className + buffer)
     command.push([
       'Function ' + className + 'F(proxy)',
-      '\tSet ' + className + 'F = (New ' + className + ')(proxy)',
+      '\tSet ' + className + 'Ftt = (New ' + className + ')',
+      '\t' + className + 'Ftt.init(proxy)',
+      //'\tSet ' + className + 'Ftt.init2 ＝ ""',
+      '\tSet ' + className + 'F = ' + className + 'Ftt',
       'End Function'
     ].join('\r\n'))
 
