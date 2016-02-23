@@ -4,6 +4,9 @@ var Observer = require('../watcher/observer.js')
 
 require('./array.js')
 
+
+var VB_ID = 0
+
 var defineGetProxy = function(obs,_key) {
   var ob = obs[_key]
 
@@ -75,7 +78,7 @@ var defineSetProxy = function(obs,_key){
 var define = null
 
 if (_.isIe8()) {
-  var VB_ID = 0
+
 
   window.execScript([
     'Function parseVB(code)',
@@ -167,30 +170,30 @@ if (_.isIe8()) {
     //   // '\tEnd Property'
     // )
 
-    buffer.push("\tPublic [" + '_pro' + "]")
+    //buffer.push("\tPublic [" + '_pro' + "]")
     //buffer.push("\tPrivate [" + '_prott' + "]")
     buffer.push("\tPublic [" + '__pat_key__' + "]")
     buffer.push("\tPublic [" + '__ori__' + "]")
     buffer.push("\tPublic [" + '__inject__' + "]")
     //buffer.push("\tPublic [" + '__parentVal__' + "]")
 
-    // buffer.unshift(
-    //   //'\r\n\tPrivate [_acc], [_pro]',
-    //   '\tPrivate Sub Class_Initialize',
-    //   '\t\tSet [_pro] = ""',
-    //   '\tEnd Sub'
-    //   // '\tPublic Default Function [self]()',
-    //   // '\t\tSet [_pro] = ""',
-    //   // '\t\tSet [self] = me',
-    //   // '\tEnd Function'
-    // );
-
     buffer.unshift(
-      '\tPublic Function [init](proxy)',
+      '\r\n\tPrivate [_pro]',
+      // '\tPrivate Sub Class_Initialize',
+      // '\t\tSet [_pro] = ""',
+      // '\tEnd Sub'
+      '\tPublic Default Function [self](proxy)',
       '\t\tSet [_pro] = proxy',
-      '\t\tSet [init] = me',
+      '\t\tSet [self] = me',
       '\tEnd Function'
     );
+
+    // buffer.unshift(
+    //   '\tPublic Function [init](proxy)',
+    //   '\t\tSet [_pro] = proxy',
+    //   '\t\tSet [init] = me',
+    //   '\tEnd Function'
+    // );
 
     buffer.push('End Class')
 
@@ -201,10 +204,10 @@ if (_.isIe8()) {
     command.push('Class ' + className + buffer)
     command.push([
       'Function ' + className + 'F(proxy)',
-      '\tSet ' + className + 'Ftt = (New ' + className + ')',
-      '\t' + className + 'Ftt.init(proxy)',
+      '\tSet ' + className + 'F = (New ' + className + ')(proxy)',
+      //'\t' + className + 'Ftt.init(proxy)',
       //'\tSet ' + className + 'Ftt.init2 ＝ ""',
-      '\tSet ' + className + 'F = ' + className + 'Ftt',
+      //'\tSet ' + className + 'F = ' + className + 'F',
       'End Function'
     ].join('\r\n'))
 
