@@ -2658,6 +2658,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _oriData(injectData){
 	  var result = null,ori
 
+	  if (!injectData) return injectData
+
 	  result = injectData
 
 	  if (_.isArray(injectData)) {

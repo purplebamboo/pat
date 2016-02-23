@@ -271,6 +271,8 @@ function hasSpecialKey(key){
 function _oriData(injectData){
   var result = null,ori
 
+  if (!injectData) return injectData
+
   result = injectData
 
   if (_.isArray(injectData)) {
