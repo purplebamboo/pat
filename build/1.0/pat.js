@@ -2826,7 +2826,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Watcher.prototype.batchCheck = function() {
 	  var self = this
 	  var last = this.last
-	  var current = this.getValue()
+	  var current = this.current = this.getValue()
 
 	  _.each(this.__directives, function(dir) {
 	    //directive自己判断要不要更新
@@ -2838,7 +2838,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  })
 
-	  this.last = this.current
+	  this.last = current
 
 	}
 

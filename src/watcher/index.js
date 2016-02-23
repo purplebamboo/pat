@@ -79,7 +79,7 @@ Watcher.prototype.check = function() {
 Watcher.prototype.batchCheck = function() {
   var self = this
   var last = this.last
-  var current = this.getValue()
+  var current = this.current = this.getValue()
 
   _.each(this.__directives, function(dir) {
     //directive自己判断要不要更新
@@ -91,7 +91,7 @@ Watcher.prototype.batchCheck = function() {
     }
   })
 
-  this.last = this.current
+  this.last = current
 
 }
 
