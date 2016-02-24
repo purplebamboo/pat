@@ -47,6 +47,8 @@ module.exports = {
       _.error('required a alias in for directive')
     }
 
+    this.isOption = this._isOption()
+
     this.oldViewMap = {}
     this.oldViewLists = []
     this.__node = this.el.clone()
@@ -61,6 +63,12 @@ module.exports = {
       }
     }
 
+  },
+  _isOption:function(){
+    var tag  = this.el.tagName.toUpperCase()
+    var parentTag  = this.el.parentNode.tagName.toUpperCase()
+    return (tag === 'OPTION' || tag === 'OPTGROUP') &&
+    parentTag === 'SELECT'
   },
   bind: function(value) {
 
@@ -340,6 +348,21 @@ module.exports = {
     }
 
     this.isUpdated = true
+    this.updateModel()
+  },
+  /**
+   * For option lists, update the containing model on
+   * parent <select>.
+   */
+
+  updateModel: function () {
+    if (this.isOption) {
+      var parent = this.startNode.parentNode
+      var model = parent && parent.__pat_model
+      if (model) {
+        model.forceUpdate()
+      }
+    }
   },
   unbind: function() {
     _.each(this.oldViewMap,function(view){

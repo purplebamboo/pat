@@ -434,6 +434,9 @@ var Element = Node.extend({
     _removeClass(this.getElement(),classname)
 
   },
+  hasAttribute:function(key){
+    return this.getAttribute(key) != ''
+  },
   getAttribute:function(key){
     var index = _.indexOfKey(this.attributes, 'name', key)
     if (index !== -1) {
