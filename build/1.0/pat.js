@@ -287,6 +287,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    watcher.destroy()
 	  })
 
+	  _.each(this.__userWatchers,function(watcher){
+	    //通知自定的watch销毁
+	    watcher.destroy()
+	  })
+
 	  if (this.$el && this.$el.innerHTML) {
 	    this.$el.innerHTML = ''
 	  }
