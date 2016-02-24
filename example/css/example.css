@@ -32,7 +32,7 @@ h2{
   background: #fafafa;
 }
 
-input{
+input[type="text"]{
   padding: 5px;
   border-radius: 5px;
   width: 100px;

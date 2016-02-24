@@ -502,13 +502,21 @@ var Element = Node.extend({
   mountHtml: function(view) {
     var tagName = this.tagName
     var attrsString = ''
-    var attrStr
+    var attrStr,value
 
     _.each(this.attributes, function(attr) {
       //如果不是debug跳过指令属性
       if (attr.name.indexOf(config.prefix+'-') == 0) return
-      //todo 需要判断整数的情况,以及没有值的情况
-      attrStr = attr.value === undefined ? attr.name : attr.name + '="' + attr.value + '"'
+      //需要判断整数的情况,以及没有值的情况
+      value = attr.value
+
+      if (_.isString(value)) {
+        value = '"' + value + '"'
+      }
+      //对于checked这种特殊的，如果为false，那么不需要渲染属性
+      if (attr.name == 'checked' && !value) return
+
+      attrStr = value === undefined ? attr.name : attr.name + '='+ value
       attrsString += ' ' + attrStr + ' '
     })
 

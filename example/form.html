@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>测试页面</title>
+  <script src="../build/1.0/pat.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="./css/example.css">
+
+</head>
+<body>
+
+<div id="test">
+
+</div>
+
+
+<script type="javascript/template" id="J_tmpl3">
+
+  <div class="line">
+    <span>lists[0].text:{{lists[0].text}}</span>
+    <input type="text" t-model="lists[0].text" />
+  </div>
+
+
+  <div class="line">
+    <span>bo:{{bo}}</span>
+    <input type="checkbox" t-model="bo" />
+  </div>
+
+
+  <div class="line">
+    <span>name:{{name}}</span>
+    <label>
+      <input id="r1" type="radio" t-model="name" value="111"/>111
+    </label>
+    <label>
+      <input id="r2" type="radio" t-model="name" value="222"/>222
+    </label>
+  </div>
+
+
+  <div class="line">
+    <span>select:{{select}}</span>
+    <select>
+      <options name="1">111</options>
+      <options name="2">222</options>
+    </select>
+  </div>
+
+
+
+</script>
+
+<script type="text/javascript">
+//debug会包括更多的信息，但是只有daily版本有效果
+Pat.config({
+  debug:true
+})
+
+
+// var templ = Pat.createElement('div',{
+//   id:'{{key}}',
+//   class:'container4 line'
+// },[
+//   Pat.createElement('div',{
+//     id:'{{word}}',
+//     't-if':'key == 11'
+//   },[Pat.createTextNode('我是if'),Pat.createTextNode('我是if2')]),
+//   Pat.createElement('div',{
+//     id:'{{word}}',
+//     't-for':'item in lists'
+//   },[Pat.createTextNode('啊是大大'),Pat.createTextNode('{{item.name}}')]),
+//   Pat.createTextNode('123456'),
+//   Pat.createTextNode('{{word}}'),
+//   Pat.createElement('template',{
+//     id:'{{word}}',
+//     't-if':'key == 11'
+//   },[Pat.createTextNode('{{word}}'),Pat.createTextNode('我是if2222')])
+// ])
+
+var p2 = new Pat({
+  el:'test',
+  data:{
+    text:'hello',
+    key:10,
+    name:'111',
+    status:1,
+    test:2,
+    bo:false,
+    //picked:'222',
+    // test:{
+    //   name:111
+    // },
+    sp:'<span>11</span>',
+    lists:[{
+      name:'1',
+      text:'11111',
+      hell:null
+    },{
+      name:'2',
+      text:'22222',
+      hell:null
+    }]
+  },
+  filters:{
+    fff:function(value) {
+      return value + '-我是filter带的值'
+    }
+  },
+  template:document.getElementById('J_tmpl3').innerHTML
+})
+
+
+// p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
+
+// p2.$data.text = '111222dddd'
+// //p2.$data.key = '11'
+
+// p2.$data.lists[1].text = 'wwwww'
+
+</script>
+</body>
+</html>

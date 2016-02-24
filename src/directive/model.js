@@ -1,4 +1,5 @@
-var _ = require('../util')
+var _ = require('../util/index.js')
+
 
 
 Util = {
@@ -26,7 +27,7 @@ Util = {
       }
     };
   })(),
-  getInputValue: function(el) {
+  getValue: function(el) {
     var o, _i, _len, _results;
     if (el.type === 'checkbox') {
       return el.checked;
@@ -46,14 +47,67 @@ Util = {
 }
 
 
+var tagTypes = {
+  'text':{
+    //callback:'',
+    update:function(value){
+      this.el.setAttribute('value',value)
+    }
+  },
+  'checkbox':{
+    //callback:'',
+    update:function(value){
+      this.el.setAttribute('checked',value)
+    }
+  },
+  'radio':{
+    //callback:'',
+    update:function(value){
+      var self = this
+      var domValue = self.el.getAttribute('value')
+      if (value == domValue) {
+        self.el.setAttribute('checked',true)
+      }else{
+        self.el.setAttribute('checked',false)
+      }
+    }
+  },
+  'select':{
+    //callback:'',
+    update:function(value){
+      this.el.setAttribute('checked',value)
+    }
+  }
+}
+
+
 module.exports = {
   priority: 3000,
   bind:function(value) {
     //添加事件监听
     var self = this
 
-    self.blurFn = function() {
-      var val = Util.getInputValue(self.el.getElement())
+    var tagName = self.el.tagName.toUpperCase()
+    var handler,element
+
+    if (tagName === 'INPUT') {
+      handler = tagTypes[self.el.getAttribute('type')] || tagTypes.text
+    } else if (tagName === 'SELECT') {
+      handler = tagTypes.select
+    } else if (tagName === 'TEXTAREA') {
+      handler = tagTypes.text
+    } else {
+      process.env.NODE_ENV !== 'production' && _.error(
+        't-model does not support element type: ' + tagName
+      )
+      return
+    }
+
+    self.handler = handler
+
+    self.callback = function(){
+      //var self = this
+      var val = Util.getValue(self.el.getElement())
       var key = self.describe.value
 
       if (val == self.curValue) return
@@ -67,32 +121,35 @@ module.exports = {
     }
 
     self.view.on('afterMount',function(){
-      Util.bindEvent(self.el.getElement(), 'blur', self.blurFn)
+      element = self.el.getElement()
+      Util.bindEvent(element, 'change', self.callback)
     })
 
     this.update(value)
 
   },
   setValue: function(key, val,scope) {
-    return new Function('$scope', 'return $scope.' + key + '="' + val + '"')(scope)
+    if (_.isString(val)) {
+      val = '"'+val+'"'
+    }
+    return new Function('$scope', 'return $scope.' + key + '=' + val)(scope)
   },
   update: function(value) {
+
+    //不允许存在破坏节点的特殊字符
+    if (_.isString(value)) {
+      value = _.htmlspecialchars(value)
+    }
+
     if (value === undefined || value === null) {
       value = ''
     }
 
-    //不允许存在破坏节点的特殊字符
-    //todo 一些防止xss的处理
-    //还有{{{}}}的特殊处理，具有回转的效果
-    if (_.isString(value)) {
-      value = _.htmlspecialchars(value)
-      //value = value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    }
-
     this.curValue = value
-    this.el.setAttribute('value',value)
+    this.handler.update.call(this,value)
+
   },
   unbind: function() {
-    Util.unbindEvent(this.el.getElement(), 'blur',self.blurFn)
+    Util.unbindEvent(this.el.getElement(), 'change',this.callback)
   }
 }
