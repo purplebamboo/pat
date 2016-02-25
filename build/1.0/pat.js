@@ -558,13 +558,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if (!_.isElement(el)) return
 
+
 	  //对于文本节点采用比较特殊的处理
 	  if (el.nodeType == 3 && _.trim(el.data)) {
 	    _compileTextNode(el, view)
 	  }
 
 	  //普通节点
-	  if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
+	  if ((el.nodeType == 1) && el.tagName.toUpperCase() !== 'SCRIPT') {
 	    _compileDirective(el, view, _.toArray(el.attributes))
 	  }
 
@@ -1916,7 +1917,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var tagTypes = {
 	  'text':{
-	    eventType:'keydown',
+	    eventType:'keyup',
 	    callback:defaultCallback,
 	    update:function(value){
 	      this.el.setAttribute('value',value)
@@ -2051,6 +2052,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (value === undefined || value === null) {
 	      value = ''
 	    }
+
 	    this.curValue = value
 	    this.handler.update.call(this,value)
 
@@ -3798,6 +3800,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    //修改真实dom
 	    if (!this.getElement()) return
+
 	    var element = this.getElement()
 
 	    this.view.$rootView.fire('beforeUpdateAttribute', [element], this)
@@ -3851,6 +3854,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (singgleCloseTags[tagName]) {
 	      return '<' + tagName + attrsString + ' />'
+	    }
+
+
+	    //对于textarea需要特殊处理，将value作为innerHTML
+	    if (tagName.toUpperCase() == 'TEXTAREA') {
+	      return '<' + tagName + attrsString + '>' + this.getAttribute('value') + '</' + tagName + '>'
 	    }
 
 	    var childHtml = ''
@@ -4108,6 +4117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	var delimiters = Config.delimiters
+	var unsafeDelimiters = Config.unsafeDelimiters
 	var blockStartReg = new RegExp(delimiters[0] + '\\#([^(]*)\\((.*?)\\)' + delimiters[1],'g')
 	var blockStartRegFalse = new RegExp(delimiters[0] + '\\^([^(]*)\\((.*?)\\)' + delimiters[1],'g')
 	var blockEndReg = new RegExp(delimiters[0] + '\\/(.*?)' + delimiters[1],'g')
@@ -4300,6 +4310,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (tmp.found.length != 0) {
 	        tmp.close_tag.children = tmp.found
 	      }
+
+	      //对于textarea需要特殊处理
+	      //它会将首次的innerHTML作为值，后面需要通过修改value来更改
+	      if (tmp.close_tag.tagName.toUpperCase() == 'TEXTAREA') {
+	        var textareaInner = '',isunSafe
+
+	        _.each(tmp.close_tag.children,function(child){
+	          if (!child.data && ("development") != 'production') {
+	            _.error('please do not use element in textarea')
+	            return
+	          }
+
+	          if (_.isString(child.data)) {
+	            isunSafe = child.data.indexOf(unsafeDelimiters[0]) > -1
+	            //所有的设置为一次性
+	            child.data = isunSafe ? child.data.replace(unsafeDelimiters[0],unsafeDelimiters[0]+'*') : child.data.replace(delimiters[0],delimiters[0]+'*')
+	          }
+
+	          textareaInner += child.data
+	        })
+
+	        //textareaInner.replace(new RegExp(delimiters[0]+"\*?",'g'),delimiters[0]+'*')
+	        tmp.close_tag.attrs['value'] = textareaInner
+	        //不需要子节点
+	        tmp.close_tag.children = []
+	      }
+
+
 	      element = createElement(tmp.close_tag.tagName,tmp.close_tag.attrs,tmp.close_tag.children)
 	      element && re.found.unshift(element)
 	    }

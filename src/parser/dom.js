@@ -13,6 +13,7 @@ var Config = require('../config.js')
 
 
 var delimiters = Config.delimiters
+var unsafeDelimiters = Config.unsafeDelimiters
 var blockStartReg = new RegExp(delimiters[0] + '\\#([^(]*)\\((.*?)\\)' + delimiters[1],'g')
 var blockStartRegFalse = new RegExp(delimiters[0] + '\\^([^(]*)\\((.*?)\\)' + delimiters[1],'g')
 var blockEndReg = new RegExp(delimiters[0] + '\\/(.*?)' + delimiters[1],'g')
@@ -205,6 +206,34 @@ function getStructure(tags, pointer, pair) {
       if (tmp.found.length != 0) {
         tmp.close_tag.children = tmp.found
       }
+
+      //对于textarea需要特殊处理
+      //它会将首次的innerHTML作为值，后面需要通过修改value来更改
+      if (tmp.close_tag.tagName.toUpperCase() == 'TEXTAREA') {
+        var textareaInner = '',isunSafe
+
+        _.each(tmp.close_tag.children,function(child){
+          if (!child.data && process.env.NODE_ENV != 'production') {
+            _.error('please do not use element in textarea')
+            return
+          }
+
+          if (_.isString(child.data)) {
+            isunSafe = child.data.indexOf(unsafeDelimiters[0]) > -1
+            //所有的设置为一次性
+            child.data = isunSafe ? child.data.replace(unsafeDelimiters[0],unsafeDelimiters[0]+'*') : child.data.replace(delimiters[0],delimiters[0]+'*')
+          }
+
+          textareaInner += child.data
+        })
+
+        //textareaInner.replace(new RegExp(delimiters[0]+"\*?",'g'),delimiters[0]+'*')
+        tmp.close_tag.attrs['value'] = textareaInner
+        //不需要子节点
+        tmp.close_tag.children = []
+      }
+
+
       element = createElement(tmp.close_tag.tagName,tmp.close_tag.attrs,tmp.close_tag.children)
       element && re.found.unshift(element)
     }

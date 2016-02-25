@@ -166,13 +166,14 @@ exports.parse = function(el,view) {
 
   if (!_.isElement(el)) return
 
+
   //对于文本节点采用比较特殊的处理
   if (el.nodeType == 3 && _.trim(el.data)) {
     _compileTextNode(el, view)
   }
 
   //普通节点
-  if ((el.nodeType == 1) && el.tagName !== 'SCRIPT') {
+  if ((el.nodeType == 1) && el.tagName.toUpperCase() !== 'SCRIPT') {
     _compileDirective(el, view, _.toArray(el.attributes))
   }
 

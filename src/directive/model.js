@@ -78,7 +78,7 @@ var defaultCallback = function() {
 
 var tagTypes = {
   'text':{
-    eventType:'keydown',
+    eventType:'keyup',
     callback:defaultCallback,
     update:function(value){
       this.el.setAttribute('value',value)
@@ -213,6 +213,7 @@ module.exports = {
     if (value === undefined || value === null) {
       value = ''
     }
+
     this.curValue = value
     this.handler.update.call(this,value)
 

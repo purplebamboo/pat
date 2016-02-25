@@ -474,6 +474,7 @@ var Element = Node.extend({
 
     //修改真实dom
     if (!this.getElement()) return
+
     var element = this.getElement()
 
     this.view.$rootView.fire('beforeUpdateAttribute', [element], this)
@@ -527,6 +528,12 @@ var Element = Node.extend({
 
     if (singgleCloseTags[tagName]) {
       return '<' + tagName + attrsString + ' />'
+    }
+
+
+    //对于textarea需要特殊处理，将value作为innerHTML
+    if (tagName.toUpperCase() == 'TEXTAREA') {
+      return '<' + tagName + attrsString + '>' + this.getAttribute('value') + '</' + tagName + '>'
     }
 
     var childHtml = ''
