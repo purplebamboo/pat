@@ -2139,6 +2139,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      self.childView = new self.view.constructor({
 	        el:self.el,
 	        data:self.view.$data,
+	        dataCheckType:this.view.$rootView.__dataCheckType,
 	        rootView:self.view.$rootView
 	      })
 
