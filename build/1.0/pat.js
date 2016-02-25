@@ -171,8 +171,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.__rendered = true
 	  }
 	}
-
-
 	//增加对一级key的watcher,这样当用户改变了这个值以后，通知子view也去改变这个值。
 	//达到联动的目的。
 	//这个主要用在for这种会创建子scope的指令上。
@@ -180,12 +178,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var self = this
 	  var data = this.$data.__ori__ || this.$data //同时考虑两种检测方式
 	  _.each(data,function(val,key){
-	    // self.$watch(key,function(){
-	    //   if (!self.__dependViews) return
-	    //   _.each(self.__dependViews,function(view){
-	    //     view.$data[key] = self.$data[key]
-	    //   })
-	    // })
 	    self.__dependWatch(key)
 	  })
 	}
@@ -291,9 +283,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	View.prototype.$apply = function(){
 
 	  if (this.__dataCheckType == 'defineProperties') {
+
+	    //todo 打出更新所花时间
 	    this.$flushUpdate()
 	  }else{
+
+	    if (View._isDigesting) {
+	      setTimeout(_.bind(arguments.callee,this),0)
+	      return
+	    }
+	    View._isDigesting = true
+	    //记录脏检测时间
+	    if (("development") != 'production' && this.$rootView == this) {
+	      _.time('view-'+this.__dataCheckType+'(' + this.__vid + ')[#' + this.$el.id + ']-digest:')
+	    }
 	    this.$digest()
+
+	    if (("development") != 'production' && this.$rootView == this) {
+	      _.timeEnd('view-'+this.__dataCheckType+'(' + this.__vid + ')[#' + this.$el.id + ']-digest:')
+	    }
+	    View._isDigesting = false
 	  }
 
 	}
@@ -332,6 +341,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.__filters = null
 	  this.isDestroyed = true
 	}
+
+
+	View._isDigesting = false
 
 
 	/**
@@ -2877,9 +2889,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      result.push(_oriData(item))
 	    })
 	  }else if(_.isPlainObject(injectData)){
-	    ori = injectData.__ori__
+	    ori = injectData.__ori__ || injectData
 	    result = {}
 	    _.each(ori,function(v,key){
+
+	      if (hasSpecialKey(key)) return
+
 	      result[key] = _oriData(injectData[key])
 	    })
 	  }

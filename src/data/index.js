@@ -284,9 +284,12 @@ function _oriData(injectData){
       result.push(_oriData(item))
     })
   }else if(_.isPlainObject(injectData)){
-    ori = injectData.__ori__
+    ori = injectData.__ori__ || injectData
     result = {}
     _.each(ori,function(v,key){
+
+      if (hasSpecialKey(key)) return
+
       result[key] = _oriData(injectData[key])
     })
   }
