@@ -520,6 +520,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _bindDir(des)
 	  })
 
+
+
 	  if (el.hasChildNodes()) {
 	    childNodes = _.toArray(el.childNodes)
 	    _.each(childNodes, function(child) {
@@ -1914,12 +1916,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var tagTypes = {
 	  'text':{
+	    eventType:'keydown',
 	    callback:defaultCallback,
 	    update:function(value){
 	      this.el.setAttribute('value',value)
 	    }
 	  },
 	  'checkbox':{
+	    eventType:'click',
 	    callback:function(){
 	      var self = this
 	      var el = self.el.getElement()
@@ -1949,6 +1953,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  },
 	  'radio':{
+	    eventType:'click',
 	    callback:defaultCallback,
 	    update:function(value){
 	      var self = this
@@ -1961,6 +1966,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  },
 	  'select':{
+	    eventType:'change',
 	    callback:defaultCallback,
 	    update:function(value){
 	      var self = this
@@ -2011,10 +2017,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    self.handler = handler
 
 	    self.callback = _.bind(self.handler.callback,self)
+	    self.eventType = self.handler.eventType
+
 
 	    self.view.on('afterMount',function(){
 	      element = self.el.getElement()
-	      Util.bindEvent(element, 'change', self.callback)
+	      Util.bindEvent(element, self.eventType, self.callback)
 	    })
 
 	    this.el.__pat_model = this
@@ -2049,7 +2057,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  unbind: function() {
 	    this.el.__pat_model = null
-	    Util.unbindEvent(this.el.getElement(), 'change',this.callback)
+	    Util.unbindEvent(this.el.getElement(), this.eventType,this.callback)
 	  }
 	}
 

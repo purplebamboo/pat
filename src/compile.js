@@ -128,6 +128,8 @@ function _compileDirective(el,view,attributes) {
     _bindDir(des)
   })
 
+
+
   if (el.hasChildNodes()) {
     childNodes = _.toArray(el.childNodes)
     _.each(childNodes, function(child) {

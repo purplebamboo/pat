@@ -53,7 +53,7 @@
 </script>
 
 <script type="javascript/template" id="J_tmpl3">
-  <span t-if="status == 1 && test !== 2">111</span>
+  <textarea id="te">2222</textarea>
 </script>
 
 <script type="text/javascript">
@@ -110,7 +110,7 @@ var p2 = new Pat({
       return value + '-我是filter带的值'
     }
   },
-  template:document.getElementById('J_tmpl2').innerHTML
+  template:document.getElementById('J_tmpl3').innerHTML
 })
 
 
