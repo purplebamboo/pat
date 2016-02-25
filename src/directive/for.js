@@ -55,7 +55,7 @@ module.exports = {
 
     this.orikeys = []
 
-    var ori = this.view.$data.__ori__
+    var ori = this.view.$data.__ori__ || this.view.$data
     //需要把当前的数据复制过来
     for (var oriKey in ori) {
       if (ori.hasOwnProperty(oriKey)) {
@@ -106,7 +106,7 @@ module.exports = {
     var newViewLists = this.newViewLists = []
     var oldViewMap = this.oldViewMap
     var self = this
-    var data,newNode,name,ori
+    var data,newNode,name
     var curKey = '__pat_key__'
 
 
@@ -117,9 +117,14 @@ module.exports = {
       if (name && oldViewMap[name] && oldViewMap[name].$data[self.alias] === item) {
         newViewMap[name] = oldViewMap[name]
         //发现可以复用，就直接更新view就行
-        //key需要重新赋值,会自动做出defineproperty的监听改变
+        //key需要重新赋值,
+        //如果不是脏检测模式会自动做出defineproperty的监听改变
+        //而脏检测模式下会调用脏检测重新局部渲染模板
         if(self.iterator) oldViewMap[name].$data[self.iterator] = key
 
+        if (self.view.$rootView.__dataCheckType == 'dirtyCheck') {
+          oldViewMap[name].$digest()
+        }
       } else {
         //否则需要新建新的view
         data = {}
@@ -131,9 +136,6 @@ module.exports = {
         if(self.iterator) data[self.iterator] = key
 
         data[self.alias] = item
-//debu
-        //data = Data.define(data)
-
 
         newNode = self.__node.clone()
         //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
@@ -145,7 +147,7 @@ module.exports = {
           el: newNode,
           data: data,
           vid:name,
-          //deepinject:false,
+          dataCheckType:self.view.$rootView.__dataCheckType,
           rootView:self.view.$rootView
         })
         newViewMap[name].orikeys = self.orikeys

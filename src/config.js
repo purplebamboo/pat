@@ -14,3 +14,7 @@ exports.unsafeDelimiters = ['{{{','}}}']
 exports.defaultIterator = '__INDEX__'
 
 exports.debug = false
+
+
+//支持两种数据变化检测方式 defineProperties dirtyCheck
+exports.dataCheckType = 'defineProperties'

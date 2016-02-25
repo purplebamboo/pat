@@ -222,6 +222,7 @@ describe("[pat:directive.js]", function() {
       expect($(el).find('.t2').html()).toBe('earth')
       //测试一次性是否有效
       pat.$data.lists[0].text = 'hahaha'
+      pat.$apply()
       //setValue('lists[0].text','hahaha')
       expect($(el).find('.t1').html()).toBe('world')
 
@@ -290,6 +291,7 @@ describe("[pat:directive.js]", function() {
         name:'hello111',
         text:'<span class="t2">test</span>'
       })
+      pat.$apply()
       //不会变化
       expect($($(el).children()[1]).html().toLowerCase()).toMatch('earth')
 

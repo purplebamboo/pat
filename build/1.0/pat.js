@@ -104,6 +104,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.__userWatchers = {}
 	  //过滤器
 	  this.__filters = options.filters || {}
+	  //数据检测方式，支持两种defineProperties dirtyCheck
+	  this.__dataCheckType = options.dataCheckType || config.dataCheckType
 	  //唯一标识
 	  this.__vid = options.vid || vid()
 	  //是否已经渲染到了页面中
@@ -111,14 +113,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  //记录初始化时间，debug模式下才会打出来
 	  if (("development") != 'production' && this.$rootView == this) {
-	    _.time('view(' + this.__vid + ')[#' + this.$el.id + ']-init:')
+	    _.time('view-'+this.__dataCheckType+'(' + this.__vid + ')[#' + this.$el.id + ']-init:')
 	  }
 
 	  //初始化
 	  this._init()
 
 	  if (("development") != 'production' && this.$rootView == this) {
-	    _.timeEnd('view(' + this.__vid + ')[#' + this.$el.id + ']-init:')
+	    _.timeEnd('view-'+this.__dataCheckType+'(' + this.__vid + ')[#' + this.$el.id + ']-init:')
 	  }
 	}
 
@@ -145,13 +147,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 
-	  //注入get set
-	  this.$data = View.$inject(this.$data,this.__deepinject)
-
+	  if (this.__dataCheckType == 'defineProperties') {
+	    //注入get set
+	    this.$data = View.$inject(this.$data,this.__deepinject)
+	  }
 
 	  //增加特殊联动依赖
 	  this.__depend()
-
 
 	  this.fire('beforeCompile')
 	  //开始解析编译虚拟节点
@@ -163,7 +165,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (!this.$el.__VD__){
 	    this.$el.innerHTML = ''
 	    this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
-	    //this.$el.innerHTML = virtualElement.mountView(this)
 	    this.__rendered = true//一定要放在事件之前，这样检测才是已经渲染了
 	    this.fire('afterMount')
 	  }else{
@@ -177,7 +178,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	//这个主要用在for这种会创建子scope的指令上。
 	View.prototype.__depend = function(){
 	  var self = this
-	  _.each(this.$data.__ori__,function(val,key){
+	  var data = this.$data.__ori__ || this.$data //同时考虑两种检测方式
+	  _.each(data,function(val,key){
 	    // self.$watch(key,function(){
 	    //   if (!self.__dependViews) return
 	    //   _.each(self.__dependViews,function(view){
@@ -268,8 +270,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return Queue.flushUpdate()
 	}
 
-	//为了兼容老的写法
-	View.prototype.$apply = View.prototype.$flushUpdate
+
+	//开始脏检测，这个方法只有内部可以使用
+	View.prototype.$digest = function() {
+	  //先检查用户自定义的watcher,这样用户的定义可以先执行完
+	  this.__userWatchers && _.each(this.__userWatchers,function(watcher){
+	    watcher.check()
+	  })
+
+	  this.__watchers && _.each(this.__watchers,function(watcher){
+	    watcher.check()
+	  })
+	}
+
+
+
+	//支持两种检测方式
+	//对于defineProperties 就是强制更新
+	//对于dirtyCheck 就是开始调用脏检测
+	View.prototype.$apply = function(){
+
+	  if (this.__dataCheckType == 'defineProperties') {
+	    this.$flushUpdate()
+	  }else{
+	    this.$digest()
+	  }
+
+	}
 
 
 	View.prototype.$compile = function(el) {
@@ -385,6 +412,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.defaultIterator = '__INDEX__'
 
 	exports.debug = false
+
+
+	//支持两种数据变化检测方式 defineProperties dirtyCheck
+	exports.dataCheckType = 'defineProperties'
 
 /***/ },
 /* 2 */
@@ -1991,8 +2022,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
-
-
 	module.exports = {
 	  priority: 3000,
 	  bind:function(value) {
@@ -2035,7 +2064,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (_.isString(val)) {
 	      val = '"'+val+'"'
 	    }
-	    return new Function('$scope', 'return $scope.' + key + '=' + val)(scope)
+	    try{
+	      new Function('$scope', 'return $scope.' + key + '=' + val)(scope)
+	      //在脏检测模式下，改变值需要手动调用脏检测
+	      if (this.view.$rootView && this.view.$rootView.__dataCheckType == 'dirtyCheck') {
+	        this.view.$rootView.$digest()
+	      }
+
+	    }catch(e){
+	      if (true) _.log('error when watcher set the value,please check your key: "' + this.key + '"', e)
+	    }
+
+	    return
 	  },
 	  forceUpdate:function(){
 	    if (this.__watcher) {
@@ -2088,7 +2128,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        el:self.el,
 	        data:self.view.$data,
 	        rootView:self.view.$rootView
-	        //deepinject:false
 	      })
 
 	      if (self.view.__rendered) {
@@ -2114,24 +2153,31 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      this.childView = new this.view.constructor({
 	        el:newVdNode,
-	        //template:newVdNode,
 	        data:this.view.$data,
+	        dataCheckType:this.view.$rootView.__dataCheckType,
 	        rootView:this.view.$rootView
-	        //deepinject:false
 	      })
 	      this.el.replace(newVdNode)
 	      this.childView.fire('afterMount') //触发事件
 
 	      this.el = newVdNode
 	      this.bound = true
+	      return
 	    }
 
 	    if (!value && this.bound == true){
 	      //软删除
 	      this.el.remove(true)
 	      this.childView.$destroy()
+	      this.childView = false
 	      this.bound = false
+	      return
 	    }
+	    //剩下的情况都是if的判断不需要改变是否渲染的，这个时候如果是脏检测模式，需要调用子view的脏检测
+	    if (this.view.$rootView.__dataCheckType == 'dirtyCheck') {
+	      this.childView && this.childView.$digest()
+	    }
+
 	  },
 	  unbind:function(){
 	    this.childView && this.childView.$destroy()
@@ -2221,7 +2267,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.orikeys = []
 
-	    var ori = this.view.$data.__ori__
+	    var ori = this.view.$data.__ori__ || this.view.$data
 	    //需要把当前的数据复制过来
 	    for (var oriKey in ori) {
 	      if (ori.hasOwnProperty(oriKey)) {
@@ -2272,7 +2318,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var newViewLists = this.newViewLists = []
 	    var oldViewMap = this.oldViewMap
 	    var self = this
-	    var data,newNode,name,ori
+	    var data,newNode,name
 	    var curKey = '__pat_key__'
 
 
@@ -2283,9 +2329,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (name && oldViewMap[name] && oldViewMap[name].$data[self.alias] === item) {
 	        newViewMap[name] = oldViewMap[name]
 	        //发现可以复用，就直接更新view就行
-	        //key需要重新赋值,会自动做出defineproperty的监听改变
+	        //key需要重新赋值,
+	        //如果不是脏检测模式会自动做出defineproperty的监听改变
+	        //而脏检测模式下会调用脏检测重新局部渲染模板
 	        if(self.iterator) oldViewMap[name].$data[self.iterator] = key
 
+	        if (self.view.$rootView.__dataCheckType == 'dirtyCheck') {
+	          oldViewMap[name].$digest()
+	        }
 	      } else {
 	        //否则需要新建新的view
 	        data = {}
@@ -2297,9 +2348,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if(self.iterator) data[self.iterator] = key
 
 	        data[self.alias] = item
-	//debu
-	        //data = Data.define(data)
-
 
 	        newNode = self.__node.clone()
 	        //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
@@ -2311,7 +2359,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          el: newNode,
 	          data: data,
 	          vid:name,
-	          //deepinject:false,
+	          dataCheckType:self.view.$rootView.__dataCheckType,
 	          rootView:self.view.$rootView
 	        })
 	        newViewMap[name].orikeys = self.orikeys
@@ -2974,8 +3022,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.last = this.current
 
 	  }else{
-	    //系统watcher加入异步批量队列
-	    Queue.update(this)
+
+	    //对于脏检测就直接调用check对于defineProperties需要放入队列
+	    if (this.__view.$rootView.__dataCheckType == 'defineProperties') {
+	      //系统watcher加入异步批量队列
+	      Queue.update(this)
+	    }else{
+	      this.batchCheck()
+	    }
+
 	  }
 
 	}

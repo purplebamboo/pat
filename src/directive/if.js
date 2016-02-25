@@ -19,7 +19,6 @@ module.exports = {
         el:self.el,
         data:self.view.$data,
         rootView:self.view.$rootView
-        //deepinject:false
       })
 
       if (self.view.__rendered) {
@@ -45,24 +44,31 @@ module.exports = {
 
       this.childView = new this.view.constructor({
         el:newVdNode,
-        //template:newVdNode,
         data:this.view.$data,
+        dataCheckType:this.view.$rootView.__dataCheckType,
         rootView:this.view.$rootView
-        //deepinject:false
       })
       this.el.replace(newVdNode)
       this.childView.fire('afterMount') //触发事件
 
       this.el = newVdNode
       this.bound = true
+      return
     }
 
     if (!value && this.bound == true){
       //软删除
       this.el.remove(true)
       this.childView.$destroy()
+      this.childView = false
       this.bound = false
+      return
     }
+    //剩下的情况都是if的判断不需要改变是否渲染的，这个时候如果是脏检测模式，需要调用子view的脏检测
+    if (this.view.$rootView.__dataCheckType == 'dirtyCheck') {
+      this.childView && this.childView.$digest()
+    }
+
   },
   unbind:function(){
     this.childView && this.childView.$destroy()

@@ -152,8 +152,6 @@ var tagTypes = {
 
 
 
-
-
 module.exports = {
   priority: 3000,
   bind:function(value) {
@@ -196,7 +194,18 @@ module.exports = {
     if (_.isString(val)) {
       val = '"'+val+'"'
     }
-    return new Function('$scope', 'return $scope.' + key + '=' + val)(scope)
+    try{
+      new Function('$scope', 'return $scope.' + key + '=' + val)(scope)
+      //在脏检测模式下，改变值需要手动调用脏检测
+      if (this.view.$rootView && this.view.$rootView.__dataCheckType == 'dirtyCheck') {
+        this.view.$rootView.$digest()
+      }
+
+    }catch(e){
+      if (process.env.NODE_ENV != 'production') _.log('error when watcher set the value,please check your key: "' + this.key + '"', e)
+    }
+
+    return
   },
   forceUpdate:function(){
     if (this.__watcher) {

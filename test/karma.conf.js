@@ -7,6 +7,7 @@ var pkg = require('../src/config.js')
 var version = pkg.version
 var files = [
   'build/'+version+'/pat.js',
+  'test/init.js',
   'test/lib/jquery.js',
   'test/lib/jasmine-jquery.js',
   'test/js/*.js'

@@ -48,7 +48,7 @@
 
   {{#for(item in lists)}}
   ＝＝＝
-  <div id="{{item.name}}">{{{item.tt}}}2222</div>
+  <div id="{{item.name}}">{{{item.name}}}2222</div>
   {{/for}}
 </script>
 
@@ -85,6 +85,7 @@ Pat.config({
 
 var p2 = new Pat({
   el:'test',
+  dataCheckType:'dirtyCheck',
   data:{
     text:'hello',
     key:10,
@@ -110,13 +111,13 @@ var p2 = new Pat({
       return value + '-我是filter带的值'
     }
   },
-  template:document.getElementById('J_tmpl3').innerHTML
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 
-for(var i in p2.$data){
-  console.log(i+'=====\n')
-}
+// for(var i in p2.$data){
+//   console.log(i+'=====\n')
+// }
 
 // p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
 

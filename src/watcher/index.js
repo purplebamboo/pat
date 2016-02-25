@@ -69,8 +69,15 @@ Watcher.prototype.check = function() {
     this.last = this.current
 
   }else{
-    //系统watcher加入异步批量队列
-    Queue.update(this)
+
+    //对于脏检测就直接调用check对于defineProperties需要放入队列
+    if (this.__view.$rootView.__dataCheckType == 'defineProperties') {
+      //系统watcher加入异步批量队列
+      Queue.update(this)
+    }else{
+      this.batchCheck()
+    }
+
   }
 
 }

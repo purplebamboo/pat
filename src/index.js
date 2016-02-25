@@ -48,6 +48,8 @@ var View = function (options) {
   this.__userWatchers = {}
   //过滤器
   this.__filters = options.filters || {}
+  //数据检测方式，支持两种defineProperties dirtyCheck
+  this.__dataCheckType = options.dataCheckType || config.dataCheckType
   //唯一标识
   this.__vid = options.vid || vid()
   //是否已经渲染到了页面中
@@ -55,14 +57,14 @@ var View = function (options) {
 
   //记录初始化时间，debug模式下才会打出来
   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
-    _.time('view(' + this.__vid + ')[#' + this.$el.id + ']-init:')
+    _.time('view-'+this.__dataCheckType+'(' + this.__vid + ')[#' + this.$el.id + ']-init:')
   }
 
   //初始化
   this._init()
 
   if (process.env.NODE_ENV != 'production' && this.$rootView == this) {
-    _.timeEnd('view(' + this.__vid + ')[#' + this.$el.id + ']-init:')
+    _.timeEnd('view-'+this.__dataCheckType+'(' + this.__vid + ')[#' + this.$el.id + ']-init:')
   }
 }
 
@@ -89,13 +91,13 @@ View.prototype._init = function() {
   }
 
 
-  //注入get set
-  this.$data = View.$inject(this.$data,this.__deepinject)
-
+  if (this.__dataCheckType == 'defineProperties') {
+    //注入get set
+    this.$data = View.$inject(this.$data,this.__deepinject)
+  }
 
   //增加特殊联动依赖
   this.__depend()
-
 
   this.fire('beforeCompile')
   //开始解析编译虚拟节点
@@ -107,7 +109,6 @@ View.prototype._init = function() {
   if (!this.$el.__VD__){
     this.$el.innerHTML = ''
     this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
-    //this.$el.innerHTML = virtualElement.mountView(this)
     this.__rendered = true//一定要放在事件之前，这样检测才是已经渲染了
     this.fire('afterMount')
   }else{
@@ -121,7 +122,8 @@ View.prototype._init = function() {
 //这个主要用在for这种会创建子scope的指令上。
 View.prototype.__depend = function(){
   var self = this
-  _.each(this.$data.__ori__,function(val,key){
+  var data = this.$data.__ori__ || this.$data //同时考虑两种检测方式
+  _.each(data,function(val,key){
     // self.$watch(key,function(){
     //   if (!self.__dependViews) return
     //   _.each(self.__dependViews,function(view){
@@ -212,8 +214,33 @@ View.prototype.$flushUpdate = function(){
   return Queue.flushUpdate()
 }
 
-//为了兼容老的写法
-View.prototype.$apply = View.prototype.$flushUpdate
+
+//开始脏检测，这个方法只有内部可以使用
+View.prototype.$digest = function() {
+  //先检查用户自定义的watcher,这样用户的定义可以先执行完
+  this.__userWatchers && _.each(this.__userWatchers,function(watcher){
+    watcher.check()
+  })
+
+  this.__watchers && _.each(this.__watchers,function(watcher){
+    watcher.check()
+  })
+}
+
+
+
+//支持两种检测方式
+//对于defineProperties 就是强制更新
+//对于dirtyCheck 就是开始调用脏检测
+View.prototype.$apply = function(){
+
+  if (this.__dataCheckType == 'defineProperties') {
+    this.$flushUpdate()
+  }else{
+    this.$digest()
+  }
+
+}
 
 
 View.prototype.$compile = function(el) {
