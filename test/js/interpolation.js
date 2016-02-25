@@ -74,4 +74,18 @@ describe("[pat:interpolation.js]", function() {
 
   })
 
+
+  it("{{}} use with textarea",function(){
+    pat = new Pat({
+      el:el,
+      data:data,
+      template:'<textarea id="te">{{text}}22222</textarea>'
+    })
+    expect($(el).find('#te').attr('value')).toEqual("hello world22222")
+    expect($(el).find('#te').html()).toEqual("hello world22222")
+    setValue('text',"haha")
+    expect($(el).find('#te')[0].value).toEqual("haha22222")
+    expect($(el).find('#te').html()).toEqual("hello world22222")
+  })
+
 })

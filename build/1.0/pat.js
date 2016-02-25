@@ -4322,11 +4322,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return
 	          }
 
-	          if (_.isString(child.data)) {
-	            isunSafe = child.data.indexOf(unsafeDelimiters[0]) > -1
-	            //所有的设置为一次性
-	            child.data = isunSafe ? child.data.replace(unsafeDelimiters[0],unsafeDelimiters[0]+'*') : child.data.replace(delimiters[0],delimiters[0]+'*')
-	          }
+	          // if (_.isString(child.data)) {
+	          //   //isunSafe = child.data.indexOf(unsafeDelimiters[0]) > -1
+	          //   //所有的设置为一次性
+	          //   //child.data = isunSafe ? child.data.replace(unsafeDelimiters[0],unsafeDelimiters[0]+'*') : child.data.replace(delimiters[0],delimiters[0]+'*')
+	          // }
 
 	          textareaInner += child.data
 	        })
