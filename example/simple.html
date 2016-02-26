@@ -10,6 +10,8 @@
 </head>
 <body>
 
+<table p-id="2"><thead p-id="3"><tr p-id="4"><!--deleted-5--><th p-id="6">2222</th></tr></thead></table>
+
 <div id="test">
 
 </div>
@@ -46,11 +48,20 @@
 
 <script type="javascript/template" id="J_tmpl2">
 
-<input type="text" t="{{sp}}" t-model="sp" />
+  <table>
+    <thead>
+      <tr>
+        {{#if(key==11)}}
+        <th>1111</th>
+        {{/if}}
+        <th>2222</th>
+      </tr>
+    </thead>
+  </table>
 </script>
 
 <script type="javascript/template" id="J_tmpl3">
-  <textarea id="te">{{text}}22222</textarea>
+
 </script>
 
 <script type="text/javascript">
@@ -82,7 +93,7 @@ Pat.config({
 
 var p2 = new Pat({
   el:'test',
-  dataCheckType:'dirtyCheck',
+  //dataCheckType:'dirtyCheck',
   data:{
     text:'hello',
     key:10,

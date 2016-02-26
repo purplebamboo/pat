@@ -243,8 +243,10 @@ exports.string2frag = function(string){
   var depth = wrap[0]
   var prefix = wrap[1]
   var suffix = wrap[2]
+  var commentData = ''
 
-  //ie8下面不支持注释节点，所以需要做出特殊处理
+  //ie8下面有个很奇怪的bug，就是当第一个节点是注释节点，那么这个注释节点渲染不出来
+  //所以需要做出特殊处理
   if (exports.isIe8()) {
     string = string.replace(/\<\!--([\w-\d]+)--\>/g,'<div id="__PAT__COMMENT">$1</div>')
   }
@@ -259,7 +261,14 @@ exports.string2frag = function(string){
   if (exports.isIe8()) {
     exports.walk(node,function(dom){
       if (dom.getAttribute && dom.getAttribute('id') == '__PAT__COMMENT') {
-        exports.replace(dom,document.createComment(_.trim(dom.innerHTML)))
+
+        commentData = dom.innerHTML
+        //测试发现，当节点是一个th并且第一个不是合法的th，
+        //那么会多一个空白的父节点，不是很明白为什么这里特殊处理下
+        if (dom.parentNode && dom.parentNode.tagName === "") {
+          dom = dom.parentNode
+        }
+        exports.replace(dom,document.createComment(_.trim(commentData)))
       }
     })
   }

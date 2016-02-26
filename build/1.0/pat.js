@@ -163,8 +163,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //如果不是虚拟dom，最后一次性的加到dom里
 	  //对于非virtualdom的才会fire afterMount事件，其他情况需要自行处理
 	  if (!this.$el.__VD__){
-	    this.$el.innerHTML = ''
-	    this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
+	    this.$el.innerHTML = virtualElement.mountView(this)
+	    //this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
 	    this.__rendered = true//一定要放在事件之前，这样检测才是已经渲染了
 	    this.fire('afterMount')
 	  }else{
@@ -193,69 +193,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	  })
 	}
 
-
-	//用于给当前的view增加几个新的key
-	// View.prototype.__addData = function(newdata){
-	//   var self = this
-	//   var newObj = self.$data.__ori__
-	//   var hasUnregister = false
-	//   var newKeys = []
-	//   _.each(newdata,function(value,key){
-
-	//     if (!_.hasKey(newObj,key)) {
-	//       newObj[key] = value
-	//       //view.$data.__ori__[key] = value
-	//       newKeys.push(key)
-	//       //self.__dependWatch(key)
-	//       //hasUnregister = true
-	//       // _.each(view.$data.__ori__,function(v,k){
-	//       //   newObj[k] = view.$data[k]
-	//       // })
-	//     }
-	//   })
-
-	//   if (newKeys.length == 0) return
-
-	//   var oriData = self.$data
-	//   self.$data = Data.define(newObj)
-
-	//   //需要把之前的watcher全部再get一遍，建立新的依赖关系
-	//   // _.each(oriData.__ori__,function(value,key){
-	//   //   oriData.$data[key].__ob__.depend()
-	//   //   self.$data[key] = oriData[key]
-	//   // })
-	//   _.each(oriData.__ori__,function(value,key){
-	//     //oriData.$data[key].__ob__.depend()
-	//     if (_.indexOf(newKeys,key) == -1) {
-	//       oriData[key].__parentVal__ && _.findAndReplace(oriData[key].__parentVal__,oriData,self.$data)
-	//       self.$data[key] = oriData[key]
-	//     }else{
-	//       self.$data[key] = self.$inject(value)
-	//     }
-	//   })
-
-	//   _.each(this.__watchers,function(watcher){
-	//     watcher.__depend = false
-	//     watcher.getValue()
-	//   })
-
-	//   //通知依赖的子view也要更新key
-	//   self.__dependViews && _.each(self.__dependViews,function(view){
-	//     view.__addData(newdata)
-	//   })
-	//   //添加key联动
-	//   _.each(newKeys,function(key){
-	//     self.__dependWatch(key)
-	//   })
-
-	// }
-
 	View.$inject = function(data,deepinject){
 	  return Data.inject(data,deepinject)
 	}
 
 	View.$normalize = function(injectData){
 	  return Data.normalize(injectData)
+	}
+
+	View.prototype.$nextTick = function(cb,ctx){
+	  return Dom.nextTick(cb,ctx)
 	}
 
 	View.prototype.$flushUpdate = function(){
@@ -399,6 +346,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	View.Watcher = Watcher
 	View.Data = Data
 	View.Element = Element
+	View.Util = _
 
 
 
@@ -898,8 +846,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var depth = wrap[0]
 	  var prefix = wrap[1]
 	  var suffix = wrap[2]
+	  var commentData = ''
 
-	  //ie8下面不支持注释节点，所以需要做出特殊处理
+	  //ie8下面有个很奇怪的bug，就是当第一个节点是注释节点，那么这个注释节点渲染不出来
+	  //所以需要做出特殊处理
 	  if (exports.isIe8()) {
 	    string = string.replace(/\<\!--([\w-\d]+)--\>/g,'<div id="__PAT__COMMENT">$1</div>')
 	  }
@@ -914,7 +864,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (exports.isIe8()) {
 	    exports.walk(node,function(dom){
 	      if (dom.getAttribute && dom.getAttribute('id') == '__PAT__COMMENT') {
-	        exports.replace(dom,document.createComment(_.trim(dom.innerHTML)))
+
+	        commentData = dom.innerHTML
+	        //测试发现，当节点是一个th并且第一个不是合法的th，
+	        //那么会多一个空白的父节点，不是很明白为什么这里特殊处理下
+	        if (dom.parentNode && dom.parentNode.tagName === "") {
+	          dom = dom.parentNode
+	        }
+	        exports.replace(dom,document.createComment(_.trim(commentData)))
 	      }
 	    })
 	  }
