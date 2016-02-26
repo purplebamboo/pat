@@ -515,8 +515,9 @@ var Element = Node.extend({
       value = attr.value
 
       if (_.isString(value)) {
-        value = '"' + value + '"'
+        value = '"' + value.replace(/"/g, '&quot;') + '"'
       }
+
       //对于checked这种特殊的，如果为false，那么不需要渲染属性
       if (attr.name == 'checked' && !value) return
 

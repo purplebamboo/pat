@@ -81,6 +81,11 @@ var tagTypes = {
     eventType:'keyup',
     callback:defaultCallback,
     update:function(value){
+
+      //如果设置了安全选项，那么就不允许存在破坏节点的特殊字符
+      if (this.describe.args[0] == 'safe' && _.isString(value)) {
+        value = _.htmlspecialchars(value)
+      }
       this.el.setAttribute('value',value)
     }
   },
@@ -213,11 +218,6 @@ module.exports = {
     }
   },
   update: function(value) {
-
-    //不允许存在破坏节点的特殊字符
-    if (_.isString(value)) {
-      value = _.htmlspecialchars(value)
-    }
 
     if (value === undefined || value === null) {
       value = ''

@@ -46,10 +46,7 @@
 
 <script type="javascript/template" id="J_tmpl2">
 
-  {{#for(item in lists)}}
-  ＝＝＝
-  <div id="{{item.name}}">{{{item.name}}}2222</div>
-  {{/for}}
+<input type="text" t="{{sp}}" t-model="sp" />
 </script>
 
 <script type="javascript/template" id="J_tmpl3">
@@ -95,7 +92,7 @@ var p2 = new Pat({
     // test:{
     //   name:111
     // },
-    sp:'<span>11</span>',
+    sp:'<span class="1">world</span>',
     lists:[{
       name:'1',
       text:'11111',
@@ -111,7 +108,7 @@ var p2 = new Pat({
       return value + '-我是filter带的值'
     }
   },
-  template:document.getElementById('J_tmpl').innerHTML
+  template:document.getElementById('J_tmpl2').innerHTML
 })
 
 

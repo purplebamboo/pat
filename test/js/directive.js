@@ -337,9 +337,9 @@ describe("[pat:directive.js]", function() {
       expect($(el).find('input').val()).toBe('<span class="1">world</span>')
 
 
-      $(el).find('input').val('replace')
+      //$(el).find('input').val('replace')
       //怎么触发blur事件呢，这边不好弄
-      $(el).find('input').blur()
+      //$(el).find('input').blur()
     })
 
     //t-modle的测试用例还不完善，还要进步弄。本身t-model还没完全开发完成

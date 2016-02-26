@@ -1963,6 +1963,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    eventType:'keyup',
 	    callback:defaultCallback,
 	    update:function(value){
+
+	      //如果设置了安全选项，那么就不允许存在破坏节点的特殊字符
+	      if (this.describe.args[0] == 'safe' && _.isString(value)) {
+	        value = _.htmlspecialchars(value)
+	      }
 	      this.el.setAttribute('value',value)
 	    }
 	  },
@@ -2095,11 +2100,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  },
 	  update: function(value) {
-
-	    //不允许存在破坏节点的特殊字符
-	    if (_.isString(value)) {
-	      value = _.htmlspecialchars(value)
-	    }
 
 	    if (value === undefined || value === null) {
 	      value = ''
@@ -3912,8 +3912,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      value = attr.value
 
 	      if (_.isString(value)) {
-	        value = '"' + value + '"'
+	        value = '"' + value.replace(/"/g, '&quot;') + '"'
 	      }
+
 	      //对于checked这种特殊的，如果为false，那么不需要渲染属性
 	      if (attr.name == 'checked' && !value) return
 
