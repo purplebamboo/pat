@@ -58,7 +58,7 @@ Watcher.prototype.getValue = function() {
 Watcher.prototype.check = function() {
   var self = this
 
-  //用户自己的watcher先执行完
+  //自定义的watcher直接执行
   if (this.isUserWatcher) {
     this.current = this.getValue()
     if (this.last != this.current) {
@@ -70,7 +70,8 @@ Watcher.prototype.check = function() {
 
   }else{
 
-    //对于脏检测就直接调用check对于defineProperties需要放入队列
+    //对于脏检测就直接调用check
+    //对于defineProperties需要放入队列
     if (this.__view.$rootView.__dataCheckType == 'defineProperties') {
       //系统watcher加入异步批量队列
       Queue.update(this)
@@ -82,7 +83,7 @@ Watcher.prototype.check = function() {
 
 }
 
-//队列会调用这个方法
+//最终会调用这个方法
 Watcher.prototype.batchCheck = function() {
   var self = this
   var last = this.last

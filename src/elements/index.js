@@ -133,11 +133,6 @@ var Node = Class.extend(domProp,{
 
     html = this.deleted ? self.mountDeleted(view) : self.mountHtml(view)
 
-    //view.on('afterMount',function(){
-
-    //self.mounted = true
-    //})
-
     return html
   },
   //软删除的节点，会在页面上存在一个注释，方便确认位置
@@ -260,14 +255,10 @@ var Node = Class.extend(domProp,{
       }else{
         this.domReplace(this.getElement(),dstEl.getElement())
       }
-      //dstEl.remove()
     }else{
       //挨个的拿人家的子节点，替换
       var mountHtml = dstEl.mountView(this.view)
       var frag = _.string2frag(mountHtml)
-      // for (var i = 0,l = nodes.length; i < l; i++) {
-      //   this.domBefore(nodes[0],this.getElement())
-      // }
       this.domBefore(frag,this.getElement())
       this.domRemove(this.getElement())
     }
@@ -300,9 +291,7 @@ var Node = Class.extend(domProp,{
     }else{
       var mountHtml = this.mountView(dstEl.view)
       var frag = _.string2frag(mountHtml)
-      //for (var i = 0,l = nodes.length; i < l; i++) {
-        this.domBefore(frag,dstEl.getElement())
-      //}
+      this.domBefore(frag,dstEl.getElement())
     }
   },
   after:function(dstEl){
@@ -330,9 +319,7 @@ var Node = Class.extend(domProp,{
     }else{
       var mountHtml = this.mountView(dstEl.view)
       var frag = _.string2frag(mountHtml)
-      //for (var i = 0,l = nodes.length; i < l; i++) {
-        this.domAfter(frag,dstNode)
-      //}
+      this.domAfter(frag,dstNode)
     }
 
   },
@@ -547,9 +534,11 @@ var Element = Node.extend({
 })
 
 
-//一个集合，主要用于处理包裹的问题，根节点还有 if for的block都是这种节点
-//这个节点本身没有什么属性之类的，有的是多个子节点，操作时也是多个子节点
-//由virtual dom来解决这个差异问题
+/**
+ * 一个集合，主要用于处理包裹的问题，根节点还有 if for的block都是这种节点
+ * 这个节点本身没有什么属性之类的，有的是多个子节点，操作时也是多个子节点
+ * 由virtual dom来解决这个差异问题
+ */
 var Collection = Element.extend({
   init: function(options) {
     this.options = options
@@ -606,13 +595,11 @@ var Collection = Element.extend({
       var deletedNode = _.string2node(this.mountDeleted())
       this.domReplace(lastElement,deletedNode)
       this.element = deletedNode
-      //this.childNodes.shift()
     }
     //挨个删除子节点，这个是硬删除，没必要留着了。有个位置留着就行
     while(this.childNodes.length){
       this.childNodes[0].remove()
     }
-    //this.childNodes = []
   },
   hasChildNodes: function() {
     return this.childNodes && this.childNodes.length && this.childNodes.length > 0

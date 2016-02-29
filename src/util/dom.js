@@ -201,8 +201,13 @@ exports.prepend = function (el, target) {
   }
 }
 
+
+/**
+ * check is ie8
+ */
+
 exports.isIe8 = function(){
-  return /MSIE\ [678]/.test(window.navigator.userAgent)
+  return /MSIE\ [8]/.test(window.navigator.userAgent)
 }
 
 
@@ -223,16 +228,30 @@ var tagHooks = {
 tagHooks.th = tagHooks.td
 tagHooks.optgroup = tagHooks.option
 tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
-// "circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use".split(',')
-//     tagHooks[tag] = tagHooks.g //处理SVG
-// })
+
+_.each("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use".split(','),function(tag){
+  tagHooks[tag] = tagHooks.g //处理SVG
+})
 
 var rtagName = /<([\w:]+)/
 
+
+
+/**
+ * translate a string to a node
+ * @param  {string} string
+ * @return {element}       generated node
+ */
 exports.string2node = function(string){
   return exports.string2frag(string).childNodes[0]
 }
 
+
+/**
+ * translate a string to a frag
+ * @param  {string} string
+ * @return {fragment}  generated fragment
+ */
 exports.string2frag = function(string){
   var node = document.createElement('div')
   var frag = document.createDocumentFragment()
@@ -297,18 +316,6 @@ exports.replace = function (target, el) {
     parent.replaceChild(el, target)
   }
 }
-
-
-/**
- * Get and remove an attribute from a node.
- *
- * @param {Node} node
- * @param {String} attr
- */
-
-// exports.clone = function (node) {
-//   return node.cloneNode(true)
-// }
 
 
 /**

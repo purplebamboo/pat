@@ -9,33 +9,6 @@ var parseExpression = parser.parseExpression
 var config = require('./config')
 
 
-
-// function _handelUnregisterKey(describe){
-//   var expression = describe.expression
-//   var view = describe.view
-//   var match = expression.match(/_scope\.([\w]+)/)
-//   var key,newObj
-//   if (!match || !match[1]) return
-
-//   key = match[1]
-//   newObj = {}
-//   newObj[key] = ''
-
-//   //从最顶级开始添加
-//   view.$rootView.__addData(newObj)
-
-//   // if (!_.hasKey(view.$data.__ori__,key)) {
-//   //   newObj[key] = ''
-//   //   _.each(view.$data.__ori__,function(v,k){
-//   //     newObj[k] = view.$data[k]
-//   //   })
-
-//   //   view.$data = Data.inject(newObj)
-//   // }
-
-// }
-
-
 /**
  * 绑定directive，初始化指令
  * @param  {object} describe 描述信息
@@ -46,9 +19,6 @@ function _bindDir(describe) {
 
   view = describe.view
   dirInstance = Directive.create(describe)
-
-  //这里需要做一个特殊处理，就是如果expression是单独的一级key并且data里面不存在，我们需要重新赋值data
-  //_handelUnregisterKey(describe)
 
   //先去watch池子里找,value可以作为key
   watcher = view.__watchers[describe.value]

@@ -25,6 +25,11 @@ exports.bind = function (fn, ctx) {
   }
 }
 
+
+/**
+ * htmlspecialchars
+ */
+
 exports.htmlspecialchars = function(str) {
 
   if (!exports.isString(str)) return str
@@ -37,10 +42,20 @@ exports.htmlspecialchars = function(str) {
   return str
 }
 
+
+/**
+ * trim string
+ */
 exports.trim=function(str){
   return str.replace(/(^\s*)|(\s*$)/g, '')
 }
 
+
+/**
+ * make a array like obj to a true array
+ * @param  {object} arg array like obj
+ * @return {array}     array
+ */
 exports.toArray = function(arg) {
   if (!arg || !arg.length) return []
   var array = []
@@ -54,31 +69,36 @@ exports.toArray = function(arg) {
 
 var toString = Object.prototype.toString
 
+
 exports.isArray = function(unknow) {
   return toString.call(unknow) === '[object Array]'
 }
+
+
 exports.isPlainObject = function (obj) {
   return toString.call(obj) === '[object Object]'
 }
+
 
 exports.isObject = function( unknow ) {
   return typeof unknow === "function" || ( typeof unknow === "object" && unknow != null )
 }
 
 
-
-
 exports.isElement = function(unknow){
   return unknow && typeof unknow === 'object' && unknow.nodeType
 }
+
 
 exports.isString = function(unknow){
   return (Object.prototype.toString.call(unknow) === '[object String]')
 }
 
+
 exports.isNumber = function(unknow){
   return (Object.prototype.toString.call(unknow) === '[object Number]')
 }
+
 
 exports.each = function(enumerable, iterator) {
 
@@ -92,6 +112,24 @@ exports.each = function(enumerable, iterator) {
     }
   }
 
+}
+
+exports.hasKey = function(object,key){
+  for (var _key in object) {
+    if (object.hasOwnProperty(_key) && _key == key) return true
+  }
+
+  return false
+}
+
+
+exports.inArray = function(array,item){
+
+  var index = exports.indexOf(array,item)
+
+  if (index === -1) return false
+
+  return true
 }
 
 
@@ -114,24 +152,6 @@ exports.assign = function() {
   }
 
   return target
-}
-
-exports.hasKey = function(object,key){
-  for (var _key in object) {
-    if (object.hasOwnProperty(_key) && _key == key) return true
-  }
-
-  return false
-}
-
-
-exports.inArray = function(array,item){
-
-  var index = exports.indexOf(array,item)
-
-  if (index === -1) return false
-
-  return true
 }
 
 
@@ -180,13 +200,17 @@ exports.indexOfKey = function(arrayObject,key,value){
 }
 
 
-/*
-  深拷贝
- */
+
 var _skipKeyFn = function(){
   return false
 }
 
+/**
+ * deep clone
+ * @param  {object} obj       ori obj need deep clone
+ * @param  {function} skipKeyFn function to skip clone
+ * @return {object}           result
+ */
 exports.deepClone = function(obj,skipKeyFn) {
 
   skipKeyFn = skipKeyFn || _skipKeyFn

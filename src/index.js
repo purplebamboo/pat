@@ -33,14 +33,16 @@ var View = function (options) {
     _.error('pat need a root el and must be a element or virtual dom')
   }
 
+  //渲染用的数据
   this.$data = options.data || {}
   //保存根view,没有的话就是自己
   this.$rootView = options.rootView ? options.rootView : this
   //模板
   this.__template = options.template
-  //对于数据是否进行深注入，默认为false, 如果是true那么当数据已经被注入了get set时，会重新复制一份注入
+  //对于数据是否进行深注入，默认为false,只对defineProperties模式有效
+  //如果是true那么当数据已经被注入了get set时，会重新复制一份注入
   this.__deepinject = options.deepinject == true ? true : false
-  //依赖的子view,当此view的一级key更新时，需要同步更新子view的一级key
+  //依赖的子view,当此view的一级key更新时，需要同步更新依赖子view的一级key，主要用在for指令那里
   this.__dependViews = []
   //所有指令观察对象
   this.__watchers = {}
@@ -83,14 +85,14 @@ View.prototype._init = function() {
   if (this.$el.__VD__) {
     virtualElement = this.$el
   }else if(this.__template){
-    this.$el.innerHTML = ''
     virtualElement = Dom.transfer(this.__template)
+    this.$el.innerHTML = ''
   }else{
     virtualElement = Dom.transfer(this.$el.innerHTML)
     this.$el.innerHTML = ''
   }
 
-
+  //defineProperties模式下需要进行数据的get set注入
   if (this.__dataCheckType == 'defineProperties') {
     //注入get set
     this.$data = View.$inject(this.$data,this.__deepinject)
@@ -105,13 +107,14 @@ View.prototype._init = function() {
   this.fire('afterCompile')
 
   //如果不是虚拟dom，最后一次性的加到dom里
-  //对于非virtualdom的才会fire afterMount事件，其他情况需要自行处理
+  //对于非virtualdom的才会fire afterMount事件，其他情况afterMount事件需要自行处理
   if (!this.$el.__VD__){
     this.$el.innerHTML = virtualElement.mountView(this)
     //this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
-    this.__rendered = true//一定要放在事件之前，这样检测才是已经渲染了
+    this.__rendered = true//一定要放在事件之前，这样检测时才是已经渲染了
     this.fire('afterMount')
   }else{
+    //对于virtualdom，只负责compile不负责放到页面，也不负责事件的触发
     this.__rendered = true
   }
 }
@@ -210,12 +213,12 @@ View.prototype.$compile = function(el) {
 View.prototype.$destroy = function() {
   _.each(this.__watchers,function(watcher){
     //通知watch销毁，watch会负责销毁对应的directive
-    //而对于针对的seter getter  会在下次更新时去掉这些引用
+    //而对于针对的seter getter会在下次更新时去掉这些watcher引用
     watcher.destroy()
   })
 
   _.each(this.__userWatchers,function(watcher){
-    //通知自定的watch销毁
+    //通知自定义的watch销毁
     watcher.destroy()
   })
 

@@ -36,19 +36,6 @@ var defineSetProxy = function(obs,_key){
 
   return function(newVal) {
 
-    // if (_.isObject(newVal)) {
-    //   newVal = exports.inject(newVal)
-
-    //   newVal.__parentVal__ = newVal.__parentVal__ || []
-    //   //_.findAndReplaceOrAdd()
-    //   if (_.indexOf(newVal.__parentVal__,ob.owner) == -1) {
-    //     newVal.__parentVal__.push(ob.owner)
-    //   }
-
-    // }
-
-
-    //todo 有时两个值一样，但是还是需要去修改__parentVal__
     if (newVal === ob.val) {
       return
     }
@@ -59,10 +46,6 @@ var defineSetProxy = function(obs,_key){
     //如果是对象需要特殊处理
     if (_.isObject(newVal)) {
       ob.val = exports.inject(newVal)
-
-      //ob.val.__parentVal__ = ob.val.__parentVal__ || []
-      //ob.val.__parentVal__.push(ob.owner)
-      //_.findAndReplace(ob.val.__parentVal__,oriData,self.$data)
       //依赖的watcher需要重新get一遍值
       //还要考虑scope有没有改变
       ob.depend()
@@ -94,8 +77,6 @@ if (_.isIe8()) {
       re;
     var props = {}
     var obs = {}
-
-//obj['init'] = ''
 
     function defineSet(key, callback) {
       cb_poll[key + '_set'] = callback;
@@ -136,9 +117,6 @@ if (_.isIe8()) {
       obs[key] = new Observer()
       obs[key].val = obj[key]
       obs[key].key = key
-      //可能存在多个parentVal
-      //obs[key].parentVal = obs[key].parentVal || []
-      //obs[key].parentVal.push(newObj)
 
       props[key] = {
         enumerable: true,
@@ -161,39 +139,18 @@ if (_.isIe8()) {
 
     }
 
-    // buffer.push(
-    //   '\tPublic Property Set [init2](value)',
-    //   '\t\tSet [init] = value',
-    //   '\tEnd Property'
-    //   // '\tPublic Property Get [_pro]()',
-    //   // '\t\t[_pro] = [__pro__]',
-    //   // '\tEnd Property'
-    // )
 
-    //buffer.push("\tPublic [" + '_pro' + "]")
-    //buffer.push("\tPrivate [" + '_prott' + "]")
     buffer.push("\tPublic [" + '__pat_key__' + "]")
     buffer.push("\tPublic [" + '__ori__' + "]")
     buffer.push("\tPublic [" + '__inject__' + "]")
-    //buffer.push("\tPublic [" + '__parentVal__' + "]")
 
     buffer.unshift(
       '\r\n\tPrivate [_pro]',
-      // '\tPrivate Sub Class_Initialize',
-      // '\t\tSet [_pro] = ""',
-      // '\tEnd Sub'
       '\tPublic Default Function [self](proxy)',
       '\t\tSet [_pro] = proxy',
       '\t\tSet [self] = me',
       '\tEnd Function'
-    );
-
-    // buffer.unshift(
-    //   '\tPublic Function [init](proxy)',
-    //   '\t\tSet [_pro] = proxy',
-    //   '\t\tSet [init] = me',
-    //   '\tEnd Function'
-    // );
+    )
 
     buffer.push('End Class')
 
@@ -205,9 +162,6 @@ if (_.isIe8()) {
     command.push([
       'Function ' + className + 'F(proxy)',
       '\tSet ' + className + 'F = (New ' + className + ')(proxy)',
-      //'\t' + className + 'Ftt.init(proxy)',
-      //'\tSet ' + className + 'Ftt.init2 ＝ ""',
-      //'\tSet ' + className + 'F = ' + className + 'F',
       'End Function'
     ].join('\r\n'))
 
@@ -239,15 +193,6 @@ if (_.isIe8()) {
 
       obs[key].val = newObj[key]
       obs[key].key = key
-      //obs[key].owner = newObj
-      //可能存在多个parentVal
-      // if (_.isObject(obs[key].val) && obs[key].val.__inject__) {
-      //   debugger
-      //   obs[key].val.__parentVal__ = obs[key].val.__parentVal__ || []
-      //   obs[key].val.__parentVal__.push(newObj)
-      // }
-      // obs[key].__parentVal__ = obs[key].__parentVal__ || []
-      // obs[key].__parentVal__.push(newObj)
 
       props[key] = {
         enumerable:true,
@@ -293,7 +238,6 @@ function _oriData(injectData){
       result[key] = _oriData(injectData[key])
     })
   }
-  //var
   return result
 }
 
@@ -307,14 +251,11 @@ exports.inject = function(data,deep) {
 
   //对于已经注入的对象，我们需要重新复制一份新的
   if (data.__inject__){
-
     if (!deep) {
       return data
     }else{
       data = _oriData(data)
     }
-    //debugger
-    //data = _oriData(data)
   }
 
   if (_.isArray(data)) {
@@ -323,16 +264,6 @@ exports.inject = function(data,deep) {
     newData.__inject__ = true
     var tmpl
     _.each(data,function(value){
-      // tmpl = value
-      // if(_.isObject(value)){
-      //   tmpl = exports.inject(value,deep)
-      //   tmpl.__parentVal__ = tmpl.__parentVal__ || []
-      //   //_.findAndReplaceOrAdd(tmpl.__parentVal__,)
-      //   if (_.indexOf(tmpl.__parentVal__,newData) == -1) {
-      //     tmpl.__parentVal__.push(newData)
-      //   }
-      //   //tmpl.__parentVal__.push(newData)
-      // }
       tmpl = exports.inject(value,deep)
       newData.push(tmpl)
     })
@@ -340,7 +271,6 @@ exports.inject = function(data,deep) {
   }
 
   if (_.isPlainObject(data)) {
-    //newData = {}
     newData = exports.define(data)
     //检测对象的值，需要再递归的去inject
     _.each(data,function(value,key){
@@ -349,7 +279,6 @@ exports.inject = function(data,deep) {
         newData[key] = exports.inject(value,deep)
       }
     })
-    //newData = exports.define(newData)
 
     return newData
   }

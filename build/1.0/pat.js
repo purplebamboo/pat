@@ -89,14 +89,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _.error('pat need a root el and must be a element or virtual dom')
 	  }
 
+	  //渲染用的数据
 	  this.$data = options.data || {}
 	  //保存根view,没有的话就是自己
 	  this.$rootView = options.rootView ? options.rootView : this
 	  //模板
 	  this.__template = options.template
-	  //对于数据是否进行深注入，默认为false, 如果是true那么当数据已经被注入了get set时，会重新复制一份注入
+	  //对于数据是否进行深注入，默认为false,只对defineProperties模式有效
+	  //如果是true那么当数据已经被注入了get set时，会重新复制一份注入
 	  this.__deepinject = options.deepinject == true ? true : false
-	  //依赖的子view,当此view的一级key更新时，需要同步更新子view的一级key
+	  //依赖的子view,当此view的一级key更新时，需要同步更新依赖子view的一级key，主要用在for指令那里
 	  this.__dependViews = []
 	  //所有指令观察对象
 	  this.__watchers = {}
@@ -139,14 +141,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (this.$el.__VD__) {
 	    virtualElement = this.$el
 	  }else if(this.__template){
-	    this.$el.innerHTML = ''
 	    virtualElement = Dom.transfer(this.__template)
+	    this.$el.innerHTML = ''
 	  }else{
 	    virtualElement = Dom.transfer(this.$el.innerHTML)
 	    this.$el.innerHTML = ''
 	  }
 
-
+	  //defineProperties模式下需要进行数据的get set注入
 	  if (this.__dataCheckType == 'defineProperties') {
 	    //注入get set
 	    this.$data = View.$inject(this.$data,this.__deepinject)
@@ -161,13 +163,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.fire('afterCompile')
 
 	  //如果不是虚拟dom，最后一次性的加到dom里
-	  //对于非virtualdom的才会fire afterMount事件，其他情况需要自行处理
+	  //对于非virtualdom的才会fire afterMount事件，其他情况afterMount事件需要自行处理
 	  if (!this.$el.__VD__){
 	    this.$el.innerHTML = virtualElement.mountView(this)
 	    //this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
-	    this.__rendered = true//一定要放在事件之前，这样检测才是已经渲染了
+	    this.__rendered = true//一定要放在事件之前，这样检测时才是已经渲染了
 	    this.fire('afterMount')
 	  }else{
+	    //对于virtualdom，只负责compile不负责放到页面，也不负责事件的触发
 	    this.__rendered = true
 	  }
 	}
@@ -266,12 +269,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	View.prototype.$destroy = function() {
 	  _.each(this.__watchers,function(watcher){
 	    //通知watch销毁，watch会负责销毁对应的directive
-	    //而对于针对的seter getter  会在下次更新时去掉这些引用
+	    //而对于针对的seter getter会在下次更新时去掉这些watcher引用
 	    watcher.destroy()
 	  })
 
 	  _.each(this.__userWatchers,function(watcher){
-	    //通知自定的watch销毁
+	    //通知自定义的watch销毁
 	    watcher.destroy()
 	  })
 
@@ -356,25 +359,60 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports) {
 
-	
-
-
-
+	/**
+	 * 指令的前缀
+	 *
+	 * @type {String}
+	 */
 	exports.prefix = 't'
 
+
+	/**
+	 * 当前版本号
+	 * @type {String}
+	 */
 	exports.version = '1.0'
 
 
+	/**
+	 * 标识id
+	 * @type {String}
+	 */
 	exports.tagId = 'p-id'
+
+
+	/**
+	 * 普通插值的分割符
+	 * @type {Array}
+	 */
 	exports.delimiters = ['{{','}}']
+
+
+	/**
+	 * html类型的插值分隔符
+	 * @type {Array}
+	 */
 	exports.unsafeDelimiters = ['{{{','}}}']
 
+
+	/**
+	 * for指令的默认key的名称
+	 * @type {String}
+	 */
 	exports.defaultIterator = '__INDEX__'
 
+
+	/**
+	 * 是否开启debug模式，如果开启，在非压缩版本下会打出很多信息。
+	 * @type {Boolean}
+	 */
 	exports.debug = false
 
 
-	//支持两种数据变化检测方式 defineProperties dirtyCheck
+	/**
+	 * 数据检测方式 支持两种数据变化检测方式 defineProperties dirtyCheck
+	 * @type {String}
+	 */
 	exports.dataCheckType = 'defineProperties'
 
 /***/ },
@@ -392,33 +430,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var config = __webpack_require__(1)
 
 
-
-	// function _handelUnregisterKey(describe){
-	//   var expression = describe.expression
-	//   var view = describe.view
-	//   var match = expression.match(/_scope\.([\w]+)/)
-	//   var key,newObj
-	//   if (!match || !match[1]) return
-
-	//   key = match[1]
-	//   newObj = {}
-	//   newObj[key] = ''
-
-	//   //从最顶级开始添加
-	//   view.$rootView.__addData(newObj)
-
-	//   // if (!_.hasKey(view.$data.__ori__,key)) {
-	//   //   newObj[key] = ''
-	//   //   _.each(view.$data.__ori__,function(v,k){
-	//   //     newObj[k] = view.$data[k]
-	//   //   })
-
-	//   //   view.$data = Data.inject(newObj)
-	//   // }
-
-	// }
-
-
 	/**
 	 * 绑定directive，初始化指令
 	 * @param  {object} describe 描述信息
@@ -429,9 +440,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  view = describe.view
 	  dirInstance = Directive.create(describe)
-
-	  //这里需要做一个特殊处理，就是如果expression是单独的一级key并且data里面不存在，我们需要重新赋值data
-	  //_handelUnregisterKey(describe)
 
 	  //先去watch池子里找,value可以作为key
 	  watcher = view.__watchers[describe.value]
@@ -576,20 +584,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 工具类
 	 */
 
-
 	var _ = {}
 	var dom = __webpack_require__(4)
 	var lang = __webpack_require__(5)
 	var log = __webpack_require__(6)
 
 	var assign = lang.assign
-	//mix in
 
 	assign(_,lang)
 	assign(_,dom)
 	assign(_,log)
 	_.Class = __webpack_require__(7)
-
 
 	module.exports = _
 
@@ -804,8 +809,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 
+
+	/**
+	 * check is ie8
+	 */
+
 	exports.isIe8 = function(){
-	  return /MSIE\ [678]/.test(window.navigator.userAgent)
+	  return /MSIE\ [8]/.test(window.navigator.userAgent)
 	}
 
 
@@ -826,16 +836,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	tagHooks.th = tagHooks.td
 	tagHooks.optgroup = tagHooks.option
 	tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
-	// "circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use".split(',')
-	//     tagHooks[tag] = tagHooks.g //处理SVG
-	// })
+
+	_.each("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use".split(','),function(tag){
+	  tagHooks[tag] = tagHooks.g //处理SVG
+	})
 
 	var rtagName = /<([\w:]+)/
 
+
+
+	/**
+	 * translate a string to a node
+	 * @param  {string} string
+	 * @return {element}       generated node
+	 */
 	exports.string2node = function(string){
 	  return exports.string2frag(string).childNodes[0]
 	}
 
+
+	/**
+	 * translate a string to a frag
+	 * @param  {string} string
+	 * @return {fragment}  generated fragment
+	 */
 	exports.string2frag = function(string){
 	  var node = document.createElement('div')
 	  var frag = document.createDocumentFragment()
@@ -900,18 +924,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parent.replaceChild(el, target)
 	  }
 	}
-
-
-	/**
-	 * Get and remove an attribute from a node.
-	 *
-	 * @param {Node} node
-	 * @param {String} attr
-	 */
-
-	// exports.clone = function (node) {
-	//   return node.cloneNode(true)
-	// }
 
 
 	/**
@@ -997,6 +1009,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 
+
+	/**
+	 * htmlspecialchars
+	 */
+
 	exports.htmlspecialchars = function(str) {
 
 	  if (!exports.isString(str)) return str
@@ -1009,10 +1026,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return str
 	}
 
+
+	/**
+	 * trim string
+	 */
 	exports.trim=function(str){
 	  return str.replace(/(^\s*)|(\s*$)/g, '')
 	}
 
+
+	/**
+	 * make a array like obj to a true array
+	 * @param  {object} arg array like obj
+	 * @return {array}     array
+	 */
 	exports.toArray = function(arg) {
 	  if (!arg || !arg.length) return []
 	  var array = []
@@ -1026,31 +1053,36 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var toString = Object.prototype.toString
 
+
 	exports.isArray = function(unknow) {
 	  return toString.call(unknow) === '[object Array]'
 	}
+
+
 	exports.isPlainObject = function (obj) {
 	  return toString.call(obj) === '[object Object]'
 	}
+
 
 	exports.isObject = function( unknow ) {
 	  return typeof unknow === "function" || ( typeof unknow === "object" && unknow != null )
 	}
 
 
-
-
 	exports.isElement = function(unknow){
 	  return unknow && typeof unknow === 'object' && unknow.nodeType
 	}
+
 
 	exports.isString = function(unknow){
 	  return (Object.prototype.toString.call(unknow) === '[object String]')
 	}
 
+
 	exports.isNumber = function(unknow){
 	  return (Object.prototype.toString.call(unknow) === '[object Number]')
 	}
+
 
 	exports.each = function(enumerable, iterator) {
 
@@ -1064,6 +1096,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }
 
+	}
+
+	exports.hasKey = function(object,key){
+	  for (var _key in object) {
+	    if (object.hasOwnProperty(_key) && _key == key) return true
+	  }
+
+	  return false
+	}
+
+
+	exports.inArray = function(array,item){
+
+	  var index = exports.indexOf(array,item)
+
+	  if (index === -1) return false
+
+	  return true
 	}
 
 
@@ -1086,24 +1136,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  return target
-	}
-
-	exports.hasKey = function(object,key){
-	  for (var _key in object) {
-	    if (object.hasOwnProperty(_key) && _key == key) return true
-	  }
-
-	  return false
-	}
-
-
-	exports.inArray = function(array,item){
-
-	  var index = exports.indexOf(array,item)
-
-	  if (index === -1) return false
-
-	  return true
 	}
 
 
@@ -1152,13 +1184,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	/*
-	  深拷贝
-	 */
+
 	var _skipKeyFn = function(){
 	  return false
 	}
 
+	/**
+	 * deep clone
+	 * @param  {object} obj       ori obj need deep clone
+	 * @param  {function} skipKeyFn function to skip clone
+	 * @return {object}           result
+	 */
 	exports.deepClone = function(obj,skipKeyFn) {
 
 	  skipKeyFn = skipKeyFn || _skipKeyFn
@@ -2599,19 +2635,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  return function(newVal) {
 
-	    // if (_.isObject(newVal)) {
-	    //   newVal = exports.inject(newVal)
-
-	    //   newVal.__parentVal__ = newVal.__parentVal__ || []
-	    //   //_.findAndReplaceOrAdd()
-	    //   if (_.indexOf(newVal.__parentVal__,ob.owner) == -1) {
-	    //     newVal.__parentVal__.push(ob.owner)
-	    //   }
-
-	    // }
-
-
-	    //todo 有时两个值一样，但是还是需要去修改__parentVal__
 	    if (newVal === ob.val) {
 	      return
 	    }
@@ -2622,10 +2645,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //如果是对象需要特殊处理
 	    if (_.isObject(newVal)) {
 	      ob.val = exports.inject(newVal)
-
-	      //ob.val.__parentVal__ = ob.val.__parentVal__ || []
-	      //ob.val.__parentVal__.push(ob.owner)
-	      //_.findAndReplace(ob.val.__parentVal__,oriData,self.$data)
 	      //依赖的watcher需要重新get一遍值
 	      //还要考虑scope有没有改变
 	      ob.depend()
@@ -2657,8 +2676,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      re;
 	    var props = {}
 	    var obs = {}
-
-	//obj['init'] = ''
 
 	    function defineSet(key, callback) {
 	      cb_poll[key + '_set'] = callback;
@@ -2699,9 +2716,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      obs[key] = new Observer()
 	      obs[key].val = obj[key]
 	      obs[key].key = key
-	      //可能存在多个parentVal
-	      //obs[key].parentVal = obs[key].parentVal || []
-	      //obs[key].parentVal.push(newObj)
 
 	      props[key] = {
 	        enumerable: true,
@@ -2724,39 +2738,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    }
 
-	    // buffer.push(
-	    //   '\tPublic Property Set [init2](value)',
-	    //   '\t\tSet [init] = value',
-	    //   '\tEnd Property'
-	    //   // '\tPublic Property Get [_pro]()',
-	    //   // '\t\t[_pro] = [__pro__]',
-	    //   // '\tEnd Property'
-	    // )
 
-	    //buffer.push("\tPublic [" + '_pro' + "]")
-	    //buffer.push("\tPrivate [" + '_prott' + "]")
 	    buffer.push("\tPublic [" + '__pat_key__' + "]")
 	    buffer.push("\tPublic [" + '__ori__' + "]")
 	    buffer.push("\tPublic [" + '__inject__' + "]")
-	    //buffer.push("\tPublic [" + '__parentVal__' + "]")
 
 	    buffer.unshift(
 	      '\r\n\tPrivate [_pro]',
-	      // '\tPrivate Sub Class_Initialize',
-	      // '\t\tSet [_pro] = ""',
-	      // '\tEnd Sub'
 	      '\tPublic Default Function [self](proxy)',
 	      '\t\tSet [_pro] = proxy',
 	      '\t\tSet [self] = me',
 	      '\tEnd Function'
-	    );
-
-	    // buffer.unshift(
-	    //   '\tPublic Function [init](proxy)',
-	    //   '\t\tSet [_pro] = proxy',
-	    //   '\t\tSet [init] = me',
-	    //   '\tEnd Function'
-	    // );
+	    )
 
 	    buffer.push('End Class')
 
@@ -2768,9 +2761,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    command.push([
 	      'Function ' + className + 'F(proxy)',
 	      '\tSet ' + className + 'F = (New ' + className + ')(proxy)',
-	      //'\t' + className + 'Ftt.init(proxy)',
-	      //'\tSet ' + className + 'Ftt.init2 ＝ ""',
-	      //'\tSet ' + className + 'F = ' + className + 'F',
 	      'End Function'
 	    ].join('\r\n'))
 
@@ -2802,15 +2792,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      obs[key].val = newObj[key]
 	      obs[key].key = key
-	      //obs[key].owner = newObj
-	      //可能存在多个parentVal
-	      // if (_.isObject(obs[key].val) && obs[key].val.__inject__) {
-	      //   debugger
-	      //   obs[key].val.__parentVal__ = obs[key].val.__parentVal__ || []
-	      //   obs[key].val.__parentVal__.push(newObj)
-	      // }
-	      // obs[key].__parentVal__ = obs[key].__parentVal__ || []
-	      // obs[key].__parentVal__.push(newObj)
 
 	      props[key] = {
 	        enumerable:true,
@@ -2856,7 +2837,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      result[key] = _oriData(injectData[key])
 	    })
 	  }
-	  //var
 	  return result
 	}
 
@@ -2870,14 +2850,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  //对于已经注入的对象，我们需要重新复制一份新的
 	  if (data.__inject__){
-
 	    if (!deep) {
 	      return data
 	    }else{
 	      data = _oriData(data)
 	    }
-	    //debugger
-	    //data = _oriData(data)
 	  }
 
 	  if (_.isArray(data)) {
@@ -2886,16 +2863,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    newData.__inject__ = true
 	    var tmpl
 	    _.each(data,function(value){
-	      // tmpl = value
-	      // if(_.isObject(value)){
-	      //   tmpl = exports.inject(value,deep)
-	      //   tmpl.__parentVal__ = tmpl.__parentVal__ || []
-	      //   //_.findAndReplaceOrAdd(tmpl.__parentVal__,)
-	      //   if (_.indexOf(tmpl.__parentVal__,newData) == -1) {
-	      //     tmpl.__parentVal__.push(newData)
-	      //   }
-	      //   //tmpl.__parentVal__.push(newData)
-	      // }
 	      tmpl = exports.inject(value,deep)
 	      newData.push(tmpl)
 	    })
@@ -2903,7 +2870,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  if (_.isPlainObject(data)) {
-	    //newData = {}
 	    newData = exports.define(data)
 	    //检测对象的值，需要再递归的去inject
 	    _.each(data,function(value,key){
@@ -2912,7 +2878,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        newData[key] = exports.inject(value,deep)
 	      }
 	    })
-	    //newData = exports.define(newData)
 
 	    return newData
 	  }
@@ -2984,7 +2949,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Watcher.prototype.check = function() {
 	  var self = this
 
-	  //用户自己的watcher先执行完
+	  //自定义的watcher直接执行
 	  if (this.isUserWatcher) {
 	    this.current = this.getValue()
 	    if (this.last != this.current) {
@@ -2996,7 +2961,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  }else{
 
-	    //对于脏检测就直接调用check对于defineProperties需要放入队列
+	    //对于脏检测就直接调用check
+	    //对于defineProperties需要放入队列
 	    if (this.__view.$rootView.__dataCheckType == 'defineProperties') {
 	      //系统watcher加入异步批量队列
 	      Queue.update(this)
@@ -3008,7 +2974,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	}
 
-	//队列会调用这个方法
+	//最终会调用这个方法
 	Watcher.prototype.batchCheck = function() {
 	  var self = this
 	  var last = this.last
@@ -3120,51 +3086,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (currentTarget && _.indexOf(watchers,currentTarget) == -1) {
 	      watchers.unshift(currentTarget)
-	      //进行属性检查，如果发现会调用不存在的key,就重新改造自己
-	      //this.checkUnregisterKey(currentTarget)
 	    }
 	  },
-	  // getKeyReg:function(){
-
-	  //   if (!this.keyReg){
-	  //     return new RegExp(this.key + '\\.([\\w]+)')
-	  //   }
-	  //   return this.keyReg
-	  // },
-	  // checkUnregisterKey:function(watcher){
-
-	  //   if (!_.isPlainObject(this.val) || !this.val.__parentVal__) return
-	  //     //'a.b'.match(/\.([\w]+)/)
-	  //    // 'a["b"]'.match(/\[("[^"]*"|'[^']*')\]/g)
-
-	  //   var expression = watcher.expression
-	  //   //todo  多个key需要处理
-	  //   var childKeyMatch = expression.match(this.getKeyReg())
-	  //   if (!childKeyMatch || !childKeyMatch[1]) return
-	  //   var childKey = childKeyMatch[1]
-	  //   var oriValue = this.val.__ori__
-	  //   var injectOriValue = null
-	  //   var self = this
-	  //   //如果不存在这个key,就需要做出特殊的处理
-	  //   if (_.hasKey(this.val,childKey)) return
-
-	  //   oriValue[childKey] = ''
-
-	  //   injectOriValue = Data.inject(oriValue)
-
-	  //   _.each(self.val.__parentVal__,function(pValue){
-
-	  //     if (_.isPlainObject(pValue)) {
-	  //       pValue[self.key] = injectOriValue
-	  //     }
-
-	  //     if (_.isArray(pValue)) {
-	  //       _.findAndReplace(pValue,self.val,injectOriValue)
-	  //     }
-	  //   })
-	  //   //this.parentVal[this.key] = oriValue
-
-	  // },
 	  unique:function(){
 	    var watchers = this.watchers
 	    var newWatchers = []
@@ -3487,11 +3410,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    html = this.deleted ? self.mountDeleted(view) : self.mountHtml(view)
 
-	    //view.on('afterMount',function(){
-
-	    //self.mounted = true
-	    //})
-
 	    return html
 	  },
 	  //软删除的节点，会在页面上存在一个注释，方便确认位置
@@ -3614,14 +3532,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }else{
 	        this.domReplace(this.getElement(),dstEl.getElement())
 	      }
-	      //dstEl.remove()
 	    }else{
 	      //挨个的拿人家的子节点，替换
 	      var mountHtml = dstEl.mountView(this.view)
 	      var frag = _.string2frag(mountHtml)
-	      // for (var i = 0,l = nodes.length; i < l; i++) {
-	      //   this.domBefore(nodes[0],this.getElement())
-	      // }
 	      this.domBefore(frag,this.getElement())
 	      this.domRemove(this.getElement())
 	    }
@@ -3654,9 +3568,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }else{
 	      var mountHtml = this.mountView(dstEl.view)
 	      var frag = _.string2frag(mountHtml)
-	      //for (var i = 0,l = nodes.length; i < l; i++) {
-	        this.domBefore(frag,dstEl.getElement())
-	      //}
+	      this.domBefore(frag,dstEl.getElement())
 	    }
 	  },
 	  after:function(dstEl){
@@ -3684,9 +3596,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }else{
 	      var mountHtml = this.mountView(dstEl.view)
 	      var frag = _.string2frag(mountHtml)
-	      //for (var i = 0,l = nodes.length; i < l; i++) {
-	        this.domAfter(frag,dstNode)
-	      //}
+	      this.domAfter(frag,dstNode)
 	    }
 
 	  },
@@ -3901,9 +3811,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 
-	//一个集合，主要用于处理包裹的问题，根节点还有 if for的block都是这种节点
-	//这个节点本身没有什么属性之类的，有的是多个子节点，操作时也是多个子节点
-	//由virtual dom来解决这个差异问题
+	/**
+	 * 一个集合，主要用于处理包裹的问题，根节点还有 if for的block都是这种节点
+	 * 这个节点本身没有什么属性之类的，有的是多个子节点，操作时也是多个子节点
+	 * 由virtual dom来解决这个差异问题
+	 */
 	var Collection = Element.extend({
 	  init: function(options) {
 	    this.options = options
@@ -3960,13 +3872,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var deletedNode = _.string2node(this.mountDeleted())
 	      this.domReplace(lastElement,deletedNode)
 	      this.element = deletedNode
-	      //this.childNodes.shift()
 	    }
 	    //挨个删除子节点，这个是硬删除，没必要留着了。有个位置留着就行
 	    while(this.childNodes.length){
 	      this.childNodes[0].remove()
 	    }
-	    //this.childNodes = []
 	  },
 	  hasChildNodes: function() {
 	    return this.childNodes && this.childNodes.length && this.childNodes.length > 0
@@ -4131,8 +4041,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-
 	/**
 	 * 用来分析模板字符串，解析成virtual dom
 	 */
@@ -4141,8 +4049,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var parser = __webpack_require__(9)
 	var Element = __webpack_require__(24)
 	var Config = __webpack_require__(1)
-
-
 
 
 	var delimiters = Config.delimiters
@@ -4161,7 +4067,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	//http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
 	ATTRIBUTE_REG = /(?:[\w-:]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?/g
 	HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:[\w-:]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?)+\s*|\s*)\/?\>/g
-	//HTML_TAG_REG = /<\/?(\w+)((?:\s+\w+(?:\s*=\s*(?:"(?:.|\n)*?"|'(?:.|\n)*?'|[^'">\s]+))?)+\s*|\s*)\/?\>/g
+
+
 	/**
 	 * 收集模板中的各种Tag
 	 *
@@ -4384,7 +4291,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	//对template做一次正则替换，以支持mustache的一些写法
+	/**
+	 * 用于对template做一次正则替换，以支持mustache的一些写法
+	 */
 	function _normalize(template){
 
 	  var newTpl = template + ''
@@ -4398,6 +4307,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
+	/**
+	 * 转化字符串为virtualdom
+	 * @param  {string} template 需要转化的模板
+	 * @return {virtualdom}      转化之后的virtualdom
+	 */
 	exports.transfer = function(template) {
 
 	  if (_.isObject(template) && template.__VD__) {
