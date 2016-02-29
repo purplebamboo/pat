@@ -1,0 +1,12 @@
+.block-switch-loading {
+  height: 3px;
+  overflow: hidden;
+  background-color: red;
+  display: block;
+  position: fixed;
+  _position: absolute;
+  left: 0;
+  top: 0;
+  width: 0%;
+  z-index: 999999;
+}
