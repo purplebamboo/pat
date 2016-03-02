@@ -82,6 +82,10 @@ var tagTypes = {
     callback:defaultCallback,
     update:function(value){
 
+      if (this.el.getAttribute('value') === value) {
+        return
+      }
+
       //如果设置了安全选项，那么就不允许存在破坏节点的特殊字符
       if (this.describe.args[0] == 'safe' && _.isString(value)) {
         value = _.htmlspecialchars(value)
@@ -183,7 +187,7 @@ module.exports = {
 
     self.callback = function(){
       //自身不需要重复修改
-      self.el.skipUpdate = true
+      //self.el.skipUpdate = true
       self.handler.callback.call(self)
     }
 
@@ -230,13 +234,8 @@ module.exports = {
     }
 
     this.curValue = value
-    //需要做个判断，如果有标识就跳过变更
-    //这个主要用在，用户操作的当前el，不需要重复的去修改value值
-    if (this.el.skipUpdate) {
-      this.el.skipUpdate = false
-    }else{
-      this.handler.update.call(this,value)
-    }
+
+    this.handler.update.call(this,value)
   },
   unbind: function() {
     this.el.__pat_model = null
