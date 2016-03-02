@@ -70,6 +70,15 @@ function _addClass(el, cls) {
 }
 
 
+function _getAttribute(element,key){
+  if (_.indexOf(['value', 'checked', 'selected'], key) !== -1 && key in element) {
+    return element[key]
+  } else {
+    element.getAttribute(key)
+  }
+}
+
+
 
 
 //一些dom的操作，会抛出事件
@@ -463,6 +472,9 @@ var Element = Node.extend({
     if (!this.getElement()) return
 
     var element = this.getElement()
+
+    //值完全一样就没必要修改
+    if (_getAttribute(element,key) === value) return
 
     this.view.$rootView.fire('beforeUpdateAttribute', [element], this)
 

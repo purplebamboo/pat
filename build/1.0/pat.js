@@ -1956,11 +1956,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    eventType:'keyup',
 	    callback:defaultCallback,
 	    update:function(value){
-
-	      if (this.el.getAttribute('value') === value) {
-	        return
-	      }
-
 	      //如果设置了安全选项，那么就不允许存在破坏节点的特殊字符
 	      if (this.describe.args[0] == 'safe' && _.isString(value)) {
 	        value = _.htmlspecialchars(value)
@@ -3357,6 +3352,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
+	function _getAttribute(element,key){
+	  if (_.indexOf(['value', 'checked', 'selected'], key) !== -1 && key in element) {
+	    return element[key]
+	  } else {
+	    element.getAttribute(key)
+	  }
+	}
+
+
 
 
 	//一些dom的操作，会抛出事件
@@ -3750,6 +3754,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!this.getElement()) return
 
 	    var element = this.getElement()
+
+	    //值完全一样就没必要修改
+	    if (_getAttribute(element,key) === value) return
 
 	    this.view.$rootView.fire('beforeUpdateAttribute', [element], this)
 
