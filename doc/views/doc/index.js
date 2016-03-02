@@ -1,5 +1,5 @@
 define(
-  'views/guide/index',
+  'views/doc/index',
   [
     'magix',
   ],
@@ -10,11 +10,6 @@ define(
       },
       render: function (e) {
         var me = this
-        me.data = {
-          text:'hello world'
-
-
-        }
         me.setView()
       }
     })

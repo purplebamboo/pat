@@ -24,7 +24,7 @@ define(
         var me = this
         var vom = me.vom
         var loc = me.location
-        var pathname = loc.path.replace('.html','') //|| 'views/guide/index.htm';
+        var pathname = loc.path
 
         var mainVframe = vom.get('magix_vf_main')
 

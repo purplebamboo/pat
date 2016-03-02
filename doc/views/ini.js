@@ -8,15 +8,16 @@ define(
     var T = {
       routes: {
         'views/default': [
-          {path:'views/guide/index.html'},
-          //{path:'views/example/index.html'}
+          {path:'views/guide/index'},
+          {path:'views/example/index'},
+          {path:'views/doc/index'},
         ]
       }
     }
 
     return {
       defaultView: MainView,
-      defaultPath: 'views/guide/index.html',
+      defaultPath: 'views/guide/index',
       //unfoundView: 'views/common/404',
       tagName: 'div',
       extensions: [
