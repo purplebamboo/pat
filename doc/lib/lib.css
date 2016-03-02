@@ -1,7 +1,7 @@
 .block-switch-loading {
   height: 3px;
   overflow: hidden;
-  background-color: red;
+  background-color: #2185d0;
   display: block;
   position: fixed;
   _position: absolute;
@@ -10,3 +10,71 @@
   width: 0%;
   z-index: 999999;
 }
+
+.clearfix {
+    *zoom:1}
+
+.clearfix:before,.clearfix:after {
+    display: table;
+    content: ""
+}
+
+.clearfix:after {
+    clear: both
+}
+
+body, button, input, select, textarea {
+    font: 12px/1.5 tahoma,"microsoft yahei","\5FAE\8F6F\96C5\9ED1";
+}
+
+#site-nav {
+  height: 55px;
+  background-color: #252535;
+  width: 100%;
+  z-index: 99;
+}
+
+.head{
+  width: 1000px;
+  margin: 0 auto;
+  height: 55px;
+  position: relative;
+  line-height: 55px;
+  z-index: 1099;
+}
+
+.head img{
+  vertical-align: middle;
+}
+
+.head-nav {
+  left: 15px;
+  top: 0px;
+  font-size: 14px;
+  position: absolute;
+}
+
+.head-nav ul{
+  margin: 0;
+}
+
+.head-nav .lists {
+  float: left;
+  margin: 0px;
+  padding: 0 15px;
+  position: relative;
+  list-style: none;
+}
+
+.head-nav .lists a {
+  color: #757393;
+}
+
+.head-nav .lists.current a,.head-nav .lists:hover a {
+  color: #fff;
+}
+
+
+
+
+

@@ -2056,7 +2056,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    self.handler = handler
 
-	    self.callback = _.bind(self.handler.callback,self)
+	    self.callback = function(){
+	      //自身不需要重复修改
+	      self.el.skipUpdate = true
+	      self.handler.callback.call(self)
+	    }
+
+	    //_.bind(self.handler.callback,self)
 	    self.eventType = self.handler.eventType
 
 
@@ -2099,8 +2105,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    this.curValue = value
-	    this.handler.update.call(this,value)
-
+	    //需要做个判断，如果有标识就跳过变更
+	    //这个主要用在，用户操作的当前el，不需要重复的去修改value值
+	    if (this.el.skipUpdate) {
+	      this.el.skipUpdate = false
+	    }else{
+	      this.handler.update.call(this,value)
+	    }
 	  },
 	  unbind: function() {
 	    this.el.__pat_model = null
