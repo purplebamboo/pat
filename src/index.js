@@ -47,7 +47,7 @@ var View = function (options) {
   //所有指令观察对象
   this.__watchers = {}
   //用户自定义的观察对象，不会进入队列，会立即执行
-  this.__userWatchers = {}
+  this.__userWatchers = options.watchers || {}
   //过滤器
   this.__filters = options.filters || {}
   //数据检测方式，支持两种defineProperties dirtyCheck
@@ -149,6 +149,7 @@ View.$normalize = function(injectData){
 }
 
 View.prototype.$nextTick = function(cb,ctx){
+  var ctx = ctx || this
   return Dom.nextTick(cb,ctx)
 }
 

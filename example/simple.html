@@ -10,7 +10,6 @@
 </head>
 <body>
 
-<table p-id="2"><thead p-id="3"><tr p-id="4"><!--deleted-5--><th p-id="6">2222</th></tr></thead></table>
 
 <div id="test">
 
@@ -21,75 +20,31 @@
 
 <div class="container4 line">
 
-  {{text}}111
+  {{text}}
 
   {{#for(item in lists)}}
     <div id="{{item.name}}">
-      {{item.text}}---{{text}}
-      <input type="text" t-model='text' value=""/>
-      <input type="text" t-model='item.text' value=""/>
-    </div>
-    <div>
-      <input type="text" t-model='text' value=""/>
+      {{item.text}}---{{text}}--{{__INDEX__}}
     </div>
   {{/for}}
 
   {{#if(key == 11)}}
-    <div id="{{key}}">{{word2}}</div>
+    <div id="{{key}}" t-class:test="test == 2">{{text}}</div>
   {{/if}}
 
   {{#if(key == 10)}}
-    <div id="{{key}}">{{text}}</div>
+    <div id="{{key}}">{{text|fff}}</div>
   {{/if}}
 </div>
-<input type="text" t-model="lists[0].text" />
 
 </script>
 
-<script type="javascript/template" id="J_tmpl2">
-
-  <table>
-    <thead>
-      <tr>
-        {{#if(key==11)}}
-        <th>1111</th>
-        {{/if}}
-        <th>2222</th>
-      </tr>
-    </thead>
-  </table>
-</script>
-
-<script type="javascript/template" id="J_tmpl3">
-
-</script>
 
 <script type="text/javascript">
 //debug会包括更多的信息，但是只有daily版本有效果
 Pat.config({
   debug:true
 })
-
-
-// var templ = Pat.createElement('div',{
-//   id:'{{key}}',
-//   class:'container4 line'
-// },[
-//   Pat.createElement('div',{
-//     id:'{{word}}',
-//     't-if':'key == 11'
-//   },[Pat.createTextNode('我是if'),Pat.createTextNode('我是if2')]),
-//   Pat.createElement('div',{
-//     id:'{{word}}',
-//     't-for':'item in lists'
-//   },[Pat.createTextNode('啊是大大'),Pat.createTextNode('{{item.name}}')]),
-//   Pat.createTextNode('123456'),
-//   Pat.createTextNode('{{word}}'),
-//   Pat.createElement('template',{
-//     id:'{{word}}',
-//     't-if':'key == 11'
-//   },[Pat.createTextNode('{{word}}'),Pat.createTextNode('我是if2222')])
-// ])
 
 var p2 = new Pat({
   el:'test',
@@ -98,12 +53,6 @@ var p2 = new Pat({
     text:'hello',
     key:10,
     name:'111',
-    status:1,
-    test:2,
-    // test:{
-    //   name:111
-    // },
-    sp:'<span class="1">world</span>',
     lists:[{
       name:'1',
       text:'11111',
@@ -119,18 +68,13 @@ var p2 = new Pat({
       return value + '-我是filter带的值'
     }
   },
-  template:document.getElementById('J_tmpl2').innerHTML
+  template:document.getElementById('J_tmpl').innerHTML
 })
-
-
-// for(var i in p2.$data){
-//   console.log(i+'=====\n')
-// }
 
 // p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
 
 // p2.$data.text = '111222dddd'
-// //p2.$data.key = '11'
+// p2.$data.key = '11'
 
 // p2.$data.lists[1].text = 'wwwww'
 

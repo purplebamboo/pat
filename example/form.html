@@ -14,7 +14,7 @@
 
 </div>
 
-<script type="javascript/template" id="J_tmpl3">
+<script type="javascript/template" id="J_tmpl">
 
   <div class="line">
     <div>"lists[0].text":{{lists[0].text}}</div>
@@ -81,13 +81,6 @@
 
   </div>
 
-
-
-
-
-
-
-
 </script>
 
 <script type="text/javascript">
@@ -95,27 +88,6 @@
 Pat.config({
   debug:true
 })
-
-
-// var templ = Pat.createElement('div',{
-//   id:'{{key}}',
-//   class:'container4 line'
-// },[
-//   Pat.createElement('div',{
-//     id:'{{word}}',
-//     't-if':'key == 11'
-//   },[Pat.createTextNode('我是if'),Pat.createTextNode('我是if2')]),
-//   Pat.createElement('div',{
-//     id:'{{word}}',
-//     't-for':'item in lists'
-//   },[Pat.createTextNode('啊是大大'),Pat.createTextNode('{{item.name}}')]),
-//   Pat.createTextNode('123456'),
-//   Pat.createTextNode('{{word}}'),
-//   Pat.createElement('template',{
-//     id:'{{word}}',
-//     't-if':'key == 11'
-//   },[Pat.createTextNode('{{word}}'),Pat.createTextNode('我是if2222')])
-// ])
 
 var p2 = new Pat({
   el:'test',
@@ -135,16 +107,8 @@ var p2 = new Pat({
       hell:null
     }]
   },
-  template:document.getElementById('J_tmpl3').innerHTML
+  template:document.getElementById('J_tmpl').innerHTML
 })
-
-
-// p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
-
-// p2.$data.text = '111222dddd'
-// //p2.$data.key = '11'
-
-// p2.$data.lists[1].text = 'wwwww'
 
 </script>
 </body>
