@@ -2,8 +2,9 @@ define(
   'views/guide/index',
   [
     'magix',
+    'jquery'
   ],
-  function (Magix) {
+  function (Magix,$) {
     return Magix.View.extend({
       init: function () {
 
@@ -12,10 +13,15 @@ define(
         var me = this
         me.data = {
           text:'hello world'
-
-
         }
-        me.setView()
+
+        me.setHTML(me.id,me.tmpl)
+        //me.setView()
+        debugger
+        $('#'+me.id).find('pre code').each(function(i, block) {
+          hljs.highlightBlock(block)
+        })
+
       }
     })
   }

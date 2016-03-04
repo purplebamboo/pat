@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "./node_modules/karma/bin/karma start ./test/karma.conf.js",
-    "build": "webpack --config webpack.config.js && webpack --config webpack.config.production.js"
+    "build": "webpack --config webpack.config.js && webpack --config webpack.config.production.js",
+    "md2doc": "node ./md2doc.js"
   },
   "keywords": [
     "light",
@@ -27,6 +28,8 @@
     "webpack": "^1.12.9"
   },
   "dependencies": {
-    "karma-coverage": "~0.5.3"
+    "highlight.js": "~9.2.0",
+    "karma-coverage": "~0.5.3",
+    "marked": "~0.3.5"
   }
 }
