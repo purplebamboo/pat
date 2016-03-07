@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>pat-轻量级指令模板解决方案</title>
+  <link rel="stylesheet" type="text/css" href="../lib/semantic.min.css">
+  <link rel="stylesheet" type="text/css" href="../lib/lib.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.2.0/highlight.min.js"></script>
+  <script src="../lib/jquery.js"></script>
+  <script src="../lib/semantic.min.js"></script>
+
+  <script>hljs.initHighlightingOnLoad()</script>
+  <script type="text/javascript">
+  $(function() {
+
+
+    $('.quick-menu .lists').each(function(){
+      var path = $(this).children('a').attr('href').slice(2)
+
+      if (path && location.pathname.indexOf(path) != -1) {
+        $(this).addClass('current')
+      }
+    })
+
+  })
+
+  </script>
+</head>
+<body>
+
+<div id="site-nav">
+  <div class="head">
+
+    <svg style="width:40px;height:40px;position:relative;margin-top:6px;" version="1.1" id="图形" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve">
+      <path class="svgpath" data-index="path_0" fill="#fff" d="M894.178228 201.847108c-17.217701-11.84676-41.842185-26.22042-60.59444-36.317789-20.84948-11.243169-40.921452-24.481259-61.464021-36.655391-40.95112-24.297112-81.53497-47.591649-121.649246-72.15475-20.070949-12.286666-41.032963-23.243385-60.88089-36.021108-18.250968-11.744457-47.581418-20.696024-76.993712-20.696024l-5.994993 0c-25.616829 0-58.885969 11.488698-74.610037 21.913438-19.652527 13.033482-40.686154 23.519605-60.655822 36.246176-39.489201 25.176923-81.280234 47.755334-121.75155 72.052447-19.468381 11.683075-42.742457 23.826515-60.778587 36.123412-19.008014 12.96187-41.259054 22.977395-60.666053 36.246176-31.56067 21.565605-68.829882 73.382394-68.829882 126.426826l0 365.981006c0 53.330882 37.289673 104.441776 69.075411 126.181297 37.115757 25.391761 81.965668 49.076074 121.19911 72.615117 40.481546 24.307342 82.272579 46.865293 121.75155 72.052447 19.938977 12.726572 40.808918 23.693521 60.88089 36.021108 17.606455 10.804286 46.333314 22.138506 74.383946 22.138506l13.197168 0c45.38189 0 102.59008-39.264133 133.58808-58.639418 39.970028-25.003007 80.512957-47.244839 121.035425-71.57162 38.742385-23.253615 84.042432-47.122075 120.473778-72.113829 30.957078-21.248464 69.800744-72.574195 69.800744-124.217068l0-370.912041C964.69612 274.175774 925.564982 223.443404 894.178228 201.847108zM737.193308 545.536153c-30.107958 22.066893-76.021827 33.166837-137.997366 33.166837l-157.445287 0 0 145.271155c0 8.327515 1.892617 14.711262 5.534626 19.284234 3.785234 4.441001 10.394049 8.18429 19.846904 11.100967l0 11.376164-156.759852 0 0-11.376164c9.30963-2.496209 15.79568-5.964302 19.570684-10.548527 3.918229-4.572972 5.810846-11.099944 5.810846-19.560454l0-372.272679c0-8.46051-1.892617-14.844257-5.534626-19.141009-3.785234-4.306983-10.261054-8.051296-19.846904-10.966949l0-11.376164 288.823608 0c57.116117 0 100.328147 8.73673 129.351687 26.363645 16.880099 10.404279 29.974964 24.972316 39.560814 43.980331 9.452855 18.87502 14.179283 40.236018 14.179283 63.69424C782.288748 489.903439 767.301266 523.47949 737.193308 545.536153z" />
+      <path class="svgpath" data-index="path_1" fill="#fff" d="M674.266345 444.531779c0 21.228003-7.959222 35.652815-23.765133 43.427891-10.803263 5.411862-29.974964 8.18429-57.648095 8.18429l-151.102461 0 0-103.091368 151.102461 0c27.948329 0 47.121052 2.629203 57.648095 8.041065C666.307123 409.001728 674.266345 423.436771 674.266345 444.531779z" />
+    </svg>
+
+    <nav class="head-nav quick-menu">
+      <ul class="clearfix">
+        <li id="index" class="lists"><a href="./index.html">首页</a></li>
+        <li id="started" class="lists"><a href="./guide.html">起步</a></li>
+        <li id="doc" class="lists"><a href="./doc.html">文档</a></li>
+        <li id="example" class="lists"><a href="./example.html">实例</a></li>
+        <li class="lists"><a href="#">文章</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<div class="main wrap channel">
+  <h1 id="-">起步</h1>
+<h2 id="-">简介</h2>
+<p>pat是一个轻量级的指令型模板解决方案。具备局部刷新，双向绑定，指令扩展，filter过滤等功能。</p>
+<p>如果你用过angular或者vue,应该对指令（directive）这个概念不会陌生,angular大而全，vue精简了一部分留下了组件，而pat在angular，react，vue的基础上，结合各自的特点专注于解决模板层面的问题。</p>
+<p>与目前主要的框架相比，pat具有以下特点：</p>
+<ul>
+<li>单一职责，pat只负责解决模板问题。使用者可以单独使用，也可以跟任何其他框架结合使用。</li>
+<li>支持mustache风格的模板语法，避免了指令写多了模板可读性差的问题。</li>
+<li>具有指令型框架的特点，扩展性强，功能强大，可以扩展自己的指令。同时支持filter与自定义watcher。</li>
+<li>具有virtual dom中间层，一方面加快了分析指令的速度，另一方面也为服务端渲染提供了可能。</li>
+<li>考虑到目前国内情况，pat做了大量事情，兼容到了ie8。</li>
+<li>同时支持脏检测与defineProperties的数据检测机制。在defineProperties模式下使用vbscript来做ie8兼容处理。</li>
+</ul>
+<h2 id="hello-world">hello world</h2>
+<p>我们来看下最简单的例子：</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    text:&#39;hello world&#39;
+  }
+})
+</code></pre>
+<p>展现出来就是hello world，这是最简单的渲染。这边的<code>{{}}</code>称之为插值。默认会转义，如果不想要转义，就像mustache那样使用<code>{{{}}}</code>来实现。</p>
+<blockquote>
+<p>如react那样，pat会针对每个dom元素加上一个标识id，用于后面局部刷新时去找dom节点。如果是插值渲染的文本节点那么会跟react那样包裹一个span标记。而对于普通文本不会包裹。</p>
+</blockquote>
+<h2 id="-">列表</h2>
+<p>下面是一个列表渲染的例子，支持mustache风格的语法，我们更推荐使用mustache风格的语法，可读性更好。</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;!--指令型语法--&gt;
+&lt;!--
+&lt;div t-if=&quot;item in lists&quot; id=&quot;test&quot;&gt;{{item.name}}-{{__INDEX__}}&lt;/div&gt;
+--&gt;
+
+&lt;!--mustache风格语法--&gt;
+{{#for(item in lists)}}
+&lt;div id=&quot;test&quot;&gt;{{item.name}}-{{__INDEX__}}&lt;/div&gt;
+{{/for}}
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    lists:[{
+        name:&#39;1111&#39;
+    },{
+        name:&#39;2222&#39;
+    }],
+    text:&#39;hello world&#39;
+  }
+})
+</code></pre>
+<p>for指令可以使用<code>__INDEX__</code>拿到当前的index。</p>
+<blockquote>
+<p>pat的指令都有一个<code>t</code>的前缀，对于 for，if，unless都是一种指令。实际上就连上面的插值也是一种特殊的指令，指令是pat的核心技术。用户也可以扩展自己的指令。</p>
+</blockquote>
+<h2 id="-">局部刷新</h2>
+<p>pat使局部刷新更加简单，通过操作数据来达到dom的局部更新目的。</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    text:&#39;hello world&#39;
+  }
+})
+
+p.$data.text = &quot;hi world&quot;
+</code></pre>
+<p>每一个pat实例都会有一个$data属性，它是pat托管的数据，可以通过修改$data里面的值来达到局部刷新的目的。避免了复杂的dom操作。</p>
+<blockquote>
+<p>pat同时支持两种数据变化监听机制，默认使用defineProperties机制，使用注入get set的方式监听数据变更之后批量修改。另外也支持脏检测机制，兼容性以及开发体验更好。详情<a href="./doc.html#defineproperties">点此了解</a>。</p>
+</blockquote>
+<h2 id="-">双向绑定</h2>
+<p>与angular，vue一样，用户可以使用<code>t-model</code>指令来选择性的使用双向绑定的功能。</p>
+<p>html:</p>
+<pre><code class="lang-html">
+&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
+&lt;input type=&quot;text&quot; value=&quot;&quot; t-model=&quot;text&quot;&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    text:&#39;hello world&#39;
+  }
+})
+</code></pre>
+<p>更多详细用法，<a href="./doc.html">请点这里</a>。</p>
+
+</div>
+
+
+</body>
+</html>

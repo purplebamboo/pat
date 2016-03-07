@@ -5,8 +5,40 @@
   <title>测试页面</title>
   <script src="../build/1.0/pat.js"></script>
 
-  <link rel="stylesheet" type="text/css" href="./css/example.css">
 
+  <style type="text/css">
+
+    body{
+      background: #fafafa;
+    }
+
+    #test{
+      background: #fff;
+      margin: 20px auto;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      width: 300px;
+      min-height: 100px;
+      padding: 20px 30px;
+    }
+    .line{
+      text-align: left;
+      margin-bottom: 10px;
+      border: 1px solid #eee;
+      padding: 10px;
+    }
+    .textarea{
+      width: 50px;
+      height: 30px;
+    }
+    input[type="text"]{
+      padding: 5px;
+      border-radius: 5px;
+      width: 100px;
+      margin-left: 10px;
+    }
+
+  </style>
 </head>
 <body>
 
@@ -17,29 +49,27 @@
 <script type="javascript/template" id="J_tmpl">
 
   <div class="line">
-    <div>"lists[0].text":{{lists[0].text}}</div>
+    <span>"基本数据绑定":{{lists[0].text}}</span>
     <input type="text" t-model="lists[0].text" />
   </div>
 
 
   <div class="line">
-    <div>
-      <div style="margin-right:20px;">bo:{{bo}}</div>
-      1.<input type="checkbox" t-model="bo" />
-      2.<input type="checkbox" t-model="bo" />
-    </div>
-
-
-    <div>
-      <div style="margin-right:20px;">checkArray:{{checkArray.toString()}}</div>
-      a.<input type="checkbox" value="a" t-model="checkArray" />
-      b.<input type="checkbox" value="b" t-model="checkArray" />
-    </div>
+    <div style="margin-right:20px;">单个checkbox:{{bo}}</div>
+    first<input type="checkbox" t-model="bo" />
+    second<input type="checkbox" t-model="bo" />
   </div>
 
 
   <div class="line">
-    <div>name:{{name}}</div>
+    <div style="margin-right:20px;">多个checkbox:{{checkArray.toString()}}</div>
+    valueA<input type="checkbox" value="a" t-model="checkArray" />
+    valueB<input type="checkbox" value="b" t-model="checkArray" />
+  </div>
+
+
+  <div class="line">
+    <div>radio:{{name}}</div>
     <label>
       <input id="r1" type="radio" t-model="name" value="111"/>111
     </label>
@@ -57,7 +87,6 @@
         <option value="222">222</option>
       </select>
     </div>
-
     <div>
       <select t-model="select">
         {{#for(item in lists)}}
@@ -69,14 +98,13 @@
   </div>
 
   <div class="line">
-    <div>text:{{text}}</div>
+    <div>textarea:{{text}}</div>
     <div>
-      <textarea id="te">{{text}}附加值</textarea>
-      <textarea id="te2">{{{text}}}</textarea>
+      未绑定：<textarea id="te">{{text}}附加值一直存在</textarea>
     </div>
 
     <div>
-      <textarea id="te3" t-model="text"></textarea>
+      双向绑定过的：<textarea id="te3" t-model="text"></textarea>
     </div>
 
   </div>

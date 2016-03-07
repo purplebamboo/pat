@@ -4,8 +4,80 @@
   <meta charset="utf-8"/>
   <title>测试页面</title>
   <script src="../build/1.0/pat.js"></script>
+  <style type="text/css">
 
-  <link rel="stylesheet" type="text/css" href="./css/example.css">
+    body{
+      background: #fafafa;
+    }
+
+    #test{
+      background: #fff;
+      margin: 20px auto;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      width: 300px;
+      min-height: 100px;
+      padding: 20px 30px;
+    }
+    .line{
+      text-align: left;
+      margin-bottom: 10px;
+      border: 1px solid #eee;
+      padding: 10px;
+    }
+
+    input[type="text"]{
+      color: #333;
+      font-size: 12px;
+      height: 16px;
+      padding: 6px 9px;
+      border-width: 1px;
+      border-style: solid;
+      border-color: #e6e6e6;
+      background-color: #fff;
+      vertical-align: middle;
+      border-radius:4px;
+    }
+
+    /**
+     * 常用的btn样式
+     * 默认高度32px，宽度自设定
+     */
+    button {
+      display: inline-block;
+      padding: 0 10px;
+      height: 28px;
+      line-height: 28px;
+      font-size: 12px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-weight: normal;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      background-color: #fff;
+      border:1px solid #eee;
+      margin-left: 10px;
+      -ms-touch-action: manipulation;
+        touch-action: manipulation;
+      cursor: pointer;
+      -webkit-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+      background-image: none;
+      -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+            box-sizing: border-box;
+    }
+    button:hover,
+    button:focus,
+    button.focus {
+      color: #333;
+      text-decoration: none;
+    }
+
+  </style>
 </head>
 
 <body>
@@ -15,9 +87,12 @@
 </div>
 
 <script type="javascript/template" id="J_tmpl">
-<input type="text" t-model="text"><button onclick="window.add()">添加</button>
+
+
+<h2>todolist</h2>
+<input type="text" placeHolder="请输入.." t-model="text"><button onclick="window.add()">添加</button>
   {{#for(item in lists)}}
-  <div>
+  <div style="margin-top:10px;">
     <span>{{__INDEX__}}--</span>
     <span>{{item.text}}</span>
     <button onclick="window.del({{__INDEX__}})">删除</button>

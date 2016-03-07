@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>pat-轻量级指令模板解决方案</title>
+  <link rel="stylesheet" type="text/css" href="../lib/semantic.min.css">
+  <link rel="stylesheet" type="text/css" href="../lib/lib.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.2.0/highlight.min.js"></script>
+  <script src="../lib/jquery.js"></script>
+  <script src="../lib/semantic.min.js"></script>
+
+  <script>hljs.initHighlightingOnLoad()</script>
+  <script type="text/javascript">
+  $(function() {
+
+
+    $('.quick-menu .lists').each(function(){
+      var path = $(this).children('a').attr('href').slice(2)
+
+      if (path && location.pathname.indexOf(path) != -1) {
+        $(this).addClass('current')
+      }
+    })
+
+  })
+
+  </script>
+</head>
+<body>
+
+<div id="site-nav">
+  <div class="head">
+
+    <svg style="width:40px;height:40px;position:relative;margin-top:6px;" version="1.1" id="图形" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve">
+      <path class="svgpath" data-index="path_0" fill="#fff" d="M894.178228 201.847108c-17.217701-11.84676-41.842185-26.22042-60.59444-36.317789-20.84948-11.243169-40.921452-24.481259-61.464021-36.655391-40.95112-24.297112-81.53497-47.591649-121.649246-72.15475-20.070949-12.286666-41.032963-23.243385-60.88089-36.021108-18.250968-11.744457-47.581418-20.696024-76.993712-20.696024l-5.994993 0c-25.616829 0-58.885969 11.488698-74.610037 21.913438-19.652527 13.033482-40.686154 23.519605-60.655822 36.246176-39.489201 25.176923-81.280234 47.755334-121.75155 72.052447-19.468381 11.683075-42.742457 23.826515-60.778587 36.123412-19.008014 12.96187-41.259054 22.977395-60.666053 36.246176-31.56067 21.565605-68.829882 73.382394-68.829882 126.426826l0 365.981006c0 53.330882 37.289673 104.441776 69.075411 126.181297 37.115757 25.391761 81.965668 49.076074 121.19911 72.615117 40.481546 24.307342 82.272579 46.865293 121.75155 72.052447 19.938977 12.726572 40.808918 23.693521 60.88089 36.021108 17.606455 10.804286 46.333314 22.138506 74.383946 22.138506l13.197168 0c45.38189 0 102.59008-39.264133 133.58808-58.639418 39.970028-25.003007 80.512957-47.244839 121.035425-71.57162 38.742385-23.253615 84.042432-47.122075 120.473778-72.113829 30.957078-21.248464 69.800744-72.574195 69.800744-124.217068l0-370.912041C964.69612 274.175774 925.564982 223.443404 894.178228 201.847108zM737.193308 545.536153c-30.107958 22.066893-76.021827 33.166837-137.997366 33.166837l-157.445287 0 0 145.271155c0 8.327515 1.892617 14.711262 5.534626 19.284234 3.785234 4.441001 10.394049 8.18429 19.846904 11.100967l0 11.376164-156.759852 0 0-11.376164c9.30963-2.496209 15.79568-5.964302 19.570684-10.548527 3.918229-4.572972 5.810846-11.099944 5.810846-19.560454l0-372.272679c0-8.46051-1.892617-14.844257-5.534626-19.141009-3.785234-4.306983-10.261054-8.051296-19.846904-10.966949l0-11.376164 288.823608 0c57.116117 0 100.328147 8.73673 129.351687 26.363645 16.880099 10.404279 29.974964 24.972316 39.560814 43.980331 9.452855 18.87502 14.179283 40.236018 14.179283 63.69424C782.288748 489.903439 767.301266 523.47949 737.193308 545.536153z" />
+      <path class="svgpath" data-index="path_1" fill="#fff" d="M674.266345 444.531779c0 21.228003-7.959222 35.652815-23.765133 43.427891-10.803263 5.411862-29.974964 8.18429-57.648095 8.18429l-151.102461 0 0-103.091368 151.102461 0c27.948329 0 47.121052 2.629203 57.648095 8.041065C666.307123 409.001728 674.266345 423.436771 674.266345 444.531779z" />
+    </svg>
+
+    <nav class="head-nav quick-menu">
+      <ul class="clearfix">
+        <li id="index" class="lists"><a href="./index.html">首页</a></li>
+        <li id="started" class="lists"><a href="./guide.html">起步</a></li>
+        <li id="doc" class="lists"><a href="./doc.html">文档</a></li>
+        <li id="example" class="lists"><a href="./example.html">实例</a></li>
+        <li class="lists"><a href="#">文章</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<div class="main wrap channel">
+  <h1 id="pat-">pat文档</h1>
+<h2 id="-">基本用法</h2>
+<p>pat的使用很简单，我们看个最简单的例子：</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    text:&#39;hello&#39;
+  },
+  template:&#39;{{text}}&#39;
+})
+</code></pre>
+<p>最终会把 hello渲染到id为test的dom元素里面。</p>
+<p>基本语法如下：</p>
+<pre><code>var p = new Pat(options)
+</code></pre><p>option具体配置如下：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>类型</th>
+<th>要求</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>options.el</td>
+<td>string,element</td>
+<td>必选</td>
+<td>需要渲染的目标节点</td>
+</tr>
+<tr>
+<td>options.data</td>
+<td>object</td>
+<td>必选</td>
+<td>渲染所用的数据</td>
+</tr>
+<tr>
+<td>options.template</td>
+<td>string</td>
+<td>可选</td>
+<td>渲染所需要的模板，非必须，如果没传，就会以el的innerHTML作为模板</td>
+</tr>
+<tr>
+<td>options.dataCheckType</td>
+<td>string</td>
+<td>可选</td>
+<td>数据检测方式，支持两种defineProperties，dirtyCheck。详情请看局部刷新那节。</td>
+</tr>
+<tr>
+<td>options.filters</td>
+<td>object</td>
+<td>可选</td>
+<td>数据管道过滤函数，参考filters那一节</td>
+</tr>
+<tr>
+<td>options.watchers</td>
+<td>object</td>
+<td>可选</td>
+<td>用户自定义watcher用来监听数据变化，详情请见watchers一节</td>
+</tr>
+</tbody>
+</table>
+<h2 id="-">基本模板语法</h2>
+<p>pat里面的模板功能都是使用指令实现的，指令是写在dom上的一个以<code>t-</code>开头的属性，pat会给这样的dom绑定一段逻辑，从而实现复杂的功能。</p>
+<p>但是指令的写法可读性差，因此pat实现了一套类似mustache语法的兼容，这只是一个语法糖，本质上还是会转换成指令执行。</p>
+<p>下面我们看下pat的基本模板语法：</p>
+<h3 id="-">插值</h3>
+<p>类似于<code>{{expression}}</code>这种语法我们称之为“插值”。可以渲染一段文本。</p>
+<p>expression可以是简单的表达式，比如基本的逻辑运算还有三元操作都是支持的。</p>
+<blockquote>
+<p>这算是比较特殊的，本质上最后还是会转换成对应的指令应用逻辑。</p>
+</blockquote>
+<p>例子：</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
+    &lt;div id=&quot;{{id}}&quot;&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
+    &lt;div&gt;{{{html}}}&lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    id:&#39;test2&#39;,
+    name:&#39;pat&#39;,
+    html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
+  },
+  template:&#39;{{text}}&#39;
+})
+</code></pre>
+<p>可以看到上面的插值有三种用法：</p>
+<ul>
+<li>普通的文本渲染使用<code>{{name}}</code>,会进行转义。</li>
+<li>另外类似于mustache的风格，我们使用<code>{{{html}}}</code>三个大括弧来实现渲染html文本的渲染。</li>
+<li>另外会发现插值也可以用在属性上。当插值里面的表达式的返回结果为null或者false的时候这个属性不会渲染到dom上。</li>
+</ul>
+<h3 id="if-">if指令</h3>
+<p>pat使用if判断也很容易：</p>
+<p>语法为：</p>
+<pre><code class="lang-html">&lt;xxx t-if=&quot;expression&quot;&gt;...&lt;/xxx&gt;
+
+//或者mustache风格
+
+{{#if(expression)}}
+...
+{{/if}}
+</code></pre>
+<p>else的语法为：</p>
+<pre><code class="lang-html">
+&lt;xxx t-unless=&quot;expression&quot;&gt;...&lt;/xxx&gt;
+
+//或者mustache风格
+
+{{#unless(expression)}}
+...
+{{/unless}}
+//等价于:
+{{^if(expression)}}
+
+{{/if}}
+</code></pre>
+<p>推荐使用mustache风格的语法，可以得到更好的可读性</p>
+<p>例子：</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
+    &lt;div t-if=&quot;name == &#39;pat&#39;&quot;&gt;
+        {{name+&#39;我是附加的文本&#39;}}
+    &lt;/div&gt;
+
+    &lt;!--推荐下面的mustache的风格--&gt;
+
+    {{#if(name=&quot;pat&quot;)}}
+        &lt;div&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
+    {{/if}}
+&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    id:&#39;test2&#39;,
+    name:&#39;pat&#39;,
+    html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
+  },
+  template:&#39;{{text}}&#39;
+})
+</code></pre>
+<h3 id="for-">for指令</h3>
+<p>for指令用来实现列表的渲染，相关语法如下：</p>
+<pre><code class="lang-html">
+&lt;xxx t-for=&quot;item in 数组对象&quot;&gt;{{item.xxx}}-{{item.__INDEX__}}&lt;/xxx&gt;
+
+//或者mustache风格
+
+{{#for(item in 数组对象)}}
+    {{item.xxx}}-{{__INDEX__}}
+{{/for}}
+</code></pre>
+<p>需要有一个子scope命名，比如这里的item。这也是跟vue和angular的语法保持一致。另外可以通过<code>__INDEX__</code>拿到当前的索引。</p>
+<p>例子：</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
+  &lt;div t-for=&quot;item in lists&quot;&gt;
+      {{item.name+&#39;当前index&#39;+__INDEX__}}
+  &lt;/div&gt;
+
+  &lt;!--推荐下面的mustache的风格--&gt;
+
+  {{#for(item in lists)}}
+      &lt;div&gt;{{item.name+&#39;当前index&#39;+__INDEX__}}&lt;/div&gt;
+  {{/for}}
+&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    id:&#39;test2&#39;,
+    name:&#39;pat&#39;,
+    lists:[{
+        name:&#39;111&#39;
+    },{
+        name:&#39;222&#39;
+    }],
+    html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
+  },
+  template:&#39;{{text}}&#39;
+})
+</code></pre>
+<h2 id="-">局部刷新</h2>
+<p>除了常规的基本的模板功能，pat还支持局部刷新的功能，通过修改数据，对应的模板会自动发生变更。</p>
+<p>每一个pat实例都会有一个$data对象，通过修改这个对象，可以达到局部刷新的功能。</p>
+<p>例子如下:</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
+    {{#if(name=&quot;pat&quot;)}}
+        &lt;div&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
+    {{/if}}
+&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    id:&#39;test2&#39;,
+    name:&#39;pat&#39;,
+    html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
+  },
+  template:&#39;{{text}}&#39;
+})
+
+p.$data.name = &#39;hide&#39;
+//此时对应的div就会销毁
+</code></pre>
+<p>可以看到，pat会根据数据变更修改对应的dom。</p>
+<h3 id="defineproperties">defineProperties</h3>
+<p>pat默认使用defineProperties给data的每个key注入钩子来达到监听数据变化的目的。上面的例子就是使用的这种模式。</p>
+<p>使用时需要注意以下几点：</p>
+<ul>
+<li>所有key需要提前写好，这样才能正常监听到变更，否则不会触发局部刷新。</li>
+<li>由于为了兼容ie8，pat在ie8下使用vbscript模拟defineProperties的功能，这有一定的限制。比如不能往p.$data里赋值新的属性，另外<code>value</code>作为vbscript的特殊值也不能使用。使用起来开发体验会比较一般。</li>
+<li>在此模式下，pat会重写数组的push，splice等方法，用来触发数据变更监听，但是通过数组下标的方式修改数据，无法触发。与vue一样，此时我们需要通过额外添加的方法$set(index,value)，来修改。</li>
+<li>pat支持批量更新，因此在一次赋值后，dom没有立即更新，可以使用实例对象的$apply(内部其实是$flushUpdate)方法来强制刷新。也可以使用$nextTick(callback)在回调里处理需要在一次批量更新之后需要执行的逻辑。</li>
+</ul>
+<p>可以看到使用defineProperties，在开发时会有不少限制。再加上需要兼容ie8，实际使用会有不少坑。</p>
+<h3 id="dirtycheck">dirtyCheck</h3>
+<p>基于总总原因，pat同时支持使用脏检测的方式来监听数据的变化。<br>例子如下：</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
+    {{#if(name=&quot;pat&quot;)}}
+        &lt;div&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
+    {{/if}}
+&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    id:&#39;test2&#39;,
+    name:&#39;pat&#39;,
+    dataCheckType:&#39;dirtyCheck&#39;, //使用脏检测
+    html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
+  },
+  template:&#39;{{text}}&#39;
+})
+
+
+p.$data.name = &#39;hide&#39;
+p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调用$digest）来开始脏检测
+
+//此时对应的div就会销毁
+</code></pre>
+<p>可以看到，差别不大，只需要在new的时候传入一个dataCheckType，设置为<code>dirtyCheck</code>。与defineProperties不同，脏检测模式下需要最后手动调用$apply来触发脏检测。</p>
+<p>脏检测天生具备批量更新（调用$apply）。不需要提前写属性，不会对原始数据注入太多。对ie8的兼容也更好。但是脏检测不可避免的性能上会比defineProperties慢，（主要是更新慢）。</p>
+<h3 id="defineproperties-vs-dirtycheck">defineProperties VS dirtyCheck</h3>
+<p>那么这两种模式我们怎么选择呢。</p>
+<p>如果你的业务比较注重性能尤其是更新性能，你也不喜欢每次最后调用$apply，甚至你不需要兼容ie8。那么就使用defineProperties模式。</p>
+<p>如果你的业务数据量不大，性能只要能说得过去。而且业务需要支持ie8，不希望提前写属性。那么推荐使用dirtyCheck模式。</p>
+<h2 id="-">特殊指令</h2>
+<p>pat还扩展了一些指令，用于特殊的需求。</p>
+<h3 id="model-">model双向绑定</h3>
+<p>现如今，双向绑定已经是很烂大街的功能了，有人推崇有人吐槽。pat使用<code>t-model</code>让使用者可以选择性的使用双向绑定。</p>
+<p>例子：</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
+&lt;input type=&quot;text&quot; value=&quot;&quot; t-model=&quot;text&quot;&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    text:&#39;hello world&#39;
+  }
+})
+</code></pre>
+<p>除了input外，checkbox，radio，textarea，select也都是支持的。具体可以查看<a href="">例子</a></p>
+<h3 id="class-">class指令</h3>
+<p>pat同时提供了<code>t-class</code>指令，用于给一个元素增加修改class。</p>
+<p>语法为：</p>
+<pre><code class="lang-html">&lt;xxx t-class:classname=&quot;expression&quot;&gt;&lt;/xxx&gt;
+</code></pre>
+<p>在expression表达式为true时，会给当前dom节点增加名为classname的class。否则会去掉这个class。</p>
+<p>例子</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
+    &lt;div class=&quot;test1&quot; t-class:test2=&quot;number &gt; 10&quot;  t-class:test3=&quot;number == 12&quot;&gt;{{text}}&lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-html">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    number:12
+  }
+})
+
+//此时会同时具有test2 和 test3两个class
+</code></pre>
+<h2 id="filter">filter</h2>
+<p>可以使用vue和angular里面的filter功能来对模板数据做出处理。</p>
+<p>例子如下：</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text|testFilter}}&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    text:&#39;hello&#39;
+  },
+  filters:{
+    testFilter:function(value,scope){
+        return &quot;我是前缀-&quot; + value
+    }
+  }
+})
+
+//渲染出来的是 我是前缀-hello
+</code></pre>
+<p>只要实例化时传入了filters的定义，就可以在模板里使用<code>|</code>加filter名称来对数据做出特殊处理。filter作为函数，第一个参数是<code>|</code>管道符前面表达式的执行结果。第二个参数是当前的scope。this指向当前实例对象。</p>
+<h2 id="watcher">watcher</h2>
+<p>pat也支持angular以及vue里面的watcher监听，用户可以自己监听一个表达式的变化，增加回调处理。</p>
+<p>例子如下：</p>
+<p>html:</p>
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
+</code></pre>
+<p>js:</p>
+<pre><code class="lang-js">var p = new Pat({
+  el:&#39;test&#39;,
+  data:{
+    text:&#39;hello&#39;
+  },
+  watchers:{
+    &#39;text&#39;:function(old,new){
+        console.log(&#39;old:&#39;+old+&#39;-new:&#39;+new)
+    }
+  }
+})
+
+p.$data.text = &#39;hi&#39;
+//这个时候控制台会打出： old:hello-new:hi
+</code></pre>
+<p>watcher的回调函数，第一个参数是老的值，第二个参数是新的值。</p>
+<h2 id="-">配置</h2>
+<p>可以通过Pat.config(options),来设定一些全局的默认配置</p>
+<p>包括下面这些：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>类型</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>options.prefix</td>
+<td>string</td>
+<td>指令的前缀，默认是t</td>
+</tr>
+<tr>
+<td>options.tagId</td>
+<td>string</td>
+<td>pat在dom上的标识，默认是p-id</td>
+</tr>
+<tr>
+<td>options.delimiters</td>
+<td>array</td>
+<td>普通插值的分割符，默认是[&#39;{{&#39;,&#39;}}&#39;]</td>
+</tr>
+<tr>
+<td>options.unsafeDelimiters</td>
+<td>array</td>
+<td>html类型的插值分隔符，默认是[&#39;{{{&#39;,&#39;}}}&#39;]</td>
+</tr>
+<tr>
+<td>options.defaultIterator</td>
+<td>String</td>
+<td>for指令的默认key的名称,默认是<code>__INDEX__</code></td>
+</tr>
+<tr>
+<td>options.debug</td>
+<td>Boolean</td>
+<td>是否开启debug模式，如果开启，在非压缩版本下会打出很多信息。默认为false。</td>
+</tr>
+<tr>
+<td>options.dataCheckType</td>
+<td>String</td>
+<td>数据检测方式 支持两种数据变化检测方式 defineProperties dirtyCheck,默认是defineProperties</td>
+</tr>
+</tbody>
+</table>
+<h2 id="-">服务端渲染</h2>
+<p>由于pat使用了virtual dom中间层，对原生dom没有强依赖，因此服务端的渲染会比较容易实现。目前还在开发中，敬请期待。</p>
+
+</div>
+
+
+</body>
+</html>

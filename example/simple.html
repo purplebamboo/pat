@@ -5,8 +5,28 @@
   <title>测试页面</title>
   <script src="../build/1.0/pat.js"></script>
 
-  <link rel="stylesheet" type="text/css" href="./css/example.css">
+  <style type="text/css">
 
+    body{
+      background: #fafafa;
+    }
+
+    #test{
+      background: #fff;
+      margin: 20px auto;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      width: 300px;
+      min-height: 100px;
+      padding: 20px 30px;
+    }
+    .line{
+      text-align: left;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+
+  </style>
 </head>
 <body>
 
@@ -18,24 +38,27 @@
 <!--支持传入模板-->
 <script type="javascript/template" id="J_tmpl">
 
-<div class="container4 line">
+  <div class="line">基本渲染:{{text}}</div>
 
-  {{text}}
+  <div class="line">
+    列表渲染：
+    {{#for(item in lists)}}
+      <div id="{{item.name}}">
+        {{item.text}}-{{text}}-当前索引{{__INDEX__}}
+      </div>
+    {{/for}}
+  </div>
 
-  {{#for(item in lists)}}
-    <div id="{{item.name}}">
-      {{item.text}}---{{text}}--{{__INDEX__}}
-    </div>
-  {{/for}}
+  <div class="line">
+    逻辑判断：
+    {{#if(key == 11)}}
+      <div id="{{key}}" t-class:test="test == 2">{{text}}</div>
+    {{/if}}
 
-  {{#if(key == 11)}}
-    <div id="{{key}}" t-class:test="test == 2">{{text}}</div>
-  {{/if}}
-
-  {{#if(key == 10)}}
-    <div id="{{key}}">{{text|fff}}</div>
-  {{/if}}
-</div>
+    {{#if(key == 10)}}
+      <div id="{{key}}">{{text|fff}}</div>
+    {{/if}}
+  </div>
 
 </script>
 
@@ -72,12 +95,9 @@ var p2 = new Pat({
 })
 
 // p2.$data.lists.splice(1,1,{name:"11111wwwhahahaffffqqqq",text:"wwwwzzzzqqqqq走着走着"})
-
 // p2.$data.text = '111222dddd'
 // p2.$data.key = '11'
-
 // p2.$data.lists[1].text = 'wwwww'
-
 </script>
 </body>
 </html>

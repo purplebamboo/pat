@@ -1,7 +1,7 @@
 {
   "name": "pat",
   "version": "1.0.0",
-  "description": "a light lib to use directive tmplate",
+  "description": "a lightweight directive template",
   "main": "index.js",
   "directories": {
     "example": "example"
