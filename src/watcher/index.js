@@ -24,15 +24,27 @@ function Watcher(view, expression, callback) {
 Watcher.currentTarget = null
 
 
-Watcher.prototype.applyFilter = function(value, filterName) {
-
-  if (!filterName) return value
+Watcher.prototype._applyFilter = function(value, filterName) {
 
   var filter = this.__view.$rootView.__filters[filterName]
   if (filter) {
     return filter.call(this.__view.$rootView, value, this.scope)
   }
   return value
+}
+
+Watcher.prototype.applyFilter = function(value, filterName) {
+
+  if (!filterName) return value
+
+  var filters = filterName.split(',')
+  var result = value
+
+  for (var i = 0; i < filters.length; i++) {
+    result = this._applyFilter(result,filters[i])
+  }
+
+  return result
 }
 
 Watcher.prototype.getValue = function() {

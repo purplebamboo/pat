@@ -100,6 +100,42 @@ exports.isNumber = function(unknow){
 }
 
 
+/**
+ * Check and convert possible numeric strings to numbers
+ * before setting back to data
+ *
+ * @param {*} value
+ * @return {*|Number}
+ */
+
+exports.toNumber = function (value) {
+  if (typeof value !== 'string') {
+    return value
+  } else {
+    var parsed = Number(value)
+    return isNaN(parsed)
+      ? value
+      : parsed
+  }
+}
+
+
+/**
+ * Strip quotes from a string
+ *
+ * @param {String} str
+ * @return {String | false}
+ */
+
+exports.stripQuotes = function (str) {
+  var a = str.charCodeAt(0)
+  var b = str.charCodeAt(str.length - 1)
+  return a === b && (a === 0x22 || a === 0x27)
+    ? str.slice(1, -1)
+    : str
+}
+
+
 exports.each = function(enumerable, iterator) {
 
   if (exports.isArray(enumerable)) {

@@ -1,6 +1,7 @@
 var config = require('../config.js')
 var _ = require('../util')
 var expParser = require('./expression.js')
+var dirParser = require('./directive.js')
 
 var prefix = config.prefix
 
@@ -133,20 +134,18 @@ exports.parseDirective = function(attr) {
 exports.parseExpression = function(text) {
 
 
-  var filterName,body,filterTagIndex
+  var filters,body,dirParsed
 
+  dirParsed = dirParser.parse(text)
 
+  if (!dirParsed.expression) return ''
 
-  filterTagIndex = text.lastIndexOf('|')
-  if (filterTagIndex != -1 && text.charAt(filterTagIndex-1) !== '|') {
-    filterName = _.trim(text.substr(filterTagIndex+1))
-    text = text.substr(0,filterTagIndex)
-  }
+  body = _.trim(expParser.compileExpFns(dirParsed.expression))
 
-  body = _.trim(expParser.compileExpFns(text))
+  filters = dirParsed.filters || []
 
-  if (filterName) {
-    body = '_that.applyFilter(' + body + ',"' + filterName + '")'
+  if (filters.length > 0) {
+    body = '_that.applyFilter(' + body + ',"' + filters.join(',') + '")'
   }
 
   return body

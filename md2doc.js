@@ -20,6 +20,6 @@ var docHtml = marked(fs.readFileSync('./doc/mds/doc.md').toString())
 var exampleHtml = marked(fs.readFileSync('./doc/mds/example.md').toString())
 
 
-fs.writeFileSync('./doc/htmls/guide.html',render(guideHtml))
-fs.writeFileSync('./doc/htmls/doc.html',render(docHtml))
-fs.writeFileSync('./doc/htmls/example.html',render(exampleHtml))
+fs.writeFileSync('./doc/views/guide.html',render(guideHtml))
+fs.writeFileSync('./doc/views/doc.html',render(docHtml))
+fs.writeFileSync('./doc/views/example.html',render(exampleHtml))
