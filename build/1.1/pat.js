@@ -4230,6 +4230,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	ATTRIBUTE_REG = /(?:[\w-:]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?/g
 	HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:[\w-:]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?)+\s*|\s*)\/?\>/g
 
+	HTML_COMMENT_REG = /<!--(.|\s)*?-->/g
 
 	/**
 	 * 收集模板中的各种Tag
@@ -4460,6 +4461,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  var newTpl = template + ''
 
+	  //去掉所有的注释
+	  newTpl = newTpl.replace(HTML_COMMENT_REG,'')
+	  //支持mustache的一些写法
 	  newTpl = newTpl.replace(blockStartReg,'<template t-$1="$2">')
 	  newTpl = newTpl.replace(blockStartRegFalse,'<template t-$1="!($2)">')
 	  newTpl = newTpl.replace(blockEndReg,'</template>')
