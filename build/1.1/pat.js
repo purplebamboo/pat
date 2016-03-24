@@ -1955,10 +1955,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (value != null && value !== false) {
-	      this.el.setAttribute(name,value)
-	    }else{
-	      this.el.removeAttribute(name)
+	      return this.el.setAttribute(name,value)
 	    }
+
+	    //对于特殊的值，就算是null或者false，也要正常赋值
+	    if (_.indexOf(['value', 'checked', 'selected'], name) !== -1){
+	      return this.el.setAttribute(name,value)
+	    }
+
+	    //最后的情况，对于null,false会直接去掉这个属性
+	    this.el.removeAttribute(name)
 
 	  }
 	}
