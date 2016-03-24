@@ -38,13 +38,27 @@
 <!--支持传入模板-->
 <script type="javascript/template" id="J_tmpl">
 
-  <select id="haha" p-id="38">
-    <option value="">000</option>
-    <option value="111" selected=false p-id="39">111</option>
-    <option value="222" >222</option>
-  </select>
+  <div class="line">基本渲染:{{text}}</div>
 
+  <div class="line">
+    列表渲染：
+    {{#for(item in lists)}}
+      <div id="{{item.name}}">
+        {{item.text}}-{{text}}-当前索引{{__INDEX__}}
+      </div>
+    {{/for}}
+  </div>
 
+  <div class="line">
+    逻辑判断：
+    {{#if(key == 11)}}
+      <div id="{{key}}" t-class:test="test == 2">{{text}}</div>
+    {{/if}}
+
+    {{#if(key == 10)}}
+      <div id="{{key}}">{{text|fff|ttt}}</div>
+    {{/if}}
+  </div>
 
 </script>
 
@@ -65,13 +79,11 @@ var p2 = new Pat({
     lists:[{
       name:'1',
       text:'11111',
-      hell:null,
-      ids:[1,2,3]
+      hell:null
     },{
       name:'2',
       text:'22222',
-      hell:null,
-      ids:[1,2,3]
+      hell:null
     }]
   },
   filters:{
