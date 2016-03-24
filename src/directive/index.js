@@ -68,7 +68,7 @@ module.exports = {
   isBlockDirective:function(attr){
     var name = _.isString(attr) ? attr : attr.name
 
-    name = name.replace(config.prefix + '-','')
+    name = name.split(':')[0].replace(config.prefix + '-','')
     if (directives[name] && directives[name].block) {
       return true
     }else{

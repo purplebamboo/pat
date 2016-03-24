@@ -40,25 +40,13 @@
 
   <div class="line">基本渲染:{{text}}</div>
 
-  <div class="line">
     列表渲染：
-    {{#for(item in lists)}}
-      <div id="{{item.name}}">
-        {{item.text}}-{{text}}-当前索引{{__INDEX__}}
-      </div>
-    {{/for}}
-  </div>
+    <div t-for="item in lists">
+      {{item.text}}-
+      <span t-for="id in item.ids">{{id}}</span>
+    </div>
 
-  <div class="line">
-    逻辑判断：
-    {{#if(key == 11)}}
-      <div id="{{key}}" t-class:test="test == 2">{{text}}</div>
-    {{/if}}
 
-    {{#if(key == 10)}}
-      <div id="{{key}}">{{text|fff|ttt}}</div>
-    {{/if}}
-  </div>
 
 </script>
 
@@ -79,11 +67,13 @@ var p2 = new Pat({
     lists:[{
       name:'1',
       text:'11111',
-      hell:null
+      hell:null,
+      ids:[1,2,3]
     },{
       name:'2',
       text:'22222',
-      hell:null
+      hell:null,
+      ids:[1,2,3]
     }]
   },
   filters:{
