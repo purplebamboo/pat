@@ -3946,8 +3946,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      //需要判断整数的情况,以及没有值的情况
 	      value = attr.value
 
-	      //对于checked这种特殊的，如果为false，那么不需要渲染属性
-	      if (attr.name == 'checked' && !value) return
+	      //对于checked,selected这种特殊的，如果为false，那么不需要渲染属性
+	      if ((attr.name == 'checked' || attr.name == 'selected') && !value) return
 
 	      if (_.isString(value)) {
 	        value = '"' + value.replace(/"/g, '&quot;') + '"'
