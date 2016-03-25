@@ -96,10 +96,9 @@ View.prototype._init = function() {
   if (this.__dataCheckType == 'defineProperties') {
     //注入get set
     this.$data = View.$inject(this.$data,this.__deepinject)
+    //增加特殊联动依赖
+    this.__depend()
   }
-
-  //增加特殊联动依赖
-  this.__depend()
 
   this.fire('beforeCompile')
   //开始解析编译虚拟节点

@@ -152,10 +152,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (this.__dataCheckType == 'defineProperties') {
 	    //注入get set
 	    this.$data = View.$inject(this.$data,this.__deepinject)
+	    //增加特殊联动依赖
+	    this.__depend()
 	  }
-
-	  //增加特殊联动依赖
-	  this.__depend()
 
 	  this.fire('beforeCompile')
 	  //开始解析编译虚拟节点
@@ -2415,16 +2414,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.oldViewLists = []
 	    this.__node = this.el.clone()
 
-	    this.orikeys = []
+	    // this.orikeys = []
 
+	    // var ori = this.view.$data.__ori__ || this.view.$data
+	    // //需要把当前的数据复制过来
+	    // for (var oriKey in ori) {
+	    //   if (ori.hasOwnProperty(oriKey)) {
+	    //     this.orikeys.push(oriKey)
+	    //   }
+	    // }
+	    this._updateOrikeys()
+
+	  },
+	  _updateOrikeys:function(){
+	    this.orikeys = this.orikeys || []
 	    var ori = this.view.$data.__ori__ || this.view.$data
 	    //需要把当前的数据复制过来
 	    for (var oriKey in ori) {
-	      if (ori.hasOwnProperty(oriKey)) {
+	      if (ori.hasOwnProperty(oriKey) && !_.inArray(this.orikeys,oriKey)) {
+	        //一级值，需要添加联动,这样当此view的key变化会通知子view也去更新
+	        //this.view.__dependWatch(oriKey)
 	        this.orikeys.push(oriKey)
 	      }
 	    }
-
 	  },
 	  _isOption:function(){
 	    var tag  = this.el.tagName.toUpperCase()
@@ -2471,6 +2483,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var data,newNode,name
 	    var curKey = '__pat_key__'
 
+	    this._updateOrikeys()
 
 	    _.each(newLists, function(item, key) {
 
@@ -2485,6 +2498,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if(self.iterator) oldViewMap[name].$data[self.iterator] = key
 
 	        if (self.view.$rootView.__dataCheckType == 'dirtyCheck') {
+	          //脏检测模式下，如果新增了key，那么也要赋值给子集
+	          _.assign(oldViewMap[name].$data,self.view.$data)
 	          oldViewMap[name].$digest()
 	        }
 	      } else {
@@ -2514,7 +2529,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 	        newViewMap[name].orikeys = self.orikeys
 	        //增加依赖，这样父级值改变了也会自动改变子view的属性
-	        self.view.__dependViews.push(newViewMap[name])
+	        //只针对defineProperties模式
+	        if (self.view.$rootView.__dataCheckType == 'defineProperties') {
+	          self.view.__dependViews.push(newViewMap[name])
+	        }
 	      }
 	      newViewLists.push(newViewMap[name])
 
