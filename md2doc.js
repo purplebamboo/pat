@@ -12,8 +12,15 @@ marked.setOptions({
 var layout = fs.readFileSync('./doc/layout.tpl').toString()
 
 var render = function(content) {
+
+  //修正中文的id问题
+  content = content.replace(/<h(\d)[^>]+>([^<]*)</g,"<h$1 id='$2'>$2<")
+
   return layout.replace('{{content}}',content)
 }
+
+
+
 
 var guideHtml = marked(fs.readFileSync('./doc/mds/guide.md').toString())
 var docHtml = marked(fs.readFileSync('./doc/mds/doc.md').toString())

@@ -5,9 +5,10 @@
   <title>pat-轻量级指令模板解决方案</title>
   <link rel="stylesheet" type="text/css" href="../lib/semantic.min.css">
   <link rel="stylesheet" type="text/css" href="../lib/lib.css">
+  <link rel="stylesheet" type="text/css" href="../lib/channel.css">
   <script src="../lib/highlight.js"></script>
-
   <script src="../lib/jquery.js"></script>
+  <script src="../lib/scrolltofix.js"></script>
   <script src="../lib/semantic.min.js"></script>
 
   <script>hljs.initHighlightingOnLoad()</script>
@@ -22,6 +23,32 @@
         $(this).addClass('current')
       }
     })
+
+
+    $('#J_article_nav').scrollToFixed()
+
+
+    var linkNav = [];
+    linkNav.push('<div id="link"><span class="title">目录</span><ul>');
+    var isMarkDownArticle = false;
+    $("#J_content").find('h2,h3').each(function(){
+        isMarkDownArticle = true;
+        var text = $(this).html().replace(/<a\s+.*>.*<\/a>/,"");
+        var child = $(this)[0].tagName.toLowerCase() == 'h3' ? 'child' : ''
+        linkNav.push('<li class="'+child+'"><a href="#'+$(this).attr("id")+'" title="'+text+'">'+text+'</a></li>');
+    });
+    linkNav.push('</div></ul>');
+    if(isMarkDownArticle){
+      $('#J_article_nav').html(linkNav.join(""))
+    }
+
+    // $(window).scroll(function(){
+    //     if($(this).scrollTop() > 150){
+    //         $("#link").animate({"top":"50px"}, 100);
+    //     }else{
+    //         $("#link").animate({"top":"280px"},100);
+    //     }
+    // });
 
   })
 
@@ -49,7 +76,8 @@
   </div>
 </div>
 
-<div class="main wrap channel">
+<div id="J_content" class="main wrap channel">
+  <div id="J_article_nav" class="article-nav"></div>
   {{content}}
 </div>
 

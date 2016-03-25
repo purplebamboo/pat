@@ -220,6 +220,7 @@ textarea  /* 1 */
 body {
   font-size: 14px;
   line-height: 1.8;
+  color: #333;
 }
 
 
@@ -440,16 +441,12 @@ body {
 
 
 
-html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-weight:inherit;font-style:inherit;font-family:inherit;font-size:100%;vertical-align:baseline}
-body{line-height:1;color:#000;background:#fff}
 table{border-collapse:separate;border-spacing:0;vertical-align:middle}
 caption,th,td{text-align:left;font-weight:normal;vertical-align:middle}
 a img{border:none}
 
 *{-webkit-margin-before:0;-webkit-margin-after:0}
-body{font-family:"Helvetica Neue","Helvetica","Microsoft YaHei","WenQuanYi Micro Hei",Arial,sans-serif;font-size:100%;color:rgba(0,0,0,.87);line-height:1.5}
 
-h1{font-size:1.5em}
 .fa{display:inline-block;font-family:FontAwesome;font-style:normal;font-weight:normal;line-height:1;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 .clearfix{zoom:1}
 .clearfix:before,.clearfix:after{content:"";display:table}
@@ -488,11 +485,7 @@ h1{font-size:1.5em}
 .wrap .highlight pre{border:none;margin:0;padding:0}
 .wrap .highlight table{margin:0;width:auto}
 .wrap .highlight td{border:none;padding:0}
-.wrap .highlight figcaption{zoom:1;font-size:.85em;text-align:left;color:#969896;line-height:1em;padding:.5em 0;margin-bottom:.5em;}
-.wrap .highlight figcaption:before,.wrap .highlight figcaption:after{content:"";display:table}
-.wrap .highlight figcaption:after{clear:both}
-.wrap .highlight figcaption a{float:right}
-.wrap .highlight .gutter pre{text-align:right;padding-right:1.5em}
+
 
 
 

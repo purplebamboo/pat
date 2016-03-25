@@ -5,9 +5,10 @@
   <title>pat-轻量级指令模板解决方案</title>
   <link rel="stylesheet" type="text/css" href="../lib/semantic.min.css">
   <link rel="stylesheet" type="text/css" href="../lib/lib.css">
+  <link rel="stylesheet" type="text/css" href="../lib/channel.css">
   <script src="../lib/highlight.js"></script>
-
   <script src="../lib/jquery.js"></script>
+  <script src="../lib/scrolltofix.js"></script>
   <script src="../lib/semantic.min.js"></script>
 
   <script>hljs.initHighlightingOnLoad()</script>
@@ -22,6 +23,32 @@
         $(this).addClass('current')
       }
     })
+
+
+    $('#J_article_nav').scrollToFixed()
+
+
+    var linkNav = [];
+    linkNav.push('<div id="link"><span class="title">目录</span><ul>');
+    var isMarkDownArticle = false;
+    $("#J_content").find('h2,h3').each(function(){
+        isMarkDownArticle = true;
+        var text = $(this).html().replace(/<a\s+.*>.*<\/a>/,"");
+        var child = $(this)[0].tagName.toLowerCase() == 'h3' ? 'child' : ''
+        linkNav.push('<li class="'+child+'"><a href="#'+$(this).attr("id")+'" title="'+text+'">'+text+'</a></li>');
+    });
+    linkNav.push('</div></ul>');
+    if(isMarkDownArticle){
+      $('#J_article_nav').html(linkNav.join(""))
+    }
+
+    // $(window).scroll(function(){
+    //     if($(this).scrollTop() > 150){
+    //         $("#link").animate({"top":"50px"}, 100);
+    //     }else{
+    //         $("#link").animate({"top":"280px"},100);
+    //     }
+    // });
 
   })
 
@@ -49,9 +76,10 @@
   </div>
 </div>
 
-<div class="main wrap channel">
-  <h1 id="pat-">pat文档</h1>
-<h2 id="-">基本用法</h2>
+<div id="J_content" class="main wrap channel">
+  <div id="J_article_nav" class="article-nav"></div>
+  <h1 id='pat文档'>pat文档</h1>
+<h2 id='示例'>示例</h2>
 <p>pat的使用很简单，我们看个最简单的例子：</p>
 <p>html:</p>
 <pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;&lt;/div&gt;
@@ -117,11 +145,11 @@
 </tr>
 </tbody>
 </table>
-<h2 id="-">基本模板语法</h2>
+<h2 id='模板语法'>模板语法</h2>
 <p>pat里面的模板功能都是使用指令实现的，指令是写在dom上的一个以<code>t-</code>开头的属性，pat会给这样的dom绑定一段逻辑，从而实现复杂的功能。</p>
 <p>但是指令的写法可读性差，因此pat实现了一套类似mustache语法的兼容，这只是一个语法糖，本质上还是会转换成指令执行。</p>
 <p>下面我们看下pat的基本模板语法：</p>
-<h3 id="-">插值</h3>
+<h3 id='插值'>插值</h3>
 <p>类似于<code>{{expression}}</code>这种语法我们称之为“插值”。可以渲染一段文本。</p>
 <p>expression可以是简单的表达式，比如基本的逻辑运算还有三元操作都是支持的。</p>
 <blockquote>
@@ -151,7 +179,7 @@
 <li>另外类似于mustache的风格，我们使用<code>{{{html}}}</code>三个大括弧来实现渲染html文本的渲染。</li>
 <li>另外会发现插值也可以用在属性上。当插值里面的表达式的返回结果为null或者false的时候这个属性不会渲染到dom上。</li>
 </ul>
-<h3 id="if-">if指令</h3>
+<h3 id='if指令'>if指令</h3>
 <p>pat使用if判断也很容易：</p>
 <p>语法为：</p>
 <pre><code class="lang-html">&lt;xxx t-if=&quot;expression&quot;&gt;...&lt;/xxx&gt;
@@ -202,7 +230,7 @@
   template:&#39;{{text}}&#39;
 })
 </code></pre>
-<h3 id="for-">for指令</h3>
+<h3 id='for指令'>for指令</h3>
 <p>for指令用来实现列表的渲染，相关语法如下：</p>
 <pre><code class="lang-html">
 &lt;xxx t-for=&quot;item in 数组对象&quot;&gt;{{item.xxx}}-{{item.__INDEX__}}&lt;/xxx&gt;
@@ -244,7 +272,7 @@
   template:&#39;{{text}}&#39;
 })
 </code></pre>
-<h2 id="-">局部刷新</h2>
+<h2 id='局部刷新'>局部刷新</h2>
 <p>除了常规的基本的模板功能，pat还支持局部刷新的功能，通过修改数据，对应的模板会自动发生变更。</p>
 <p>每一个pat实例都会有一个$data对象，通过修改这个对象，可以达到局部刷新的功能。</p>
 <p>例子如下:</p>
@@ -270,7 +298,7 @@ p.$data.name = &#39;hide&#39;
 //此时对应的div就会销毁
 </code></pre>
 <p>可以看到，pat会根据数据变更修改对应的dom。</p>
-<h3 id="defineproperties">defineProperties</h3>
+<h3 id='defineProperties'>defineProperties</h3>
 <p>pat默认使用defineProperties给data的每个key注入钩子来达到监听数据变化的目的。上面的例子就是使用的这种模式。</p>
 <p>使用时需要注意以下几点：</p>
 <ul>
@@ -280,7 +308,7 @@ p.$data.name = &#39;hide&#39;
 <li>pat支持批量更新，因此在一次赋值后，dom没有立即更新，可以使用实例对象的$apply(内部其实是$flushUpdate)方法来强制刷新。也可以使用$nextTick(callback)在回调里处理需要在一次批量更新之后需要执行的逻辑。</li>
 </ul>
 <p>可以看到使用defineProperties，在开发时会有不少限制。再加上需要兼容ie8，实际使用会有不少坑。</p>
-<h3 id="dirtycheck">dirtyCheck</h3>
+<h3 id='dirtyCheck'>dirtyCheck</h3>
 <p>基于总总原因，pat同时支持使用脏检测的方式来监听数据的变化。<br>例子如下：</p>
 <p>html:</p>
 <pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
@@ -309,13 +337,13 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 </code></pre>
 <p>可以看到，差别不大，只需要在new的时候传入一个dataCheckType，设置为<code>dirtyCheck</code>。与defineProperties不同，脏检测模式下需要最后手动调用$apply来触发脏检测。</p>
 <p>脏检测天生具备批量更新（调用$apply）。不需要提前写属性，不会对原始数据注入太多。对ie8的兼容也更好。但是脏检测不可避免的性能上会比defineProperties慢，（主要是更新慢）。</p>
-<h3 id="defineproperties-vs-dirtycheck">defineProperties VS dirtyCheck</h3>
+<h3 id='监听方式选择'>监听方式选择</h3>
 <p>那么这两种模式我们怎么选择呢。</p>
 <p>如果你的业务比较注重性能尤其是更新性能，你也不喜欢每次最后调用$apply，甚至你不需要兼容ie8。那么就使用defineProperties模式。</p>
 <p>如果你的业务数据量不大，性能只要能说得过去。而且业务需要支持ie8，不希望提前写属性。那么推荐使用dirtyCheck模式。</p>
-<h2 id="-">特殊指令</h2>
+<h2 id='特殊指令'>特殊指令</h2>
 <p>pat还扩展了一些指令，用于特殊的需求。</p>
-<h3 id="model-">model双向绑定</h3>
+<h3 id='model双向绑定'>model双向绑定</h3>
 <p>现如今，双向绑定已经是很烂大街的功能了，有人推崇有人吐槽。pat使用<code>t-model</code>让使用者可以选择性的使用双向绑定。</p>
 <p>例子：</p>
 <p>html:</p>
@@ -331,7 +359,7 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 })
 </code></pre>
 <p>除了input外，checkbox，radio，textarea，select也都是支持的。具体可以查看<a href="">例子</a></p>
-<h3 id="class-">class指令</h3>
+<h3 id='class指令'>class指令</h3>
 <p>pat同时提供了<code>t-class</code>指令，用于给一个元素增加修改class。</p>
 <p>语法为：</p>
 <pre><code class="lang-html">&lt;xxx t-class:classname=&quot;expression&quot;&gt;&lt;/xxx&gt;
@@ -353,7 +381,7 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 
 //此时会同时具有test2 和 test3两个class
 </code></pre>
-<h2 id="filter">filter</h2>
+<h2 id='filter'>filter</h2>
 <p>可以使用vue和angular里面的filter功能来对模板数据做出处理。</p>
 <p>例子如下：</p>
 <p>html:</p>
@@ -375,7 +403,7 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 //渲染出来的是 我是前缀-hello
 </code></pre>
 <p>只要实例化时传入了filters的定义，就可以在模板里使用<code>|</code>加filter名称来对数据做出特殊处理。filter作为函数，第一个参数是<code>|</code>管道符前面表达式的执行结果。第二个参数是当前的scope。this指向当前实例对象。</p>
-<h2 id="watcher">watcher</h2>
+<h2 id='watcher'>watcher</h2>
 <p>pat也支持angular以及vue里面的watcher监听，用户可以自己监听一个表达式的变化，增加回调处理。</p>
 <p>例子如下：</p>
 <p>html:</p>
@@ -398,7 +426,7 @@ p.$data.text = &#39;hi&#39;
 //这个时候控制台会打出： old:hello-new:hi
 </code></pre>
 <p>watcher的回调函数，第一个参数是老的值，第二个参数是新的值。</p>
-<h2 id="-">配置</h2>
+<h2 id='配置'>配置</h2>
 <p>可以通过Pat.config(options),来设定一些全局的默认配置</p>
 <p>包括下面这些：</p>
 <table>
@@ -447,7 +475,7 @@ p.$data.text = &#39;hi&#39;
 </tr>
 </tbody>
 </table>
-<h2 id="-">服务端渲染</h2>
+<h2 id='服务端渲染'>服务端渲染</h2>
 <p>由于pat使用了virtual dom中间层，对原生dom没有强依赖，因此服务端的渲染会比较容易实现。目前还在开发中，敬请期待。</p>
 
 </div>

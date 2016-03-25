@@ -115,7 +115,7 @@ p.$data.text = "hi world"
 每一个pat实例都会有一个$data属性，它是pat托管的数据，可以通过修改$data里面的值来达到局部刷新的目的。避免了复杂的dom操作。
 
 
-> pat同时支持两种数据变化监听机制，默认使用defineProperties机制，使用注入get set的方式监听数据变更之后批量修改。另外也支持脏检测机制，兼容性以及开发体验更好。详情[点此了解](./doc.html#defineproperties)。
+> pat同时支持两种数据变化监听机制，默认使用defineProperties机制，使用注入get set的方式监听数据变更之后批量修改。另外也支持脏检测机制，兼容性以及开发体验更好。详情[点此了解](./doc.html#defineProperties)。
 
 
 
