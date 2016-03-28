@@ -23,12 +23,12 @@ pat是一个轻量级的指令型模板解决方案。具备局部刷新，双�
 压缩版本：
 
 ```
-http://g.alicdn.com/mm/pat/1.0/pat-min.js
+http://g.alicdn.com/mm/pat/1.1/pat-min.js
 ```
 未压缩版本：
 
 ```
-http://g.alicdn.com/mm/pat/1.0/pat.js
+http://g.alicdn.com/mm/pat/1.1/pat.js
 ```
 
 ## test
