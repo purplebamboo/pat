@@ -13,7 +13,7 @@ var inSingle, inDouble, curly, square, paren
  */
 
 function pushFilter () {
-  var filter = str.slice(lastFilterIndex, i).trim()
+  var filter = _.trim(str.slice(lastFilterIndex, i))
 
   if (filter) {
     (dir.filters = dir.filters || []).push(filter)
@@ -62,7 +62,7 @@ exports.parse = function (s) {
       if (dir.expression == null) {
         // first filter, end of expression
         lastFilterIndex = i + 1
-        dir.expression = str.slice(0, i).trim()
+        dir.expression = _.trim(str.slice(0, i))
       } else {
         // already has filter
         pushFilter()
@@ -82,7 +82,7 @@ exports.parse = function (s) {
   }
 
   if (dir.expression == null) {
-    dir.expression = str.slice(0, i).trim()
+    dir.expression = _.trim(str.slice(0, i))
   } else if (lastFilterIndex !== 0) {
     pushFilter()
   }

@@ -164,8 +164,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //如果不是虚拟dom，最后一次性的加到dom里
 	  //对于非virtualdom的才会fire afterMount事件，其他情况afterMount事件需要自行处理
 	  if (!this.$el.__VD__){
-	    this.$el.innerHTML = virtualElement.mountView(this)
-	    //this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
+	    //this.$el.innerHTML = virtualElement.mountView(this)
+	    this.$el.innerHTML = ''
+	    this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
 	    this.__rendered = true//一定要放在事件之前，这样检测时才是已经渲染了
 	    this.fire('afterMount')
 	  }else{
@@ -1849,7 +1850,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 	function pushFilter () {
-	  var filter = str.slice(lastFilterIndex, i).trim()
+	  var filter = _.trim(str.slice(lastFilterIndex, i))
 
 	  if (filter) {
 	    (dir.filters = dir.filters || []).push(filter)
@@ -1898,7 +1899,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (dir.expression == null) {
 	        // first filter, end of expression
 	        lastFilterIndex = i + 1
-	        dir.expression = str.slice(0, i).trim()
+	        dir.expression = _.trim(str.slice(0, i))
 	      } else {
 	        // already has filter
 	        pushFilter()
@@ -1918,7 +1919,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  if (dir.expression == null) {
-	    dir.expression = str.slice(0, i).trim()
+	    dir.expression = _.trim(str.slice(0, i))
 	  } else if (lastFilterIndex !== 0) {
 	    pushFilter()
 	  }

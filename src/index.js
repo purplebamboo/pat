@@ -108,8 +108,9 @@ View.prototype._init = function() {
   //如果不是虚拟dom，最后一次性的加到dom里
   //对于非virtualdom的才会fire afterMount事件，其他情况afterMount事件需要自行处理
   if (!this.$el.__VD__){
-    this.$el.innerHTML = virtualElement.mountView(this)
-    //this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
+    //this.$el.innerHTML = virtualElement.mountView(this)
+    this.$el.innerHTML = ''
+    this.$el.appendChild(_.string2frag(virtualElement.mountView(this)))
     this.__rendered = true//一定要放在事件之前，这样检测时才是已经渲染了
     this.fire('afterMount')
   }else{
