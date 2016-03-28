@@ -3966,7 +3966,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      value = attr.value
 
 	      //对于checked,selected这种特殊的，如果为false，那么不需要渲染属性
-	      if ((attr.name == 'checked' || attr.name == 'selected') && !value) return
+	      if ((attr.name == 'checked' || attr.name == 'selected') && value !== undefined && !value) return
 
 	      if (_.isString(value)) {
 	        value = '"' + value.replace(/"/g, '&quot;') + '"'
