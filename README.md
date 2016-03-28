@@ -12,7 +12,7 @@ pat是一个轻量级的指令型模板解决方案。具备局部刷新，双�
 * 具有virtual dom中间层，一方面加快了分析指令的速度，另一方面也为服务端渲染提供了可能。
 * 同时支持脏检测与defineproperty的数据检测机制。并且都是支持ie8的。在defineproperty模式下使用vbscript来做兼容处理。
 
-详细文档，请见：http://groups.alidemo.cn/mm/pat/doc/views/index.html
+详细文档，请见：http://purplebamboo.github.io/pat/doc/views/index.html
 
 
 ## usage
