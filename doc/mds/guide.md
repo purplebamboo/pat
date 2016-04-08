@@ -44,7 +44,7 @@ var p = new Pat({
 
 ## 列表
 
-下面是一个列表渲染的例子，支持mustache风格的语法，我们更推荐使用mustache风格的语法，可读性更好。
+下面是一个列表渲染的例子，我们更推荐使用mustache风格的语法，可读性更好。
 
 
 
@@ -54,7 +54,7 @@ html:
 ```html
 <!--指令型语法-->
 <!--
-<div t-if="item in lists" id="test">{{item.name}}-{{__INDEX__}}</div>
+<div t-for="item in lists" id="test">{{item.name}}-{{__INDEX__}}</div>
 -->
 
 <!--mustache风格语法-->
@@ -81,7 +81,7 @@ var p = new Pat({
 
 ```
 
-for指令可以使用`__INDEX__`拿到当前的index。
+for指令可以使用`__INDEX__`拿到当前的索引index，从0开始计数。
 
 > pat的指令都有一个`t`的前缀，对于 for，if，unless都是一种指令。实际上就连上面的插值也是一种特殊的指令，指令是pat的核心技术。用户也可以扩展自己的指令。
 
