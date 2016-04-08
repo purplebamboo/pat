@@ -78,7 +78,7 @@ describe("[pat:dom.js]",function(){
 
   it("transfer complex html",function(){
     var html = '{{#for(a in b)}}'+
-    '<span id="test">'+
+    '<span id="test"><!--asdasdasdasd<asdasd<&vghj\n\tc><-->'+
       '{{#if(a)}}'+
       '<div id=11>{{ccc}}</div>'+
       '{{/if}}'+
