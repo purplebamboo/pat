@@ -158,9 +158,14 @@
 <p>例子：</p>
 <p>html:</p>
 <pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
-    &lt;div id=&quot;{{id}}&quot;&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
-    &lt;div&gt;{{{html}}}&lt;/div&gt;
+
 &lt;/div&gt;
+
+
+&lt;script type=&quot;javascript/template&quot; id=&quot;J_tmpl&quot;&gt;
+&lt;div id=&quot;{{id}}&quot;&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
+&lt;div&gt;{{{html}}}&lt;/div&gt;
+&lt;/script&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
@@ -170,7 +175,7 @@
     name:&#39;pat&#39;,
     html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
   },
-  template:&#39;{{text}}&#39;
+  template:document.getElementById(&#39;J_tmpl&#39;).innerHTML
 })
 </code></pre>
 <p>可以看到上面的插值有三种用法：</p>
@@ -207,17 +212,24 @@
 <p>推荐使用mustache风格的语法，更方便阅读。</p>
 <p>例子：</p>
 <p>html:</p>
-<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
-    &lt;div t-if=&quot;name == &#39;pat&#39;&quot;&gt;
-        {{name+&#39;我是附加的文本&#39;}}
-    &lt;/div&gt;
+<pre><code class="lang-html">
 
-    &lt;!--推荐下面的mustache的风格--&gt;
+&lt;div id=&quot;test&quot;&gt;
 
-    {{#if(name=&quot;pat&quot;)}}
-        &lt;div&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
-    {{/if}}
 &lt;/div&gt;
+
+
+&lt;script type=&quot;javascript/template&quot; id=&quot;J_tmpl&quot;&gt;
+&lt;div t-if=&quot;name == &#39;pat&#39;&quot;&gt;
+    {{name+&#39;我是附加的文本&#39;}}
+&lt;/div&gt;
+
+&lt;!--推荐下面的mustache的风格--&gt;
+
+{{#if(name=&quot;pat&quot;)}}
+    &lt;div&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
+{{/if}}
+&lt;/script&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
@@ -227,7 +239,7 @@
     name:&#39;pat&#39;,
     html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
   },
-  template:&#39;{{text}}&#39;
+  template:document.getElementById(&#39;J_tmpl&#39;).innerHTML
 })
 </code></pre>
 <h3 id='for指令'>for指令</h3>
@@ -245,6 +257,10 @@
 <p>例子：</p>
 <p>html:</p>
 <pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
+
+&lt;/div&gt;
+
+&lt;script type=&quot;javascript/template&quot; id=&quot;J_tmpl&quot;&gt;
   &lt;div t-for=&quot;item in lists&quot;&gt;
       {{item.name+&#39;当前index&#39;+__INDEX__}}
   &lt;/div&gt;
@@ -254,7 +270,7 @@
   {{#for(item in lists)}}
       &lt;div&gt;{{item.name+&#39;当前index&#39;+__INDEX__}}&lt;/div&gt;
   {{/for}}
-&lt;/div&gt;
+&lt;/script&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
@@ -269,7 +285,7 @@
     }],
     html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
   },
-  template:&#39;{{text}}&#39;
+  template:document.getElementById(&#39;J_tmpl&#39;).innerHTML
 })
 </code></pre>
 <h2 id='局部刷新'>局部刷新</h2>
@@ -278,10 +294,14 @@
 <p>例子如下:</p>
 <p>html:</p>
 <pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
-    {{#if(name=&quot;pat&quot;)}}
-        &lt;div&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
-    {{/if}}
+
 &lt;/div&gt;
+
+&lt;script type=&quot;javascript/template&quot; id=&quot;J_tmpl&quot;&gt;
+  {{#if(name=&quot;pat&quot;)}}
+    &lt;div&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
+  {{/if}}
+&lt;/script&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
@@ -291,7 +311,7 @@
     name:&#39;pat&#39;,
     html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
   },
-  template:&#39;{{text}}&#39;
+  template:document.getElementById(&#39;J_tmpl&#39;).innerHTML
 })
 
 p.$data.name = &#39;hide&#39;
@@ -311,11 +331,16 @@ p.$data.name = &#39;hide&#39;
 <h3 id='dirtyCheck'>dirtyCheck</h3>
 <p>基于总总原因，pat同时支持使用脏检测的方式来监听数据的变化。<br>例子如下：</p>
 <p>html:</p>
-<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
-    {{#if(name=&quot;pat&quot;)}}
-        &lt;div&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
-    {{/if}}
+<pre><code class="lang-html">
+&lt;div id=&quot;test&quot;&gt;
+
 &lt;/div&gt;
+
+&lt;script type=&quot;javascript/template&quot; id=&quot;J_tmpl&quot;&gt;
+  {{#if(name=&quot;pat&quot;)}}
+    &lt;div&gt;{{name+&#39;我是附加的文本&#39;}}&lt;/div&gt;
+  {{/if}}
+&lt;/script&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
@@ -326,7 +351,7 @@ p.$data.name = &#39;hide&#39;
     name:&#39;pat&#39;,
     html:&#39;&lt;strong&gt;pat&lt;/strong&gt;&#39;
   },
-  template:&#39;{{text}}&#39;
+  template:document.getElementById(&#39;J_tmpl&#39;).innerHTML
 })
 
 
@@ -352,15 +377,22 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 <p>pat使用<code>t-model</code>让使用者可以选择性的使用双向绑定。</p>
 <p>例子：</p>
 <p>html:</p>
-<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
-&lt;input type=&quot;text&quot; value=&quot;&quot; t-model=&quot;text&quot;&gt;
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
+
+&lt;/div&gt;
+
+&lt;script type=&quot;javascript/template&quot; id=&quot;J_tmpl&quot;&gt;
+  {{text}}
+  &lt;input type=&quot;text&quot; value=&quot;&quot; t-model=&quot;text&quot;&gt;
+&lt;/script&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
   el:&#39;test&#39;,
   data:{
     text:&#39;hello world&#39;
-  }
+  },
+  template:document.getElementById(&#39;J_tmpl&#39;).innerHTML
 })
 </code></pre>
 <p>除了input外，checkbox，radio，textarea，select也都是支持的。具体可以查看<a href="./example.html#form">例子</a></p>
@@ -373,15 +405,20 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 <p>例子</p>
 <p>html:</p>
 <pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
-    &lt;div class=&quot;test1&quot; t-class:test2=&quot;number &gt; 10&quot;  t-class:test3=&quot;number == 12&quot;&gt;{{text}}&lt;/div&gt;
+
 &lt;/div&gt;
+
+&lt;script type=&quot;javascript/template&quot; id=&quot;J_tmpl&quot;&gt;
+  &lt;div class=&quot;test1&quot; t-class:test2=&quot;number &gt; 10&quot;  t-class:test3=&quot;number == 12&quot;&gt;{{text}}&lt;/div&gt;
+&lt;/script&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-html">var p = new Pat({
   el:&#39;test&#39;,
   data:{
     number:12
-  }
+  },
+  template:document.getElementById(&#39;J_tmpl&#39;).innerHTML
 })
 
 //此时会同时具有test2 和 test3两个class
@@ -390,7 +427,7 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 <p>可以使用vue和angular里面的filter功能来对模板数据做出处理。</p>
 <p>例子如下：</p>
 <p>html:</p>
-<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text|testFilter}}&lt;/div&gt;
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;&lt;/div&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
@@ -398,6 +435,7 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
   data:{
     text:&#39;hello&#39;
   },
+  template:&#39;{{text|testFilter}}&#39;,
   filters:{
     testFilter:function(value,scope){
         return &quot;我是前缀-&quot; + value
@@ -418,7 +456,7 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 <p>pat也支持angular以及vue里面的watcher监听，用户可以自己监听一个表达式的变化，增加回调处理。</p>
 <p>例子如下：</p>
 <p>html:</p>
-<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;&lt;/div&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
@@ -426,6 +464,7 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
   data:{
     text:&#39;hello&#39;
   },
+  template:&#39;{{text}}&#39;,
   watchers:{
     &#39;text&#39;:function(old,new){
         console.log(&#39;old:&#39;+old+&#39;-new:&#39;+new)
