@@ -109,11 +109,11 @@
 <p>如react那样，pat会针对每个dom元素加上一个标识id，用于后面局部刷新时去找dom节点。如果是插值渲染的文本节点那么会跟react那样包裹一个span标记。而对于普通文本不会包裹。</p>
 </blockquote>
 <h2 id='列表'>列表</h2>
-<p>下面是一个列表渲染的例子，支持mustache风格的语法，我们更推荐使用mustache风格的语法，可读性更好。</p>
+<p>下面是一个列表渲染的例子，我们更推荐使用mustache风格的语法，可读性更好。</p>
 <p>html:</p>
 <pre><code class="lang-html">&lt;!--指令型语法--&gt;
 &lt;!--
-&lt;div t-if=&quot;item in lists&quot; id=&quot;test&quot;&gt;{{item.name}}-{{__INDEX__}}&lt;/div&gt;
+&lt;div t-for=&quot;item in lists&quot; id=&quot;test&quot;&gt;{{item.name}}-{{__INDEX__}}&lt;/div&gt;
 --&gt;
 
 &lt;!--mustache风格语法--&gt;
@@ -134,7 +134,7 @@
   }
 })
 </code></pre>
-<p>for指令可以使用<code>__INDEX__</code>拿到当前的index。</p>
+<p>for指令可以使用<code>__INDEX__</code>拿到当前的索引index，从0开始计数。</p>
 <blockquote>
 <p>pat的指令都有一个<code>t</code>的前缀，对于 for，if，unless都是一种指令。实际上就连上面的插值也是一种特殊的指令，指令是pat的核心技术。用户也可以扩展自己的指令。</p>
 </blockquote>

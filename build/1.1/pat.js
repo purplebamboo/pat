@@ -710,17 +710,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    result = _query(root,pid)
 	  }else{//如果已经软删除了，那么页面上的就会是一个注释占位节点，这个时候通过取父级来定位
 
-	    //如果父级是root直接从容器开始找
+	    //如果父级是root或者是template直接从容器开始找
 	    var parent
 
-	    if (virtualDom.parentNode.__ROOT__) {
+	    if (!virtualDom.parentNode || virtualDom.parentNode.__ROOT__ || virtualDom.parentNode.nodeType === -1) {
 	      parent = root
 	    }else{
 	      parent = _query(root,virtualDom.parentNode.patId)
 	    }
 
-	    // var parentId = virtualDom.parentNode.patId
-	    // var parent = _query(root,parentId)
 	    //父级都不存在，那么子集肯定没有在dom上
 	    if (!parent) return null
 	    //之后通过遍历的方式去找注释节点

@@ -1,6 +1,8 @@
-//验证各种属性的解析是否正确
-
-
+//验证指令，插值等属性的解析是否出错
+//包括三个部分：
+//1. parseExpression
+//2. parseText
+//3. parseDirective
 
 describe("[pat:parse.js]", function() {
 

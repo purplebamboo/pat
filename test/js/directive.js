@@ -1,4 +1,4 @@
-//验证各种指令
+//验证各种指令功能
 describe("[pat:directive.js]", function() {
 
 
@@ -43,36 +43,7 @@ describe("[pat:directive.js]", function() {
 
   })
 
-  describe("(test class)", function() {
-    beforeEach(function(){
-      el = document.createElement('div')
-      data = {
-        name:'pat',
-        key:10,
-        test:2
-      }
-    })
 
-    it("use t-bind render attribute",function(){
-      pat = new Pat({
-        el:el,
-        data:data,
-        template:'<span id="test" class="a b" t-class:haha="key == 10" t-class:hello="test == 2">1111</span>'
-      })
-
-
-      expect($(el).find('#test').attr('class')).toEqual('a b haha hello')
-      setValue('key',1)
-      expect($(el).find('#test').attr('class')).toEqual('a b hello')
-      setValue('test',1)
-      expect($(el).find('#test').attr('class')).toEqual('a b')
-      setValue('key',10)
-      expect($(el).find('#test').attr('class')).toEqual('a b haha')
-
-
-    })
-
-  })
 
   describe("(test if and unless)", function() {
 
@@ -156,6 +127,23 @@ describe("[pat:directive.js]", function() {
 
     })
 
+    it("use t-if with nesting",function(){
+
+      pat = new Pat({
+        el:el,
+        data:{
+          status:1,
+          text:'hello world'
+        },
+        template:'<template t-if="status < 2">{{#if(status == 0)}}{{{text}}}{{/if}}</template>'
+      })
+
+      expect($.trim($(el).html())).toMatch('<!--deleted')
+      setValue('status',0)
+      expect($.trim($(el).html())).toMatch('hello world')
+
+    })
+
 
   })
 
@@ -209,8 +197,6 @@ describe("[pat:directive.js]", function() {
     })
 
 
-
-
     it("use t-for with template",function(){
 
       pat = new Pat({
@@ -226,6 +212,38 @@ describe("[pat:directive.js]", function() {
       //setValue('lists[0].text','hahaha')
       expect($(el).find('.t1').html()).toBe('world')
 
+    })
+
+
+    it("use t-for with nesting",function(){
+
+      pat = new Pat({
+        el:el,
+        data:{
+          lists:[{
+            name:'1',
+            text:'aaaa'
+          },{
+            name:'2',
+            text:'bbbb'
+          },{
+            name:'3',
+            text:'ccccc'
+          },{
+            name:'4',
+            text:'ddddd'
+          }],
+          indexs:[1,2,3,4,5]
+        },
+        template:'{{#for(item in lists)}}<!--comment--><div class="tt{{item.name}}">{{#for(t in indexs)}}|{{*t}}{{/for}}--{{{*item.text}}}</div>{{/for}}'
+      })
+
+      expect($(el).find('.tt1')[0].children[1].innerHTML).toBe('1')
+      expect($(el).find('.tt1')[0].children[5].innerHTML).toBe('3')
+      expect($(el).find('.tt1')[0].children[10].innerHTML).toBe('aaaa')
+      expect($(el).find('.tt3')[0].children[1].innerHTML).toBe('1')
+      expect($(el).find('.tt3')[0].children[5].innerHTML).toBe('3')
+      expect($(el).find('.tt3')[0].children[10].innerHTML).toBe('ccccc')
     })
 
     it("test t-for with change item",function(){
@@ -309,7 +327,7 @@ describe("[pat:directive.js]", function() {
   })
 
 
-  describe("(test v-model directive)", function() {
+  describe("(test t-model directive)", function() {
     beforeEach(function(){
       el = document.createElement('div')
       data = {
@@ -342,8 +360,77 @@ describe("[pat:directive.js]", function() {
       //$(el).find('input').blur()
     })
 
-    //t-modle的测试用例还不完善，还要进步弄。本身t-model还没完全开发完成
-    //other todo
+    it("use t-model render radio",function(){
+
+      pat = new Pat({
+        el:el,
+        data:data,
+        template:'<input class="t-m" type="radio" value="1" t-model="status">'
+      })
+
+      expect($(el).find('.t-m')[0].checked).toBe(true)
+      setValue('status',0)
+      expect($(el).find('.t-m')[0].checked).toBe(false)
+    })
+
+
+    it("use t-model render checkbox",function(){
+
+      pat = new Pat({
+        el:el,
+        data:data,
+        template:'<input class="t-m" type="checkbox" value="1" t-model="status">'
+      })
+
+      expect($(el).find('.t-m')[0].checked).toBe(true)
+      setValue('status',0)
+      expect($(el).find('.t-m')[0].checked).toBe(false)
+    })
+
+    it("use t-model render select",function(){
+
+      pat = new Pat({
+        el:el,
+        data:data,
+        template:'<select t-model="status"><option value="1">111</option><option value="2">222</option></select>'
+      })
+
+      expect($(el).find('option')[0].selected).toBe(true)
+      setValue('status',2)
+      expect($(el).find('option')[0].selected).toBe(false)
+      expect($(el).find('option')[1].selected).toBe(true)
+    })
+
+  })
+
+  describe("(test class)", function() {
+    beforeEach(function(){
+      el = document.createElement('div')
+      data = {
+        name:'pat',
+        key:10,
+        test:2
+      }
+    })
+
+    it("use t-bind render attribute",function(){
+      pat = new Pat({
+        el:el,
+        data:data,
+        template:'<span id="test" class="a b" t-class:haha="key == 10" t-class:hello="test == 2">1111</span>'
+      })
+
+
+      expect($(el).find('#test').attr('class')).toEqual('a b haha hello')
+      setValue('key',1)
+      expect($(el).find('#test').attr('class')).toEqual('a b hello')
+      setValue('test',1)
+      expect($(el).find('#test').attr('class')).toEqual('a b')
+      setValue('key',10)
+      expect($(el).find('#test').attr('class')).toEqual('a b haha')
+
+
+    })
 
   })
 

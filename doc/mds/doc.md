@@ -61,7 +61,7 @@ pat里面的模板功能都是使用指令实现的，指令是写在dom上的�
 
 expression可以是简单的表达式，比如基本的逻辑运算还有三元操作都是支持的。
 
-> 这算是比较特殊的，本质上最后还是会转换成对应的指令应用逻辑。
+> 这算是比较特殊的指令，本质上最后还是会转换成对应的指令应用逻辑。
 
 
 例子：
@@ -94,8 +94,8 @@ var p = new Pat({
 可以看到上面的插值有三种用法：
 
 * 普通的文本渲染使用`{{name}}`,会进行转义。
-* 另外类似于mustache的风格，我们使用`{{{html}}}`三个大括弧来实现渲染html文本的渲染。
-* 另外会发现插值也可以用在属性上。当插值里面的表达式的返回结果为null或者false的时候这个属性不会渲染到dom上。
+* 类似于mustache的风格，我们使用`{{{html}}}`三个大括弧来实现渲染html文本的渲染。
+* 插值也可以用在属性上，当插值里面的表达式的返回结果为null或者false的时候这个属性不会渲染到dom上。
 
 
 ### if指令
@@ -133,7 +133,7 @@ else的语法为：
 
 ```
 
-推荐使用mustache风格的语法，可以得到更好的可读性
+推荐使用mustache风格的语法，更方便阅读。
 
 例子：
 
@@ -303,10 +303,10 @@ js:
 ```js
 var p = new Pat({
   el:'test',
+  dataCheckType:'dirtyCheck', //使用脏检测
   data:{
     id:'test2',
     name:'pat',
-    dataCheckType:'dirtyCheck', //使用脏检测
     html:'<strong>pat</strong>'
   },
   template:'{{text}}'
@@ -321,7 +321,9 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 
 ```
 
-可以看到，差别不大，只需要在new的时候传入一个dataCheckType，设置为`dirtyCheck`。与defineProperties不同，脏检测模式下需要最后手动调用$apply来触发脏检测。
+与上一个相比差别不大，只需要在new的时候传入一个dataCheckType，设置为`dirtyCheck`。
+
+与defineProperties不同，脏检测模式下需要最后手动调用$apply来触发脏检测。
 
 脏检测天生具备批量更新（调用$apply）。不需要提前写属性，不会对原始数据注入太多。对ie8的兼容也更好。但是脏检测不可避免的性能上会比defineProperties慢，（主要是更新慢）。
 
@@ -331,9 +333,9 @@ p.$apply()  //脏检测模式下，需要自己手动调用$apply（内部会调
 
 那么这两种模式我们怎么选择呢。
 
-如果你的业务比较注重性能尤其是更新性能，你也不喜欢每次最后调用$apply，甚至你不需要兼容ie8。那么就使用defineProperties模式。
+* 如果你的业务比较注重性能尤其是更新性能，你也不喜欢每次最后调用$apply，同时你不需要兼容ie8。那么就使用defineProperties模式。
 
-如果你的业务数据量不大，性能只要能说得过去。而且业务需要支持ie8，不希望提前写属性。那么推荐使用dirtyCheck模式。
+* 如果你的业务数据量不大，性能只要能说得过去。而且业务需要支持ie8，不希望提前写属性。那么推荐使用dirtyCheck模式。
 
 
 ## 特殊指令
@@ -342,7 +344,7 @@ pat还扩展了一些指令，用于特殊的需求。
 
 ### model双向绑定
 
-现如今，双向绑定已经是很烂大街的功能了，有人推崇有人吐槽。pat使用`t-model`让使用者可以选择性的使用双向绑定。
+pat使用`t-model`让使用者可以选择性的使用双向绑定。
 
 例子：
 
@@ -367,7 +369,7 @@ var p = new Pat({
 
 ```
 
-除了input外，checkbox，radio，textarea，select也都是支持的。具体可以查看[例子]()
+除了input外，checkbox，radio，textarea，select也都是支持的。具体可以查看[例子](./example.html#form)
 
 
 
@@ -442,7 +444,14 @@ var p = new Pat({
 
 ```
 
-只要实例化时传入了filters的定义，就可以在模板里使用`|`加filter名称来对数据做出特殊处理。filter作为函数，第一个参数是`|`管道符前面表达式的执行结果。第二个参数是当前的scope。this指向当前实例对象。
+只要实例化时传入了filters的定义，就可以在模板里使用管道符(|)加filter名称来对数据做出特殊处理。
+
+filter作为函数：
+
+* 第一个参数是管道符(|)前面表达式的执行结果。
+* 第二个参数是当前的scope。this指向当前实例对象。
+
+pat也支持追加多个管道符，将见面的结果做回后面filter的输入值。
 
 
 ## watcher
