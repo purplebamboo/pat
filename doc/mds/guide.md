@@ -24,7 +24,7 @@ pat是一个轻量级的指令型模板解决方案。具备局部刷新，双�
 html:
 
 ```html
-<div id="test">{{text}}</div>
+<div id="test"></div>
 ```
 
 js:
@@ -34,7 +34,8 @@ var p = new Pat({
   el:'test',
   data:{
     text:'hello world'
-  }
+  },
+  template:'{{text}}'
 })
 
 ```
@@ -52,15 +53,25 @@ var p = new Pat({
 html:
 
 ```html
+
+<div id="test">
+
+</div>
+
+<script type="javascript/template" id="J_tmpl">
+
 <!--指令型语法-->
 <!--
-<div t-for="item in lists" id="test">{{item.name}}-{{__INDEX__}}</div>
+<div t-for="item in lists">{{item.name}}-{{__INDEX__}}</div>
 -->
 
 <!--mustache风格语法-->
 {{#for(item in lists)}}
-<div id="test">{{item.name}}-{{__INDEX__}}</div>
+<div>{{item.name}}-{{__INDEX__}}</div>
 {{/for}}
+
+</script>
+
 ```
 
 js:
@@ -75,7 +86,8 @@ var p = new Pat({
         name:'2222'
     }],
     text:'hello world'
-  }
+  },
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 
@@ -95,7 +107,7 @@ pat使局部刷新更加简单，通过操作数据来达到dom的局部更新�
 html:
 
 ```html
-<div id="test">{{text}}</div>
+<div id="test"></div>
 ```
 
 js:
@@ -105,7 +117,8 @@ var p = new Pat({
   el:'test',
   data:{
     text:'hello world'
-  }
+  },
+  template:'{{text}}'
 })
 
 p.$data.text = "hi world"
@@ -129,9 +142,14 @@ p.$data.text = "hi world"
 html:
 
 ```html
+<div id="test">
 
-<div id="test">{{text}}</div>
+</div>
+
+<script type="javascript/template" id="J_tmpl">
+<div>{{text}}</div>
 <input type="text" value="" t-model="text">
+</script>
 ```
 
 js:
@@ -141,7 +159,8 @@ var p = new Pat({
   el:'test',
   data:{
     text:'hello world'
-  }
+  },
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 ```

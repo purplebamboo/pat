@@ -72,9 +72,15 @@ html:
 
 ```html
 <div id="test">
-    <div id="{{id}}">{{name+'我是附加的文本'}}</div>
-    <div>{{{html}}}</div>
+
 </div>
+
+
+<script type="javascript/template" id="J_tmpl">
+<div id="{{id}}">{{name+'我是附加的文本'}}</div>
+<div>{{{html}}}</div>
+</script>
+
 ```
 
 js:
@@ -87,7 +93,7 @@ var p = new Pat({
     name:'pat',
     html:'<strong>pat</strong>'
   },
-  template:'{{text}}'
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 ```
@@ -140,17 +146,26 @@ else的语法为：
 html:
 
 ```html
+
+
 <div id="test">
-    <div t-if="name == 'pat'">
-        {{name+'我是附加的文本'}}
-    </div>
 
-    <!--推荐下面的mustache的风格-->
-
-    {{#if(name="pat")}}
-        <div>{{name+'我是附加的文本'}}</div>
-    {{/if}}
 </div>
+
+
+<script type="javascript/template" id="J_tmpl">
+<div t-if="name == 'pat'">
+    {{name+'我是附加的文本'}}
+</div>
+
+<!--推荐下面的mustache的风格-->
+
+{{#if(name="pat")}}
+    <div>{{name+'我是附加的文本'}}</div>
+{{/if}}
+</script>
+
+
 ```
 
 js:
@@ -163,7 +178,7 @@ var p = new Pat({
     name:'pat',
     html:'<strong>pat</strong>'
   },
-  template:'{{text}}'
+  template:document.getElementById('J_tmpl').innerHTML
 })
 ```
 
@@ -193,6 +208,10 @@ html:
 
 ```html
 <div id="test">
+
+</div>
+
+<script type="javascript/template" id="J_tmpl">
   <div t-for="item in lists">
       {{item.name+'当前index'+__INDEX__}}
   </div>
@@ -202,7 +221,10 @@ html:
   {{#for(item in lists)}}
       <div>{{item.name+'当前index'+__INDEX__}}</div>
   {{/for}}
-</div>
+</script>
+
+
+
 ```
 
 js:
@@ -220,7 +242,7 @@ var p = new Pat({
     }],
     html:'<strong>pat</strong>'
   },
-  template:'{{text}}'
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 ```
@@ -237,10 +259,14 @@ html:
 
 ```html
 <div id="test">
-    {{#if(name="pat")}}
-        <div>{{name+'我是附加的文本'}}</div>
-    {{/if}}
+
 </div>
+
+<script type="javascript/template" id="J_tmpl">
+  {{#if(name="pat")}}
+    <div>{{name+'我是附加的文本'}}</div>
+  {{/if}}
+</script>
 ```
 
 js:
@@ -253,7 +279,7 @@ var p = new Pat({
     name:'pat',
     html:'<strong>pat</strong>'
   },
-  template:'{{text}}'
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 p.$data.name = 'hide'
@@ -291,11 +317,17 @@ pat默认使用defineProperties给data的每个key注入钩子来达到监听数
 html:
 
 ```html
+
 <div id="test">
-    {{#if(name="pat")}}
-        <div>{{name+'我是附加的文本'}}</div>
-    {{/if}}
+
 </div>
+
+<script type="javascript/template" id="J_tmpl">
+  {{#if(name="pat")}}
+    <div>{{name+'我是附加的文本'}}</div>
+  {{/if}}
+</script>
+
 ```
 
 js:
@@ -309,7 +341,7 @@ var p = new Pat({
     name:'pat',
     html:'<strong>pat</strong>'
   },
-  template:'{{text}}'
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 
@@ -353,8 +385,16 @@ pat使用`t-model`让使用者可以选择性的使用双向绑定。
 html:
 
 ```html
-<div id="test">{{text}}</div>
-<input type="text" value="" t-model="text">
+<div id="test">
+
+</div>
+
+<script type="javascript/template" id="J_tmpl">
+  {{text}}
+  <input type="text" value="" t-model="text">
+</script>
+
+
 ```
 
 js:
@@ -364,7 +404,8 @@ var p = new Pat({
   el:'test',
   data:{
     text:'hello world'
-  }
+  },
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 ```
@@ -392,8 +433,13 @@ html:
 
 ```html
 <div id="test">
-    <div class="test1" t-class:test2="number > 10"  t-class:test3="number == 12">{{text}}</div>
+
 </div>
+
+<script type="javascript/template" id="J_tmpl">
+  <div class="test1" t-class:test2="number > 10"  t-class:test3="number == 12">{{text}}</div>
+</script>
+
 ```
 
 js:
@@ -403,7 +449,8 @@ var p = new Pat({
   el:'test',
   data:{
     number:12
-  }
+  },
+  template:document.getElementById('J_tmpl').innerHTML
 })
 
 //此时会同时具有test2 和 test3两个class
@@ -422,7 +469,7 @@ var p = new Pat({
 html:
 
 ```html
-<div id="test">{{text|testFilter}}</div>
+<div id="test"></div>
 ```
 
 js:
@@ -433,6 +480,7 @@ var p = new Pat({
   data:{
     text:'hello'
   },
+  template:'{{text|testFilter}}',
   filters:{
     testFilter:function(value,scope){
         return "我是前缀-" + value
@@ -467,7 +515,7 @@ pat也支持angular以及vue里面的watcher监听，用户可以自己监听一
 html:
 
 ```html
-<div id="test">{{text}}</div>
+<div id="test"></div>
 ```
 
 js:
@@ -478,6 +526,7 @@ var p = new Pat({
   data:{
     text:'hello'
   },
+  template:'{{text}}',
   watchers:{
     'text':function(old,new){
         console.log('old:'+old+'-new:'+new)

@@ -94,14 +94,15 @@
 <h2 id='hello world'>hello world</h2>
 <p>我们来看下最简单的例子：</p>
 <p>html:</p>
-<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;&lt;/div&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
   el:&#39;test&#39;,
   data:{
     text:&#39;hello world&#39;
-  }
+  },
+  template:&#39;{{text}}&#39;
 })
 </code></pre>
 <p>展现出来就是hello world，这是最简单的渲染。这边的<code>{{}}</code>称之为插值。默认会转义，如果不想要转义，就像mustache那样使用<code>{{{}}}</code>来实现。</p>
@@ -111,15 +112,24 @@
 <h2 id='列表'>列表</h2>
 <p>下面是一个列表渲染的例子，我们更推荐使用mustache风格的语法，可读性更好。</p>
 <p>html:</p>
-<pre><code class="lang-html">&lt;!--指令型语法--&gt;
+<pre><code class="lang-html">
+&lt;div id=&quot;test&quot;&gt;
+
+&lt;/div&gt;
+
+&lt;script type=&quot;javascript/template&quot; id=&quot;J_tmpl&quot;&gt;
+
+&lt;!--指令型语法--&gt;
 &lt;!--
-&lt;div t-for=&quot;item in lists&quot; id=&quot;test&quot;&gt;{{item.name}}-{{__INDEX__}}&lt;/div&gt;
+&lt;div t-for=&quot;item in lists&quot;&gt;{{item.name}}-{{__INDEX__}}&lt;/div&gt;
 --&gt;
 
 &lt;!--mustache风格语法--&gt;
 {{#for(item in lists)}}
-&lt;div id=&quot;test&quot;&gt;{{item.name}}-{{__INDEX__}}&lt;/div&gt;
+&lt;div&gt;{{item.name}}-{{__INDEX__}}&lt;/div&gt;
 {{/for}}
+
+&lt;/script&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
@@ -131,7 +141,8 @@
         name:&#39;2222&#39;
     }],
     text:&#39;hello world&#39;
-  }
+  },
+  template:document.getElementById(&#39;J_tmpl&#39;).innerHTML
 })
 </code></pre>
 <p>for指令可以使用<code>__INDEX__</code>拿到当前的索引index，从0开始计数。</p>
@@ -141,14 +152,15 @@
 <h2 id='局部刷新'>局部刷新</h2>
 <p>pat使局部刷新更加简单，通过操作数据来达到dom的局部更新目的。</p>
 <p>html:</p>
-<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;&lt;/div&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
   el:&#39;test&#39;,
   data:{
     text:&#39;hello world&#39;
-  }
+  },
+  template:&#39;{{text}}&#39;
 })
 
 p.$data.text = &quot;hi world&quot;
@@ -160,16 +172,22 @@ p.$data.text = &quot;hi world&quot;
 <h2 id='双向绑定'>双向绑定</h2>
 <p>与angular，vue一样，用户可以使用<code>t-model</code>指令来选择性的使用双向绑定的功能。</p>
 <p>html:</p>
-<pre><code class="lang-html">
-&lt;div id=&quot;test&quot;&gt;{{text}}&lt;/div&gt;
+<pre><code class="lang-html">&lt;div id=&quot;test&quot;&gt;
+
+&lt;/div&gt;
+
+&lt;script type=&quot;javascript/template&quot; id=&quot;J_tmpl&quot;&gt;
+&lt;div&gt;{{text}}&lt;/div&gt;
 &lt;input type=&quot;text&quot; value=&quot;&quot; t-model=&quot;text&quot;&gt;
+&lt;/script&gt;
 </code></pre>
 <p>js:</p>
 <pre><code class="lang-js">var p = new Pat({
   el:&#39;test&#39;,
   data:{
     text:&#39;hello world&#39;
-  }
+  },
+  template:document.getElementById(&#39;J_tmpl&#39;).innerHTML
 })
 </code></pre>
 <p>更多详细用法，<a href="./doc.html">请点这里</a>。</p>
