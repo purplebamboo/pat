@@ -71,6 +71,7 @@
         <li id="doc" class="lists"><a href="./doc.html">文档</a></li>
         <li id="example" class="lists"><a href="./example.html">实例</a></li>
         <li id="article" class="lists"><a href="./article.html">文章</a></li>
+        <li class="lists"><a target="_blank" href="../../benchmark/list.html">基准测试</a></li>
       </ul>
     </nav>
   </div>
