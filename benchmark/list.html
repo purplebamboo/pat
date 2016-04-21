@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>大数据测试</title>
+  <script src="../build/1.1/pat-min.js"></script>
+  <script src="./jquery.js"></script>
+
+  <style type="text/css">
+
+    body{
+      background: #fafafa;
+    }
+
+    h1{
+      text-align: center;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    #test{
+      background: #fff;
+      margin: 20px auto;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      width: 800px;
+      min-height: 100px;
+      padding: 20px 30px;
+      position: relative;
+    }
+    .line{
+      text-align: left;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    #timeConsole{
+      position: absolute;
+      left: 0px;
+      width: 200px;
+      height: 30px;
+      line-height: 30px;
+      display: block;
+      top: 0px;
+      background: #fafafa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+
+
+
+<div id="test">
+  <span id="timeConsole">暂无数据...</span>
+
+
+  <h1>下面是针对<span id="J_number_text">1000</span>行，每行20列数据的渲染测试</h1>
+  <pre style="white-space: pre-line;font-size: 14px;padding: 20px;">
+    分为三种情况：初次渲染，局部小更新，还有整个列表数据全部替换。
+    1.初次渲染：脏检测不需要注入数据，所以渲染更快。
+    2.局部小更新：脏检测肯定不如defineProperties，因为需要整个遍历。
+    3.整个列表更新：脏检测更快，因为这个时候defineProperties的指向性优势不存在了就是全量更新，还要考虑各种defineProperties里面潜在的冲突问题，另外对于新的数据，又要来一遍递归的注入数据。而脏检测不需要。
+
+    我们业务中更多的是第三种情况。
+  </pre>
+  <div>
+    选择数据检测方式：
+    <select id="J_type">
+        <option value="dirtyCheck" selected>dirtyCheck</option>
+        <option value="defineProperties">defineProperties</option>
+    </select>
+    设置行数：<input id="J_number" type="text" value="1000"/>
+    <button onClick="startAnalyze()">初次渲染</button>
+    <button onClick="startUpdateOne()">更新第一个数据</button>
+    <button onClick="startUpdate()">更新全部数据</button>
+  </div>
+
+  <div id="container">
+
+
+
+
+  </div>
+
+</div>
+
+<!--支持传入模板-->
+<script type="javascript/template" id="J_tmpl">
+
+  {{#for(item in lists)}}
+  <div class="line">
+    {{item.id1}}-{{item.id2}}-{{item.id3}}-{{item.id4}}-{{item.id5}}-{{item.id6}}-{{item.id7}}-{{item.id8}}-{{item.id9}}-{{item.id10}}-{{item.id11}}-{{item.id12}}-{{item.id13}}-{{item.id14}}-{{item.id15}}-{{item.id16}}-{{item.id17}}-{{item.id18}}-{{item.id19}}-{{item.id20}}-当前行数{{__INDEX__}}
+  </div>
+  {{/for}}
+</script>
+
+
+<script type="text/javascript">
+
+
+$('#J_number').on('change',function(){
+    $("#J_number_text").html($('#J_number').val())
+})
+
+
+var p2
+
+
+function startAnalyze(){
+
+
+  var type = $('#J_type').val()
+  var number = $('#J_number').val()
+  $('#container').html('...')
+
+  function generateObj(index){
+    var obj = {}
+    for (var i = 1; i <= 20; i++) {
+      obj['id'+i] = 'No.'+i
+    }
+    return obj
+  }
+
+
+  var list = []
+
+
+  for (var i = 1; i <= number; i++) {
+    list.push(generateObj(i))
+  }
+
+  var start = new Date().getTime()
+
+  p2 = new Pat({
+    el:'container',
+    dataCheckType:type,
+    data:{
+      lists:list
+    },
+    template:document.getElementById('J_tmpl').innerHTML
+  })
+
+  var time = new Date().getTime() - start
+
+  document.getElementById('timeConsole').innerHTML = '花费了' + time + 'ms'
+
+}
+
+
+function startUpdateOne(){
+  if (!p2 || !p2.$data) {
+    alert('请先渲染一次再来使用更新。。。')
+  }
+
+  for (var key in p2.$data.lists[0]) {
+    p2.$data.lists[0][key] = '[' + p2.$data.lists[0][key] + ']'
+  }
+
+  var start = new Date().getTime()
+
+  p2.$apply()
+
+  var time = new Date().getTime() - start
+
+  document.getElementById('timeConsole').innerHTML = '单个更新花费了' + time + 'ms'
+
+}
+
+function startUpdate(){
+  if (!p2 || !p2.$data) {
+    alert('请先渲染一次再来使用更新。。。')
+  }
+
+  //参考我们的业务，一个全新的数据
+  var newList = []
+
+  for (var i = 0; i < p2.$data.lists.length; i++) {
+
+    var obj = {}
+    for (var key in p2.$data.lists[i]) {
+      obj[key] = '[' + p2.$data.lists[i][key] + ']'
+    }
+    newList.push(obj)
+  }
+
+
+  var start = new Date().getTime()
+  p2.$data.lists = newList
+  p2.$apply()
+
+  var time = new Date().getTime() - start
+
+  document.getElementById('timeConsole').innerHTML = '全部更新花费了' + time + 'ms'
+
+}
+</script>
+</body>
+</html>
