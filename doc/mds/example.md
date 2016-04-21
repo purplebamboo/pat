@@ -3,18 +3,21 @@
 ## simple
 
 <div>
-<iframe width="100%" height="400" src="http://jsfiddle.net/cherishpeace/c52nLgqj/1/embedded/" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
+<p data-height="266" data-theme-id="dark" data-slug-hash="MyXNWE" data-default-tab="result" data-user="cherishpeace" data-embed-version="2" class="codepen">See the Pen <a href="http://codepen.io/cherishpeace/pen/MyXNWE/">MyXNWE</a> by cherishpeace (<a href="http://codepen.io/cherishpeace">@cherishpeace</a>) on <a href="http://codepen.io">CodePen</a>.</p>
+<script async src="http://assets.codepen.io/assets/embed/ei.js"></script>
 </div>
 
 ## form
 
 <div>
-<iframe width="100%" height="400" src="http://jsfiddle.net/cherishpeace/dqgst5jx/1/embedded/" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
+<p data-height="458" data-theme-id="dark" data-slug-hash="dMKxoL" data-default-tab="result" data-user="cherishpeace" data-embed-version="2" class="codepen">See the Pen <a href="http://codepen.io/cherishpeace/pen/dMKxoL/">dMKxoL</a> by cherishpeace (<a href="http://codepen.io/cherishpeace">@cherishpeace</a>) on <a href="http://codepen.io">CodePen</a>.</p>
+<script async src="http://assets.codepen.io/assets/embed/ei.js"></script>
 </div>
 
 ## todolist
 
 <div>
-<iframe width="100%" height="400" src="http://jsfiddle.net/cherishpeace/aw56ufmc/1/embedded/" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
+<p data-height="266" data-theme-id="dark" data-slug-hash="WwyVQR" data-default-tab="result" data-user="cherishpeace" data-embed-version="2" class="codepen">See the Pen <a href="http://codepen.io/cherishpeace/pen/WwyVQR/">WwyVQR</a> by cherishpeace (<a href="http://codepen.io/cherishpeace">@cherishpeace</a>) on <a href="http://codepen.io">CodePen</a>.</p>
+<script async src="http://assets.codepen.io/assets/embed/ei.js"></script>
 
 </div>

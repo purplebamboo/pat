@@ -25,8 +25,16 @@ var render = function(content) {
 var guideHtml = marked(fs.readFileSync('./doc/mds/guide.md').toString())
 var docHtml = marked(fs.readFileSync('./doc/mds/doc.md').toString())
 var exampleHtml = marked(fs.readFileSync('./doc/mds/example.md').toString())
+var articleHtml = marked(fs.readFileSync('./doc/mds/article.md').toString())
 
 
 fs.writeFileSync('./doc/views/guide.html',render(guideHtml))
 fs.writeFileSync('./doc/views/doc.html',render(docHtml))
 fs.writeFileSync('./doc/views/example.html',render(exampleHtml))
+fs.writeFileSync('./doc/views/article.html',render(articleHtml))
+
+
+
+
+
+
