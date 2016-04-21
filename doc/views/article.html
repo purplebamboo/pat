@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>pat-轻量级指令模板解决方案</title>
+  <link rel="stylesheet" type="text/css" href="../lib/semantic.min.css">
+  <link rel="stylesheet" type="text/css" href="../lib/lib.css">
+  <link rel="stylesheet" type="text/css" href="../lib/channel.css">
+  <script src="../lib/highlight.js"></script>
+  <script src="../lib/jquery.js"></script>
+  <script src="../lib/scrolltofix.js"></script>
+  <script src="../lib/semantic.min.js"></script>
+
+  <script>hljs.initHighlightingOnLoad()</script>
+  <script type="text/javascript">
+  $(function() {
+
+
+    $('.quick-menu .lists').each(function(){
+      var path = $(this).children('a').attr('href').slice(2)
+
+      if (path && location.pathname.indexOf(path) != -1) {
+        $(this).addClass('current')
+      }
+    })
+
+
+    $('#J_article_nav').scrollToFixed()
+
+
+    var linkNav = [];
+    linkNav.push('<div id="link"><span class="title">目录</span><ul>');
+    var isMarkDownArticle = false;
+    $("#J_content").find('h2,h3').each(function(){
+        isMarkDownArticle = true;
+        var text = $(this).html().replace(/<a\s+.*>.*<\/a>/,"");
+        var child = $(this)[0].tagName.toLowerCase() == 'h3' ? 'child' : ''
+        linkNav.push('<li class="'+child+'"><a href="#'+$(this).attr("id")+'" title="'+text+'">'+text+'</a></li>');
+    });
+    linkNav.push('</div></ul>');
+    if(isMarkDownArticle){
+      $('#J_article_nav').html(linkNav.join(""))
+    }
+
+    // $(window).scroll(function(){
+    //     if($(this).scrollTop() > 150){
+    //         $("#link").animate({"top":"50px"}, 100);
+    //     }else{
+    //         $("#link").animate({"top":"280px"},100);
+    //     }
+    // });
+
+  })
+
+  </script>
+</head>
+<body>
+
+<div id="site-nav">
+  <div class="head">
+
+    <svg style="width:40px;height:40px;position:relative;margin-top:6px;" version="1.1" id="图形" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve">
+      <path class="svgpath" data-index="path_0" fill="#fff" d="M894.178228 201.847108c-17.217701-11.84676-41.842185-26.22042-60.59444-36.317789-20.84948-11.243169-40.921452-24.481259-61.464021-36.655391-40.95112-24.297112-81.53497-47.591649-121.649246-72.15475-20.070949-12.286666-41.032963-23.243385-60.88089-36.021108-18.250968-11.744457-47.581418-20.696024-76.993712-20.696024l-5.994993 0c-25.616829 0-58.885969 11.488698-74.610037 21.913438-19.652527 13.033482-40.686154 23.519605-60.655822 36.246176-39.489201 25.176923-81.280234 47.755334-121.75155 72.052447-19.468381 11.683075-42.742457 23.826515-60.778587 36.123412-19.008014 12.96187-41.259054 22.977395-60.666053 36.246176-31.56067 21.565605-68.829882 73.382394-68.829882 126.426826l0 365.981006c0 53.330882 37.289673 104.441776 69.075411 126.181297 37.115757 25.391761 81.965668 49.076074 121.19911 72.615117 40.481546 24.307342 82.272579 46.865293 121.75155 72.052447 19.938977 12.726572 40.808918 23.693521 60.88089 36.021108 17.606455 10.804286 46.333314 22.138506 74.383946 22.138506l13.197168 0c45.38189 0 102.59008-39.264133 133.58808-58.639418 39.970028-25.003007 80.512957-47.244839 121.035425-71.57162 38.742385-23.253615 84.042432-47.122075 120.473778-72.113829 30.957078-21.248464 69.800744-72.574195 69.800744-124.217068l0-370.912041C964.69612 274.175774 925.564982 223.443404 894.178228 201.847108zM737.193308 545.536153c-30.107958 22.066893-76.021827 33.166837-137.997366 33.166837l-157.445287 0 0 145.271155c0 8.327515 1.892617 14.711262 5.534626 19.284234 3.785234 4.441001 10.394049 8.18429 19.846904 11.100967l0 11.376164-156.759852 0 0-11.376164c9.30963-2.496209 15.79568-5.964302 19.570684-10.548527 3.918229-4.572972 5.810846-11.099944 5.810846-19.560454l0-372.272679c0-8.46051-1.892617-14.844257-5.534626-19.141009-3.785234-4.306983-10.261054-8.051296-19.846904-10.966949l0-11.376164 288.823608 0c57.116117 0 100.328147 8.73673 129.351687 26.363645 16.880099 10.404279 29.974964 24.972316 39.560814 43.980331 9.452855 18.87502 14.179283 40.236018 14.179283 63.69424C782.288748 489.903439 767.301266 523.47949 737.193308 545.536153z" />
+      <path class="svgpath" data-index="path_1" fill="#fff" d="M674.266345 444.531779c0 21.228003-7.959222 35.652815-23.765133 43.427891-10.803263 5.411862-29.974964 8.18429-57.648095 8.18429l-151.102461 0 0-103.091368 151.102461 0c27.948329 0 47.121052 2.629203 57.648095 8.041065C666.307123 409.001728 674.266345 423.436771 674.266345 444.531779z" />
+    </svg>
+
+    <nav class="head-nav quick-menu">
+      <ul class="clearfix">
+        <li id="index" class="lists"><a href="./index.html">首页</a></li>
+        <li id="started" class="lists"><a href="./guide.html">起步</a></li>
+        <li id="doc" class="lists"><a href="./doc.html">文档</a></li>
+        <li id="example" class="lists"><a href="./example.html">实例</a></li>
+        <li id="article" class="lists"><a href="./article.html">文章</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<div id="J_content" class="main wrap channel">
+  <div id="J_article_nav" class="article-nav"></div>
+  <h1 id='局部刷新模板那些事'>局部刷新模板那些事</h1>
+<p>模板是每个前端工作者都会接触到的东西，近几年前端的工程化，发展的如火如荼。从基本的字符串拼接到字符串模板，再到现在各种框架给出的“伪模板”解决方案，前端模板经历了种种变革。</p>
+<p>下面就不同时期的模板做一下回顾。</p>
+<blockquote>
+<p>本文假定读者已经对<code>underscore</code>, <code>mustache</code>，<code>angularjs</code>，<code>reactjs</code>等技术有了一定的了解。否则请先看看相关资料了解下。</p>
+</blockquote>
+<h2 id='原始的模板'>原始的模板</h2>
+<p>提到模板，不得不提到每个前端都会经历的字符串拼接的阶段。</p>
+<p>看下面这段代码：</p>
+<pre><code class="lang-js">
+&lt;ul id=&quot;test&quot;&gt;
+
+
+&lt;/ul&gt;
+
+&lt;script&gt;
+
+var students = [{
+    name:&#39;张三&#39;,
+    age:&#39;19&#39;
+},{
+    name:&#39;李四&#39;,
+    age:&#39;17&#39;
+},{
+    name:&#39;王五&#39;,
+    age:&#39;21&#39;
+}]
+
+var htmlArray = [],tmplStr
+
+for(var i=0;i&lt;students.length;i++){
+    tmplStr = &#39;&lt;li&gt;&#39;
+    tmplStr += &#39;姓名：&#39;+ students[i].name +&#39;年龄：&#39; + students[i].age
+    tmplStr += &#39;&lt;/li&gt;&#39;
+    htmlArray.push(tmplStr)
+}
+
+document.getElementById(&#39;test&#39;).innerHTML = htmlArray.join(&#39; &#39;)
+&lt;/script&gt;
+</code></pre>
+<p>代码逻辑很简单，将一份数据循环拼接好字符串最后组装好html字符串塞到页面上。</p>
+<p>可以看到这种写法，模板部分跟逻辑部分很容易耦合在一起，非常的不清晰，可读性也很差。在大规模项目中是不建议这么用的。</p>
+<h2 id='字符串模板的兴起'>字符串模板的兴起</h2>
+<p>因为上面的写法有太多的缺点，所以先辈们开始实现基本的模板引擎。实现展示与逻辑的分离。</p>
+<p>比较典型的是underscore类型的模板，它其实很简单，就是把一个基本的模板语法转换成一个可执行的javascript代码。</p>
+<p>我们看下上面的功能使用underscore的语法怎么写：</p>
+<pre><code class="lang-js">
+
+&lt;ul id=&quot;test&quot;&gt;
+
+
+&lt;/ul&gt;
+
+&lt;script&gt;
+
+var students = [{
+    name:&#39;张三&#39;
+},{
+    name:&#39;李四&#39;
+},{
+    name:&#39;王五&#39;
+}]
+
+
+var tmpl = &#39;&lt;% for(var i=0;i&lt;students.length;i++){ %&gt; 姓名： &lt;% students[i].name %&gt;   &lt;% } %&gt;&#39;
+
+//假设template可以实现类似underscore的语法
+var tplCompile = template(tmpl) //先生成执行函数
+
+document.getElementById(&#39;test&#39;).innerHTML = tplCompile(students)//执行渲染
+&lt;/script&gt;
+</code></pre>
+<p>template，作为实现了underscore功能的函数，传入一个模板还有一份数据，就可以把模板渲染出来。</p>
+<p>这样写的好处是，实现了模板与字符串逻辑的分离。ui层，也就是渲染逻辑看起来会比较清晰。</p>
+<p>下面我们来看看如何实现一个最基本的template：</p>
+<pre><code class="lang-js">
+function template(tpl){
+    //用来匹配出我们的特殊语法
+    var tplReg = /&lt;%([^%&gt;]+)?%&gt;/g
+
+    var match;
+    var cursor=0;
+    var regOut = /(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g;
+
+    //需要拼接的代码，这里注意with的用法，用来使渲染的数据应用在模板里
+    var code = &#39;var codes=[];\nwith(renderData){\n&#39;;
+
+    var addLine = function(line,js){
+        //普通文本，这时候加上一个双引号就可以了
+        if(!js){
+            code += &#39;codes.push(&quot;&#39; + line.replace(/&quot;/g, &#39;\\&quot;&#39;) + &#39;&quot;);\n&#39;
+            return
+        }
+
+        //特殊语法特殊处理
+        //对于有js特殊逻辑比如for,if这种代码，不适用push。直接打出。
+        if(regOut.test(line)){
+            code += line + &#39;\n&#39;;
+        }else{
+            //普通的特殊语法，跟上面的普通的文本唯一的区别就是少了双引号，这样以后执行时就会是变量。
+            code += &#39;codes.push(&#39; + line + &#39;);\n&#39;
+        }
+
+    }
+    //通过正则不停的去匹配特殊语法
+    while(match = tplReg.exec(tpl)) {
+        //截取前面的普通文本
+        addLine(tpl.slice(cursor, match.index)); //普通文本
+        //将当前的特殊语法加入
+        addLine(match[1],true);  //特殊逻辑
+        cursor = match.index + match[0].length; //更新游标
+    }
+    //末尾可能还剩下些语法
+    addLine(tpl.substr(cursor, tpl.length - cursor)); //剩下的代码
+
+    code += &#39;};return codes.join(&quot;&quot;)&#39;;
+    code = code.replace(/[\r\t\n]/g, &#39;&#39;)
+
+    var compileFn = function(data){
+        //使用function执行拼好的代码，将data传到函数里。
+        return new Function(&#39;renderData&#39;,code)(data);
+    }
+
+    return compileFn
+
+}
+</code></pre>
+<p>实现很简单，主要就是通过正则替换，拼凑出最终的js执行语句，然后使用function来执行得到结果。</p>
+<p>我们通过tplReg这个正则匹配出所有的<code>&lt;% ... %&gt;</code>特殊语法，<code>addLine</code>负责生成javascript可执行语句。</p>
+<p><code>addLine</code>添加的语句需要分三种情况：</p>
+<ol>
+<li>特殊语法之外的普通文本，比如上面的<code>姓名：</code>这种文本。这个时候直接push到codes里面就行，最后会原样输出。这边需要加上双引号代表是个普通字符串。</li>
+<li>对于特殊语法里面的普通语法，比如上面的<code>students[i].name</code>，这种时候直接push到codes里面，跟上面不同的是，这时不需要加双引号,这样最后这些codes执行时就会把它作为变量去处理。</li>
+<li>还有一种特殊的语法，就是<code>for(var i=0;i&lt;students.length;i++){</code>这种带for的<br>。这个时候不能放到codes里面，因为我们本身需要它的循环功能。</li>
+</ol>
+<p>最后拼接好codes后，使用function一次执行得到最终渲染好的字符串。</p>
+<p>当然我们这边的实现超级简陋，仅供参考原理。实际的模板还需要考虑缓存，兼容性，xss等等。</p>
+<p>字符串模板使用很广泛，也踊跃出了若干实现。mustache，Underscore templates，Dust.js等等，前端真的是能折腾。如果有选择困难症，可以看看这里：<a href="http://garann.github.io/template-chooser/">http://garann.github.io/template-chooser/</a></p>
+<p>这个阶段的模板或多或少都是相同的原理。</p>
+<ul>
+<li>解析字符串模板，有的是直接正则分析，有的是用语法树分析。</li>
+<li>渲染出结果，直接改造成原生的javascript语句执行拿到结果。</li>
+</ul>
+<p>这在很长一段时间里对于前端工程师来说已经够用了。通过模板的dsl，很好的实现了前端逻辑与ui的分离。</p>
+<h2 id='字符串模板的局部刷新'>字符串模板的局部刷新</h2>
+<p>但是随着前端的发展，特别是富客户端应用的兴起。单纯的字符串模板已经很难满足需求了。</p>
+<p>比如一个学生个人信息界面，分为个人姓名，还有个人成绩两块。</p>
+<pre><code class="lang-js">
+&lt;div&gt;个人信息：&lt;/div&gt;
+&lt;div id=&quot;test&quot;&gt;
+
+
+&lt;/div&gt;
+
+&lt;script&gt;
+
+var student = {
+    name:&#39;张三&#39;,
+    score:89
+}
+
+
+var tmpl = &#39;&lt;div&gt;姓名: &lt;% name %&gt; &lt;/div&gt;&lt;div&gt;成绩: &lt;% score %&gt; &lt;/div&gt;&#39;
+
+//假设template方法可以实现underscore的语法
+document.getElementById(&#39;test&#39;).innerHTML = template(tmpl)(student)
+&lt;/script&gt;
+</code></pre>
+<p>如果我们初次渲染后需要去更新成绩。我们期待的情况肯定是只更新成绩，个人姓名不要重复刷新。这对于普通字符串模板是做不到的。只能自己使用dom操作去修改，而这样就违背了我们的初衷，逻辑又跟展现耦合变的不可控了。</p>
+<blockquote>
+<p>实际情况会更复杂,页面内容更多，需要局部刷新的地方更多，这里为了方便，只举一个最简单的例子。</p>
+</blockquote>
+<p>如果不自己使用dom操作，还希望用模板，那么每次要改点东西都需要整个页面全部重新渲染，在通过innerHTML一次性更新。</p>
+<ul>
+<li>首先这会造成页面的整体刷新，用户体验差</li>
+<li>其次，每次innerHTML，浏览器都需要重新渲染dom结构，造成性能浪费</li>
+</ul>
+<p>我们其实是需要一种局部刷新的东西，在初次渲染后仍然保持模板与dom的联系。通过一些方法，只改变页面中的一小部分html。差异化的去更新。其实是一种innerHTML的优化。</p>
+<p>我们团队很久之前就做了这方面的尝试，可以先看下我们是怎么用的:</p>
+<pre><code class="lang-js">
+&lt;script&gt;
+
+var student = {
+    name:&#39;张三&#39;,
+    score:89
+}
+
+//注意下面的模板里面多了 tpl-name=&quot;sc&quot;  tpl-key=&quot;score&quot;
+var tmpl = &#39;&lt;div&gt;姓名: &lt;% name %&gt; &lt;/div&gt;&lt;div tpl-name=&quot;sc&quot; tpl-key=&quot;score&quot;&gt;成绩: &lt;% score %&gt; &lt;/div&gt;&#39;
+
+
+//第一次渲染，会自动绑定到test的div上
+var node = render(&#39;test&#39;, tmpl, student)
+
+//如果我们需要更新成绩只需要调用setChunkData来局部刷新页面
+node.setChunkData(score,100)
+
+&lt;/script&gt;
+</code></pre>
+<p>首先我们会在需要更新的局部dom上打上标签<code>tpl-name=&quot;sc&quot; tpl-key=&quot;score&quot;</code>,代表这里的dom第二次渲染需要依赖score这个变量,并且这个局部模板有了唯一标识sc。然后当我们需要更新成绩的时候只需要调用<code>node.setChunkData(score,100)</code>就可以找到依赖score这个变量对应的dom并且自动使用局部模板去刷新页面了。</p>
+<p>可以看到这样带来了不少好处，我们可以继续享受模板带来的便利性，也可以局部刷新页面中的某个区块。而这一切都是建立在数据上的，我们的逻辑处理永远在数据这一层，面向数据编程。而渲染，局部渲染都会自动帮忙完成。</p>
+<p>那么达到这样的功能我们需要做什么呢？</p>
+<ul>
+<li>首先我们需要先解析模板，对于<code>tpl-key</code>这样的标签，我们需要特殊处理，把子模板记录下来，并且记录tpl-name，作为对应。</li>
+<li>在调用setChunkData时，我们需要去找到对应的局部模板，还有对应的dom。重新渲染后局部innerHTML。</li>
+</ul>
+<p>我们看一个最简单的实现（基于上面的template增强而来）：</p>
+<pre><code class="lang-js">
+//此函数依赖上面的template函数
+var render = function(id, tpl,data){
+
+    //初次渲染，直接使用以前的template函数
+    document.getElementById(id).innerHTML = template(tpl)(data)
+
+
+    //下面都是局部渲染需要的逻辑
+    var tpls = []//存放局部刷新的模板
+    //解析模板，找到局部模板 这边的getSubTpls可以先不管，只需要知道返回结果为：
+    //[{name:&#39;sc&#39;,key:score,tpl:&#39;&lt;span&gt;成绩:&lt;/span&gt; &lt;% score %&gt; &#39;}]
+    tpls = getSubTpls(tpl)
+
+
+    //用于根据依赖的key找到对应的那些模板
+    function getChunkTpl(key){
+        var results = []
+
+        for(var i= tpls.length-1;i&gt;-1;i--){
+            if(tpls[i].key === key){
+                results.push(tpls[i])
+            }
+        }
+        return results
+    }
+
+    return {
+        setChunkData:function(key,value){
+            var subData = {}
+            subData[key] = value
+
+
+            var subNode
+            var subTpls = getChunkTpl(key) //匹配到对应的局部模板,可能有多个
+
+            for(var i=0;i&lt;subTpls.length;i++){
+                //这里为了图方便直接用querySelector了
+                subNode = document.querySelector(&#39;[tpl-name=&quot;&#39; + subTpls[i].name + &#39;&quot;]&#39;)
+                //渲染好，刷新局部dom
+                subNode.innerHTML = template(subTpls[i].tpl)(subData)
+
+            }
+
+        }
+    }
+
+}
+</code></pre>
+<p>基本实现了我们需要的功能，逻辑上也不复杂，提前准备好局部模板，在setChunkData时通过key找出对应的局部模板还有dom节点，这样就可以达到局部刷新的目的。</p>
+<p>下面看下getSubTpls的实现，这个如果不感兴趣可以直接跳过，毕竟已经是过时的技术了。</p>
+<pre><code class="lang-js">
+//这个方法是用来获取一个tag下面的字符串
+//getTagInnerHtml(&#39;&lt;div&gt;&lt;span&gt;&lt;/span&gt;&lt;div id=&#39;1&#39;&gt;&lt;/div&gt;&lt;/div&gt;&#39;,div,0,0)
+//可以匹配出&lt;span&gt;&lt;/span&gt;&lt;div id=&#39;1&#39;&gt;&lt;/div&gt;
+function getTagInnerHtml(tpl, tag, s_pos, offset) {
+    var s_tag = &#39;&lt;&#39; + tag
+    var e_tag = &#39;&lt;/&#39; + tag + &#39;&gt;&#39;
+
+    var s_or_pos = s_pos + offset
+
+    var e_pos = s_pos
+    var e_next_pos = s_pos
+
+    s_pos = tpl.indexOf(s_tag, s_pos)
+    var s_next_pos = s_pos + 1
+
+    while (true) {
+        s_pos = tpl.indexOf(s_tag, s_next_pos);
+        e_pos = tpl.indexOf(e_tag, e_next_pos);
+
+        if (s_pos == -1 || s_pos &gt; e_pos) {
+            break
+        }
+        s_next_pos = s_pos + 1
+        e_next_pos = e_pos + 1
+    }
+    return {
+        html: tpl.substring(s_or_pos, e_pos)
+    }
+}
+
+
+function getSubTpls(tpl){
+    //用来匹配带有标签的tag的正则
+    var tplTagReg = /&lt;([\w]+)\s+[^&gt;]*?tpl-name=[&quot;\&#39;]([^&quot;\&#39;]+)[&quot;\&#39;]\s+[^&gt;]*?tpl-key=[&quot;\&#39;]([^&quot;\&#39;]+)[&quot;\&#39;]\s*[^&gt;]*?&gt;/g
+
+    var match,tagInfo
+    var tpls = []
+
+    while(match = tplTagReg.exec(tpl)) {
+
+        tagInfo = getTagInnerHtml(tpl,match[1],match.index,match[0].length)
+
+        tpls.push({
+            name:match[2],
+            key:match[3],
+            tpl: tagInfo.html
+        })
+    }
+    return tpls
+}
+</code></pre>
+<p>关键是getTagInnerHtml的实现，由于javascript没有平衡组的概念，所以不得不写这么一长串的处理逻辑，具体参考</p>
+<p><a href="http://lf-6666.blog.163.com/blog/static/3123705200942155416430/">http://lf-6666.blog.163.com/blog/static/3123705200942155416430/</a></p>
+<p><a href="http://thx.github.io/brix-core/articles/tpl-3/">http://thx.github.io/brix-core/articles/tpl-3/</a></p>
+<p>至此基本功能就完成了。在一段时间里也够用了。</p>
+<blockquote>
+<p>实际的代码，需要处理的问题更多，需要处理好父子级局部模板，多个数据并列依赖等等问题，由于已经是过时的技术了，这里就不详细展开了，有兴趣的可以到<a href="https://github.com/etaoux/brix/blob/master/dist/2.0/brix.js">这里</a>了解。</p>
+</blockquote>
+<p>但是其实还是有些显而易见的问题：</p>
+<ul>
+<li>局部刷新需要自己去指定标签，也很难处理父子包含，同级数据并列等问题</li>
+<li>使用<code>setChunkData</code>私有方法，需要到模板找到对应的依赖数据，需要自己去把握逻辑</li>
+<li>局部刷新其实只是局部的innerHTML,有的时候没法力度太细。跟真正的dom操作比起来，消耗、闪烁都是要大的。</li>
+</ul>
+<p>这个时候我们渐渐发现字符串模板已经走到头了。面对日新月异的前端开发，尤其是单页应用，普通的字符串模板已经不能满足需求了。</p>
+<h2 id='新时代的“模板”'>新时代的“模板”</h2>
+<p>因为字符串模板的种种缺陷，在新的大时代背景下，尤其是前端各种框架的井喷时代。各种各样的框架实现了很多很有意思的东西，跳出了传统字符串模板的概念，但是的确实现了模板的功能。这个时候已经不适合称之为模板了。</p>
+<p>我们先想想，我们上面探索局部刷新时遇到了什么问题。</p>
+<p>首先我们需要保持跟模板的联系，这样我们下次需要局部刷新时才能找到对应的节点。比如我们上面是通过在dom节点上打标来实现的。</p>
+<p>其次我们需要监听数据的变化，我们上面是直接使用私有方法<code>setChunkData</code>来通知引擎数据变化了，可以开始更新了。这样其实很不好，需要我们关注太多的东西。</p>
+<p>另外如果我们多次调用setChunkData，那么就会渲染多次，除了最后一次前面的渲染都是没有必要的，所以我们还需要个批量更新的东西，前面的那些改动不需要真实的反应到dom上。</p>
+<p>事实上，目前的主流框架虽然已经脱离了模板的范畴，但是也是紧紧围绕这几个方面来实现的。</p>
+<p>当然目前还兴起了双向绑定的热潮，不过在传统的字符串模板里是难以实现的。</p>
+<p>下面我们大概介绍下主流的几个框架的是如何实现<code>模板</code>功能的，具体分为下面这几点：</p>
+<ul>
+<li>如何监听数据的变化</li>
+<li>如何渲染更新页面定位节点位置<ul>
+<li>初次渲染的逻辑</li>
+<li>后来的更新机制</li>
+</ul>
+</li>
+<li>如何实现双向绑定</li>
+<li>如何实现批量更新</li>
+</ul>
+<h3 id='angularjs'>angularjs</h3>
+<p>angularjs带来了很多前端界的新概念，指令，脏检测，filter等等等。</p>
+<h4 id='原理'>原理</h4>
+<p>我们看下angularjs的大致图形</p>
+<p>几个概念：</p>
+<ul>
+<li>watcher 用来监听一个表达式的变更，然后有一个回调。</li>
+<li>directive  具有link方法，存放所有的指令逻辑。一般会使用watcher的功能。</li>
+<li>scope   作用域，angular的所有方法，数据都会在这个上面。</li>
+<li>digest  用来执行脏检测，开始递归检查scope上的所有watcher发现当前的值跟以前的不一样时就做出dom改变。</li>
+</ul>
+<p>三个大模块：</p>
+<p><img src="http://blog.mgechev.com/images/lightweight-ng/main-components.png" alt="dd"></p>
+<p>Provider:</p>
+<ul>
+<li>注册组件（directives, services 和 controllers）</li>
+<li>解决各个组件之间的依赖关系</li>
+<li>初始化所有组件</li>
+</ul>
+<p>DOMCompiler:</p>
+<ul>
+<li>遍历dom树的所有节点</li>
+<li>找到注册的属性类型的directives指令</li>
+<li>调用对应的directive对应的link逻辑</li>
+<li>管理scope</li>
+</ul>
+<p>Scope：</p>
+<ul>
+<li>监控表达式</li>
+<li>在每次$digest循环的时候执行所有的表达式，直到稳定，稳定就是说，表达式的值不再改变的时候</li>
+<li>在表达式的值发生改变时，调用对应的所有的回调函数</li>
+</ul>
+<p>怎么串起来：</p>
+<pre><code class="lang-js">&lt;span ng-bind=&quot;a + &#39;hello&#39;&quot;&gt;&lt;/span&gt;
+</code></pre>
+<p>我们看看<code>ng-bind</code>这个指令的实现：</p>
+<pre><code class="lang-js">Provider.directive(&#39;ng-bind&#39;, function () {
+  return {
+    link: function (el, scope, exp) {
+      //初次渲染的逻辑
+      el.innerHTML = scope.$eval(exp);
+      //添加一个观察者，当在下一次脏检测发现数据改变时就执行回调逻辑
+      scope.$watch(exp, function (val) {
+        el.innerHTML = val;
+      });
+    }
+  };
+});
+</code></pre>
+<p>初始化时：DOMCompiler遍历dom节点，找到指令定义，执行link,写dom。并且通过scope的方法增加watcher观察者。</p>
+<p>更新时：调用scope的digest，这个时候会遍历所有watchers，拿新的值跟旧的值做对比，如果不同就执行回调。</p>
+<p>所以对于我们这边的简单例子来说，第一次初始化时，通过link函数我们第一次使用innerHTML来渲染dom。同时添加了一个watcher,这样在框架下次脏检测时，检测到数据变化就会调用回调里的逻辑，这里就是重新innerHTML。</p>
+<p>具体可以看看<a href="http://purplebamboo.github.io/2015/05/27/use-200-line-code-to-implementation-a-simple-angular/">这篇文章</a>了解下它内部的渲染逻辑。</p>
+<blockquote>
+<p>当然这里只是给出了最简单的实现，其实这类模板的难点在于for,if这种指令的实现。这里受限于篇幅就不详细展开了。</p>
+</blockquote>
+<h4 id='分析'>分析</h4>
+<p>所以，angular的局部刷新，就是通过指令的私有逻辑来实现的。提出了一些比较好玩的概念。<br>我们再对比下之前说的那几个点：</p>
+<ul>
+<li><p>如何监听数据的变化：通过脏检测，用户在代码中调用<code>scope.$digest()</code>方法,在angularjs里面框架会在某些时候帮你调用。脏检测会负责遍历scope上面的所有观察者watcher。对比表达式的上一次值与现在的值，如果发现数据变化就会调用添加的回调逻辑。</p>
+</li>
+<li><p>如何渲染更新页面定位节点位置：通过指令，本身已经有了dom引用，一些特殊情况，会使用注释节点做占位符。</p>
+</li>
+<li><p>如何实现双向绑定：实现model指令，监听数据改变后先修改data数据，之后调用digest来一次脏检测更新就行了。</p>
+</li>
+<li><p>如何实现批量更新：脏检测本身就是批量的，因为是一次性调用digest才开始统一检查数据变化。</p>
+</li>
+</ul>
+<h4 id='优点'>优点</h4>
+<ul>
+<li>angular大而全，功能特别强大。集成了很多概念，社区也比较强大。</li>
+<li>开发体验比较好。模板里的expression使用了自己的编译器去解析，所以支持很强大的语法。</li>
+<li>提出了很多很好的概念，如filter，watcher。</li>
+</ul>
+<h4 id='缺点'>缺点</h4>
+<ul>
+<li>很多功能不需要，难以单独拿出来跟业务结合</li>
+<li>脏检测导致的性能问题，特别是大列表的局部刷新情况，watcher太多，导致性能巨差</li>
+<li>直接解析现有dom带来不少问题，闪烁，属性错误等等</li>
+<li>页面有多个实例时会经常出现脏检测的冲突</li>
+<li>指令的写法，相对于传统的字符串模板，可读性差</li>
+</ul>
+<h3 id='vuejs'>vuejs</h3>
+<p>vue在学习angular的基础上，做了些精简还有优化。vue只负责处理view，其实是模板+组件方案+动画。我们这里主要看他的模板方面的原理</p>
+<h4 id='原理'>原理</h4>
+<p>原理其实类似，也是有指令还有watcher的概念，只是去掉了scope，去掉了脏检测而是使用get set来做数据的变化监听。</p>
+<p><img src="http://cn.vuejs.org/images/data.png" alt="222"></p>
+<p>首先你需要先了解下<a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty">defineProperty</a>,这个特性，可以达到在你对一个属性读或者写的时候写上自己的钩子函数。</p>
+<p>整个原理是这样：</p>
+<ul>
+<li>先给数据注入get，set。递归注入，这样可以注入自己的钩子逻辑。</li>
+<li>第一次compile的时候，找到页面上的指令，并且初始化指令，同时new一个watcher，第一次获取值。获取值的时候，触发get的钩子。这样就把key跟对应的watcher绑定起来。</li>
+<li>watcher的回调不像angular那样自己写自己的私有逻辑，而是默认都是调用指令的update方法。</li>
+<li>所以指令也是不同的，vue的指令有bind，update，destroy三个方法，分别负责初始化，更新，销毁需要做的事情。</li>
+<li>当用户修改了值，会触发set，这样会通知对应绑定的watcher进行两次数据的校验，不同就触发回调，也就是对应指令的update方法。</li>
+</ul>
+<p>可以看到跟angular不同的地方主要在于，指令职责更细，另外有暴力的全部watcher检测，变成了通过set的钩子来指向性的找到对应的watcher做数据变更检测。所以在更新性能上会明显优于脏检测。</p>
+<p>具体原理可以参考：<a href="http://cn.vuejs.org/guide/reactivity.html">http://cn.vuejs.org/guide/reactivity.html</a><br>还有：<a href="http://jiongks.name/blog/vue-code-review/">http://jiongks.name/blog/vue-code-review/</a></p>
+<h4 id='分析'>分析</h4>
+<ul>
+<li>如何监听数据的变化：通过defineproperties注入钩子，修改了数据就会出发钩子，然后通知对应的watcher进行检测</li>
+<li>如何渲染更新页面定位节点位置： 也是通过指令，本身已经有了dom引用。而且vue很创新的使用了空白节点来占位。</li>
+<li>如何实现双向绑定： 实现model指令，也是有私有逻辑，监听dom改变后，修改对应的data，钩子会自动触发完成更新。</li>
+<li>如何实现批量更新：vue使用settimeOut,延迟watcher的check。通过去重watcher。达到批量更新的目的。当你多次调用赋值时不会立即去check数据的变更，而是在一次setTimeout后，开始检测队列。</li>
+</ul>
+<h4 id='特点'>特点</h4>
+<ul>
+<li>相对angular来说，职责更清晰，去掉了很多不必要的东西，更加轻量</li>
+<li>使用defineproperties解决了脏检测的性能问题，从暴力全量检测变成了指向性的检测</li>
+<li>提出了空白占位节点的概念，解决了angular里面一堆注释节点的问题</li>
+<li>动画功能很强大</li>
+</ul>
+<h4 id='缺点'>缺点</h4>
+<ul>
+<li>defineproperties必须提前写好属性，侵入的改写get set。</li>
+<li>不支持ie8</li>
+<li>直接解析dom节点，（造成额外的404请求，一些写法有问题。因为提前渲染）</li>
+<li>一直保留着对dom的引用。是否是一种浪费</li>
+<li>初次渲染并不会比脏检测快，因为需要各种递归的注入。</li>
+<li>指令写多了模板可读性太差。</li>
+<li>暂时没有服务端渲染方案，因为依赖dom。</li>
+</ul>
+<p>其实这些缺点也都是angular会有的缺点，可以说vue已经解决了大部分的angular会有的问题。不过为了使用defineproperties放弃了支持ie8，对于国内的环境来说，ie8还是难以割舍。</p>
+<h3 id='reactjs'>reactjs</h3>
+<p>reactjs创造性的提出了虚拟dom的概念，完全改变了前端的开发方式</p>
+<h4 id='原理'>原理</h4>
+<p>react，其实就是虚拟dom与真实dom的互动。</p>
+<p><img src="https://img.alicdn.com/tps/TB1NPA_JpXXXXcVXXXXXXXXXXXX-1024-768.jpg" alt="ddd"></p>
+<p>最上面的<code>text,basic element,custom element</code>都是我们通常说的<code>virtual dom</code>。我们先不管红色的自定义组件节点<code>custom element</code>。</p>
+<p>每一个<code>virtual dom</code>都有一个对应的<code>Component</code>来管理。<code>Component</code>具有两个方法：<code>mountComponent</code>还有<code>receiveComponent</code>分别负责处理初次渲染还有更新的逻辑。</p>
+<p>react初次渲染就是拼接出字符串。每种<code>virtual dom</code>会调用自己的<code>Component</code>对应的<code>mountComponent</code>来得到渲染之后的内容。比如对于text就直接返回个span包裹的文本，对于basic element，需要先处理自身属性，再调用子节点对应的Component的mountComponent，最后全部拼接好，一次性的innerHTMl到页面上。</p>
+<p>更新的时候，react里面一般是通过setState来赋予一个新的值，这样内部再调用receiveComponent来处理逻辑。对于basic element，就是先更新属性，再去更新子节点。这里有套算法，能复用的就直接调用子节点的receiveComponent。否则就是一次重新的mountComponent渲染（diff,patch）。对于text节点，直接是innerHTML更新。</p>
+<p>具体原理参考：<a href="http://purplebamboo.github.io/2015/09/15/reactjs_source_analyze_part_one/">http://purplebamboo.github.io/2015/09/15/reactjs_source_analyze_part_one/</a></p>
+<h4 id='分析'>分析</h4>
+<ul>
+<li><p>如何监听数据的变化：很原始的get set（setState），跟我们最上面的<code>setChunkData</code>类似</p>
+</li>
+<li><p>如何渲染更新页面定位节点位置：不需要直接引用真实dom，引用虚拟dom就行。虚拟dom根据id来跟真实dom一一对应。</p>
+</li>
+<li><p>如何实现双向绑定：原生不支持双向绑定，不过有插件形式的替代方案。</p>
+</li>
+<li><p>如何实现批量更新：执行方法时会包裹一个batchUpdate。这样所有的setState会执行完以后再统一去diff。</p>
+</li>
+</ul>
+<h4 id='特点'>特点</h4>
+<ul>
+<li>创造性的提出了virtual dom的概念</li>
+<li>支持服务端渲染</li>
+<li>通过dom的diff，加快了更新速度</li>
+</ul>
+<h4 id='缺点'>缺点</h4>
+<ul>
+<li>本质上还是脏检测，虽然这个脏检测是可以优化的</li>
+<li>其实不存在模板语法，if，for都是要写js代码。理解起来很困难。</li>
+<li>全家桶没办法跟其他的技术结合</li>
+<li>不允许自己修改dom</li>
+</ul>
+<h2 id='思考'>思考</h2>
+<p>不管是 angularjs，vuejs，或者是reactjs，总感觉用起来不是那么顺手，原因是我们已经习惯了传统意义上的模板写法。所以这种dom based的模板总会有这样那样的限制，导致我们不能很顺畅的去开发。</p>
+<p>上面这几种，目前我是比较喜欢vue的设计理念的，但是它也有着我们难以接受的缺点。不能说vue不优秀，只是的确不适合我们的业务。</p>
+<p>那么我们是不是可以改造下，是否可以结合virtual dom 跟 指令的优势？</p>
+<p>vue的指令是直接操作dom的，如果加一层virtual dom，实现大部分dom方法。让指令引用virtual dom，由virtual dom来操作真实dom。这样其实就可以解决掉vue的大部分问题。</p>
+<p>我们可以先把模板解析成一个ast（抽象语法树）结构的虚拟dom树。然后去解析这个树，分析出各种依赖信息。这比vue直接使用原生dom会好很多。</p>
+<p>指令不会直接跟dom打交道，而是跟虚拟dom打交道。</p>
+<p>对于初次的渲染来说，各个指令会调用虚拟dom的方法，此时虚拟dom知道是初次渲染，所以只会更新自己，而不会修改真实的dom。在最后全部执行好后，一次性的innerHTML到页面中。有点跟react类似？</p>
+<p>而更新的时候，仍然是指令的逻辑，只不过这个时候虚拟dom不仅仅会更新自身，也会同时更新真实的dom。</p>
+<p>可以看到因为加了一层虚拟dom，解决了很多问题。</p>
+<p>我们的基本原理还是vue的原理，但是通过一层中间虚拟dom层。我们可以做到：</p>
+<ul>
+<li>可以把模板的解析前置到打包阶段。打包出虚拟的virtual dom，像react那样，而vue是放到一个documentfragment，先渲染再改动。</li>
+<li>初次渲染不再依赖真实dom，从而使服务器渲染可以像react那样变得比较简单。</li>
+<li>因为不依赖dom，所以不会出现vue那样的非法指令的问题。</li>
+<li>因为有一层中间dom。所以理论上可以支持任何语法，只要后面打包时转成虚拟dom的语法。</li>
+</ul>
+<p>所以 我做了pat，在vue的基础上加上vd的概念，当然还支持了ie8等等，为了支持业务做了一些改动。</p>
+<p>一句话概括pat:</p>
+<pre><code>listener(defineProperties/dirtycheck) + directive + virtual dom
+</code></pre><p>地址：<a href="http://purplebamboo.github.io/pat/doc/views/index.html">http://purplebamboo.github.io/pat/doc/views/index.html</a></p>
+<p>与目前主要的框架相比，pat具有以下特点：</p>
+<ul>
+<li>单一职责，pat只负责解决模板问题。使用者可以单独使用，也可以跟任何其他框架结合使用。</li>
+<li>支持类mustache风格的模板语法，避免了指令写多了模板可读性差的问题。</li>
+<li>具有指令型框架的特点，扩展性强，功能强大，可以扩展自己的指令。同时支持filter与自定义watcher。</li>
+<li>具有virtual dom中间层，一方面加快了分析指令的速度，另一方面也为服务端渲染提供了可能。还解决了错误属性的问题。而且没有强引用。</li>
+<li>考虑到目前国内情况，pat做了大量事情，兼容到了ie8。</li>
+<li>同时支持脏检测与defineProperties的数据检测机制。在defineProperties模式下使用vbscript来做ie8兼容处理。</li>
+</ul>
+<h2 id='结语'>结语</h2>
+<p>目前的前端界各种框架满天飞，但是都或多或少的有所缺陷。有句话说的好，没有最完美的方案只有最适合的自己的方案。</p>
+<p>在这样的背景下作为一个前端遇到问题该怎么办呢，我认为可以先找开源技术，但是当开源技术不能满足自己的需求时。可以在开源技术的基础上修改加上自己的东西从而更好的解决问题。</p>
+<p>其实把模板解析成ast已经有很多框架在做了。都是看重了virtual dom的优势。比如下面这些：</p>
+<ul>
+<li><a href="https://github.com/ractivejs/ractive">htmlbar</a>: 运行在handlebar之后的二次编译</li>
+<li><a href="http://examples.ractivejs.org/todos">ractivejs</a>: 也是分析成虚拟dom</li>
+<li><a href="https://github.com/regularjs/regular">Regularjs</a>: 网易的框架，在angular基础上改造而来</li>
+<li><a href="https://github.com/kof/diff-renderer">diff-render</a>: facebook的人开发的，可以直接diff两个渲染好的字符串的差异，然后去更新。本质上每次都会解析成虚拟dom，然后像react那样diff这两个虚拟dom树</li>
+</ul>
+<p>总之前端的轮子真的太多了，但是无外乎那些解决方案，我们要做的就是了解这些方案，找到合适自己的，当没有特别合适的就拿一个加以改造解决自己的问题（于是又会造个轮子＝ ＝）。</p>
+<h2 id='相关引用'>相关引用</h2>
+<ul>
+<li><a href="http://div.io/topic/636">http://div.io/topic/636</a></li>
+<li><a href="http://www.liaoxuefeng.com/article/001426512790239f83bfb47b1134b63b09a57548d06e5c5000">http://www.liaoxuefeng.com/article/001426512790239f83bfb47b1134b63b09a57548d06e5c5000</a></li>
+<li><a href="http://www.cnblogs.com/hustskyking/p/principle-of-javascript-template.html">http://www.cnblogs.com/hustskyking/p/principle-of-javascript-template.html</a></li>
+<li><a href="http://www.html-js.com/article/Regularjs-Chinese-guidelines-for-a-comprehensive-summary-of-the-front-template-technology">http://www.html-js.com/article/Regularjs-Chinese-guidelines-for-a-comprehensive-summary-of-the-front-template-technology</a></li>
+<li><a href="http://www.toobug.net/article/how_to_design_front_end_template_engine.html">http://www.toobug.net/article/how_to_design_front_end_template_engine.html</a></li>
+<li><a href="https://www.zhihu.com/question/32524504">https://www.zhihu.com/question/32524504</a></li>
+<li><a href="http://ejohn.org/blog/javascript-micro-templating/">http://ejohn.org/blog/javascript-micro-templating/</a></li>
+<li><a href="http://nuysoft.com/bak/templating.html">http://nuysoft.com/bak/templating.html</a></li>
+</ul>
+
+</div>
+
+
+</body>
+</html>

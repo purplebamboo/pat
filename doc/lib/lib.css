@@ -487,7 +487,9 @@ a img{border:none}
 .wrap .highlight td{border:none;padding:0}
 
 
-
+img{
+  width: 100%;
+}
 
 
 
