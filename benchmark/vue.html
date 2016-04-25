@@ -4,6 +4,7 @@
   <meta charset="utf-8"/>
   <title>大数据测试</title>
   <script src="../build/latest/pat-min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/1.0.21/vue.min.js"></script>
   <script src="./jquery.js"></script>
 
   <style type="text/css">
@@ -55,44 +56,33 @@
   <span id="timeConsole">暂无数据...</span>
 
 
-  <h1>下面是针对<span id="J_number_text">1000</span>行，每行20列数据的渲染测试</h1>
-  <pre style="white-space: pre-line;font-size: 14px;padding: 20px;">
-    分为三种情况：初次渲染，局部小更新，还有整个列表数据全部替换。
-    1.初次渲染：脏检测不需要注入数据，所以渲染更快。
-    2.局部小更新：脏检测肯定不如defineProperties，因为需要整个遍历。
-    3.整个列表更新：脏检测更快，因为这个时候defineProperties的指向性优势不存在了就是全量更新，还要考虑各种defineProperties里面潜在的冲突问题，另外对于新的数据，又要来一遍递归的注入数据。而脏检测不需要。
-
-    我们业务中更多的是第三种情况。
-  </pre>
+  <h1>下面是针对<span id="J_number_text">1000</span>行，每行20列数据的渲染测试,对比vue和pat的性能</h1>
   <div>
-    选择数据检测方式：
+    选择数据检测方式（只针对pat）：
     <select id="J_type">
         <option value="dirtyCheck" selected>dirtyCheck</option>
         <option value="defineProperties">defineProperties</option>
     </select>
     设置行数：<input id="J_number" type="text" value="1000"/>
     <button onClick="startAnalyze()">初次渲染</button>
-    <button onClick="startUpdateOne()">更新第一个数据</button>
-    <button onClick="startUpdate()">更新全部数据</button>
   </div>
 
-  <div id="container">
+  <div id="container-pat">
+  </div>
+  <div id="container-vue">
 
-
-
-
+    <div class="line" v-for="item in lists">
+      {{item.id1}}-{{item.id2}}-{{item.id3}}-{{item.id4}}-{{item.id5}}-{{item.id6}}-{{item.id7}}-{{item.id8}}-{{item.id9}}-{{item.id10}}-{{item.id11}}-{{item.id12}}-{{item.id13}}-{{item.id14}}-{{item.id15}}-{{item.id16}}-{{item.id17}}-{{item.id18}}-{{item.id19}}-{{item.id20}}-当前行数{{__INDEX__}}
+    </div>
   </div>
 
 </div>
 
 <!--支持传入模板-->
 <script type="javascript/template" id="J_tmpl">
-
-  {{#for(item in lists)}}
-  <div class="line">
+  <div class="line" t-for="item in lists">
     {{item.id1}}-{{item.id2}}-{{item.id3}}-{{item.id4}}-{{item.id5}}-{{item.id6}}-{{item.id7}}-{{item.id8}}-{{item.id9}}-{{item.id10}}-{{item.id11}}-{{item.id12}}-{{item.id13}}-{{item.id14}}-{{item.id15}}-{{item.id16}}-{{item.id17}}-{{item.id18}}-{{item.id19}}-{{item.id20}}-当前行数{{__INDEX__}}
   </div>
-  {{/for}}
 </script>
 
 
@@ -104,7 +94,7 @@ $('#J_number').on('change',function(){
 })
 
 
-var p2
+var patT,vueT
 
 
 function startAnalyze(){
@@ -132,8 +122,8 @@ function startAnalyze(){
 
   var start = new Date().getTime()
 
-  p2 = new Pat({
-    el:'container',
+  patT = new Pat({
+    el:'container-pat',
     dataCheckType:type,
     data:{
       lists:list
@@ -142,56 +132,20 @@ function startAnalyze(){
   })
 
   var time = new Date().getTime() - start
+  var startVue = new Date().getTime()
 
-  document.getElementById('timeConsole').innerHTML = '花费了' + time + 'ms'
-
-}
-
-
-function startUpdateOne(){
-  if (!p2 || !p2.$data) {
-    alert('请先渲染一次再来使用更新。。。')
-  }
-
-  for (var key in p2.$data.lists[0]) {
-    p2.$data.lists[0][key] = '[' + p2.$data.lists[0][key] + ']'
-  }
-
-  var start = new Date().getTime()
-
-  p2.$apply()
-
-  var time = new Date().getTime() - start
-
-  document.getElementById('timeConsole').innerHTML = '单个更新花费了' + time + 'ms'
-
-}
-
-function startUpdate(){
-  if (!p2 || !p2.$data) {
-    alert('请先渲染一次再来使用更新。。。')
-  }
-
-  //参考我们的业务，一个全新的数据
-  var newList = []
-
-  for (var i = 0; i < p2.$data.lists.length; i++) {
-
-    var obj = {}
-    for (var key in p2.$data.lists[i]) {
-      obj[key] = '[' + p2.$data.lists[i][key] + ']'
+  vueT = new Vue({
+    el:'#container-vue',
+    data:{
+      lists:list
     }
-    newList.push(obj)
-  }
+    //template:document.getElementById('J_tmpl').innerHTML
+  })
 
-
-  var start = new Date().getTime()
-  p2.$data.lists = newList
-  p2.$apply()
-
-  var time = new Date().getTime() - start
-
-  document.getElementById('timeConsole').innerHTML = '全部更新花费了' + time + 'ms'
+  vueT.$nextTick(function(){
+    var timeVue = new Date().getTime() - startVue
+    document.getElementById('timeConsole').innerHTML = 'pat-' + time + 'ms/vue-' + timeVue + 'ms'
+  })
 
 }
 </script>

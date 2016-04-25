@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <title>测试页面</title>
-  <script src="../build/1.1/pat.js"></script>
+  <script src="../build/latest/pat.js"></script>
 
   <style type="text/css">
 
@@ -38,7 +38,7 @@
 <!--支持传入模板-->
 <script type="javascript/template" id="J_tmpl">
 
-  <div class="line">基本渲染:{{text}}</div>
+  <div class="line" id="{{sp}}">基本渲染:{{text}}</div>
 
   <div class="line">
     列表渲染：
@@ -84,7 +84,8 @@ var p2 = new Pat({
       name:'2',
       text:'22222',
       hell:null
-    }]
+    }],
+    sp:'<span>xxxx</span>'
   },
   filters:{
     fff:function(value) {

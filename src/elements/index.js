@@ -284,7 +284,7 @@ var Node = Class.extend(domProp,{
     //如果对方不在dom上，就没必要操作
     if (!dstEl.getElement()) return
 
-    var dstNode = dstEl.nodeType == -1 ? dstEl.endElement : dstEl.getElement()
+    var dstNode = dstEl.getElement()
 
     //如果自己在dom上
     if (this.getElement()){
@@ -300,7 +300,7 @@ var Node = Class.extend(domProp,{
     }else{
       var mountHtml = this.mountView(dstEl.view)
       var frag = _.string2frag(mountHtml)
-      this.domBefore(frag,dstEl.getElement())
+      this.domBefore(frag,dstNode)
     }
   },
   after:function(dstEl){
@@ -607,6 +607,7 @@ var Collection = Element.extend({
       var deletedNode = _.string2node(this.mountDeleted())
       this.domReplace(lastElement,deletedNode)
       this.element = deletedNode
+      this.endElement = deletedNode
     }
     //挨个删除子节点，这个是硬删除，没必要留着了。有个位置留着就行
     while(this.childNodes.length){

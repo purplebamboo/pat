@@ -144,6 +144,26 @@ describe("[pat:directive.js]", function() {
 
     })
 
+    it("use t-if with multiple",function(){
+
+      pat = new Pat({
+        el:el,
+        data:{
+          status:1,
+          test:1,
+          text:'hello world'
+        },
+        template:'{{#if(status < 2)}}<em>tttt</em>{{#if(test == 1)}}{{{text}}}{{/if}}{{/if}}'
+      })
+
+      expect($.trim($(el).find('em').html())).toMatch('tttt')
+      expect($.trim($(el).find('span').html())).toMatch('hello world')
+      pat.$data.test = 2
+      pat.$apply()
+      expect($.trim($(el).html())).toMatch('<!--deleted')
+
+    })
+
 
   })
 
@@ -244,6 +264,77 @@ describe("[pat:directive.js]", function() {
       expect($(el).find('.tt3')[0].children[1].innerHTML).toBe('1')
       expect($(el).find('.tt3')[0].children[5].innerHTML).toBe('3')
       expect($(el).find('.tt3')[0].children[10].innerHTML).toBe('ccccc')
+    })
+
+    it("test t-for with multi childNodes",function(){
+      pat = new Pat({
+        el:el,
+        data:{
+          lists:[{
+            name:'1',
+            text:'11111'
+          },{
+            name:'2',
+            text:'22222'
+          }]
+        },
+        template:'{{#for(item in lists)}}<div>oooooo</div><div>{{item.text}}</div>{{/for}}'
+      })
+
+
+      expect($(el).children().length).toBe(4)
+      expect($(el).children()[1].innerHTML).toMatch('11111')
+      expect($(el).children()[3].innerHTML).toMatch('22222')
+
+      pat.$data.lists.push({
+        name:'3',
+        text:'3333'
+      })
+
+      pat.$data.lists.push({
+        name:'4',
+        text:'4444'
+      })
+
+      pat.$apply()
+
+      expect($(el).children().length).toBe(8)
+      expect($(el).children()[1].innerHTML).toMatch('11111')
+      expect($(el).children()[3].innerHTML).toMatch('22222')
+      expect($(el).children()[5].innerHTML).toMatch('3333')
+      expect($(el).children()[6].innerHTML).toMatch('oooooo')
+      expect($(el).children()[7].innerHTML).toMatch('4444')
+
+      pat.$data.lists = [{
+        name:'1',
+        text:'11111xxx'
+      },{
+        name:'2',
+        text:'22222xxxxx'
+      }]
+
+      pat.$apply()
+
+      expect($(el).children().length).toBe(4)
+      expect($(el).children()[1].innerHTML).toMatch('11111xxx')
+      expect($(el).children()[3].innerHTML).toMatch('22222xxxxx')
+
+      pat.$data.lists.splice(1,1,{
+        text:'hahaha'
+      },{
+        text:'mmmmm'
+      })
+
+      pat.$apply()
+
+      expect($(el).children().length).toBe(6)
+
+      expect($(el).children()[1].innerHTML).toMatch('11111xxx')
+      expect($(el).children()[2].innerHTML).toMatch('oooooo')
+      expect($(el).children()[3].innerHTML).toMatch('hahaha')
+      expect($(el).children()[4].innerHTML).toMatch('oooooo')
+      expect($(el).children()[5].innerHTML).toMatch('mmmmm')
+
     })
 
     it("test t-for with change item",function(){

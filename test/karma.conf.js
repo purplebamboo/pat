@@ -4,7 +4,7 @@
 
 var pkg = require('../src/config.js')
 
-var version = pkg.version
+var version = 'latest'
 var files = [
   'build/'+version+'/pat.js',
   'test/init.js',
