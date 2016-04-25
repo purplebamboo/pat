@@ -9,11 +9,16 @@ var ROOT_PATH = path.resolve(__dirname);
 var APP_PATH = path.resolve(ROOT_PATH, 'src');
 var BUILD_PATH = path.resolve(ROOT_PATH, 'build');
 
+
+var entryConfig = {}
+entryConfig[version] = APP_PATH
+entryConfig['latest'] = APP_PATH
+
 module.exports = {
-  entry: APP_PATH,
+  entry: entryConfig,
   output: {
     path: BUILD_PATH,
-    filename: version + '/pat-min.js',
+    filename: '[name]/pat-min.js',
     library: 'Pat',
     libraryTarget: 'umd'
   },
