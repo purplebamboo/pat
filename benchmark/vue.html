@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>大数据测试</title>
+  <script src="../build/latest/pat-min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/1.0.21/vue.min.js"></script>
+  <script src="./jquery.js"></script>
+
+  <style type="text/css">
+
+    body{
+      background: #fafafa;
+    }
+
+    h1{
+      text-align: center;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    #test{
+      background: #fff;
+      margin: 20px auto;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      width: 800px;
+      min-height: 100px;
+      padding: 20px 30px;
+      position: relative;
+    }
+    .line{
+      text-align: left;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    #timeConsole{
+      position: absolute;
+      left: 0px;
+      width: 200px;
+      height: 30px;
+      line-height: 30px;
+      display: block;
+      top: 0px;
+      background: #fafafa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+
+
+
+<div id="test">
+  <span id="timeConsole">暂无数据...</span>
+
+
+  <h1>下面是针对<span id="J_number_text">1000</span>行，每行20列数据的渲染测试,对比vue和pat的性能</h1>
+  <div>
+    选择数据检测方式（只针对pat）：
+    <select id="J_type">
+        <option value="dirtyCheck" selected>dirtyCheck</option>
+        <option value="defineProperties">defineProperties</option>
+    </select>
+    设置行数：<input id="J_number" type="text" value="1000"/>
+    <button onClick="startAnalyze()">初次渲染</button>
+  </div>
+
+  <div id="container-pat">
+  </div>
+  <div id="container-vue">
+
+    <div class="line" v-for="item in lists">
+      {{item.id1}}-{{item.id2}}-{{item.id3}}-{{item.id4}}-{{item.id5}}-{{item.id6}}-{{item.id7}}-{{item.id8}}-{{item.id9}}-{{item.id10}}-{{item.id11}}-{{item.id12}}-{{item.id13}}-{{item.id14}}-{{item.id15}}-{{item.id16}}-{{item.id17}}-{{item.id18}}-{{item.id19}}-{{item.id20}}-当前行数{{__INDEX__}}
+    </div>
+  </div>
+
+</div>
+
+<!--支持传入模板-->
+<script type="javascript/template" id="J_tmpl">
+  <div class="line" t-for="item in lists">
+    {{item.id1}}-{{item.id2}}-{{item.id3}}-{{item.id4}}-{{item.id5}}-{{item.id6}}-{{item.id7}}-{{item.id8}}-{{item.id9}}-{{item.id10}}-{{item.id11}}-{{item.id12}}-{{item.id13}}-{{item.id14}}-{{item.id15}}-{{item.id16}}-{{item.id17}}-{{item.id18}}-{{item.id19}}-{{item.id20}}-当前行数{{__INDEX__}}
+  </div>
+</script>
+
+
+<script type="text/javascript">
+
+
+$('#J_number').on('change',function(){
+    $("#J_number_text").html($('#J_number').val())
+})
+
+
+var patT,vueT
+
+
+function startAnalyze(){
+
+
+  var type = $('#J_type').val()
+  var number = $('#J_number').val()
+  $('#container').html('...')
+
+  function generateObj(index){
+    var obj = {}
+    for (var i = 1; i <= 20; i++) {
+      obj['id'+i] = 'No.'+i
+    }
+    return obj
+  }
+
+
+  var list = []
+
+
+  for (var i = 1; i <= number; i++) {
+    list.push(generateObj(i))
+  }
+
+  var start = new Date().getTime()
+
+  patT = new Pat({
+    el:'container-pat',
+    dataCheckType:type,
+    data:{
+      lists:list
+    },
+    template:document.getElementById('J_tmpl').innerHTML
+  })
+
+  var time = new Date().getTime() - start
+  var startVue = new Date().getTime()
+
+  vueT = new Vue({
+    el:'#container-vue',
+    data:{
+      lists:list
+    }
+    //template:document.getElementById('J_tmpl').innerHTML
+  })
+
+  vueT.$nextTick(function(){
+    var timeVue = new Date().getTime() - startVue
+    document.getElementById('timeConsole').innerHTML = 'pat-' + time + 'ms/vue-' + timeVue + 'ms'
+  })
+
+}
+</script>
+</body>
+</html>

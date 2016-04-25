@@ -144,6 +144,26 @@ describe("[pat:directive.js]", function() {
 
     })
 
+    it("use t-if with multiple",function(){
+
+      pat = new Pat({
+        el:el,
+        data:{
+          status:1,
+          test:1,
+          text:'hello world'
+        },
+        template:'{{#if(status < 2)}}<em>tttt</em>{{#if(test == 1)}}{{{text}}}{{/if}}{{/if}}'
+      })
+
+      expect($.trim($(el).find('em').html())).toMatch('tttt')
+      expect($.trim($(el).find('span').html())).toMatch('hello world')
+      pat.$data.test = 2
+      pat.$apply()
+      expect($.trim($(el).html())).toMatch('<!--deleted')
+
+    })
+
 
   })
 
