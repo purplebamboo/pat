@@ -4488,8 +4488,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //去掉所有的注释
 	  newTpl = newTpl.replace(HTML_COMMENT_REG,'')
 	  //支持mustache的一些写法
-	  newTpl = newTpl.replace(blockStartReg,'<template t-$1="$2">')
-	  newTpl = newTpl.replace(blockStartRegFalse,'<template t-$1="!($2)">')
+	  newTpl = newTpl.replace(blockStartReg,function(str,type,exp){
+	    //把双引号全部替换为单引号，防止冲突
+	    exp = exp.replace(/"/g,"'")
+	    return '<template t-'+type+'="'+exp+'">'
+	  })
+
+	  newTpl = newTpl.replace(blockStartRegFalse,function(str,type,exp){
+	    //把双引号全部替换为单引号，防止冲突
+	    exp = exp.replace(/"/g,"'")
+	    return '<template t-'+type+'="!('+exp+')">'
+	  })
 	  newTpl = newTpl.replace(blockEndReg,'</template>')
 
 	  return newTpl
