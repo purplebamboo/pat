@@ -1,5 +1,6 @@
 var _ = require('../util')
-
+var Cache = require('../cache')
+var dirCache = new Cache(500,500)
 /**
  * Parser state
  */
@@ -37,10 +38,15 @@ function pushFilter () {
  * @return {Object}
  */
 
-exports.parse = function (s) {
+exports.parse = function (text) {
 
+  // try cache
+  var hit = dirCache.get(text)
+  if (hit) {
+    return hit
+  }
 
-  str = s
+  str = text
   inSingle = inDouble = false
   curly = square = paren = 0
   lastFilterIndex = 0
@@ -86,6 +92,8 @@ exports.parse = function (s) {
   } else if (lastFilterIndex !== 0) {
     pushFilter()
   }
+
+  dirCache.set(text,dir)
 
   return dir
 }

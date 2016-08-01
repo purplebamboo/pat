@@ -2,7 +2,8 @@ var config = require('../config.js')
 var _ = require('../util')
 var expParser = require('./expression.js')
 var dirParser = require('./directive.js')
-
+var Cache = require('../cache')
+var parseTextCache = new Cache(500,500)
 var prefix = config.prefix
 
 var delimiters = config.delimiters
@@ -54,7 +55,7 @@ var interpolationRegx = new RegExp(
  * sk-bind='test.text'
  *
  * {
- *   expression:'@test.text',
+ *   expObj:expObj,
  *   directive:'bind',
  *   name:'sk-bind',
  *   value:'test.text',
@@ -88,7 +89,7 @@ exports.parseDirective = function(attr) {
       args: [name],
       oneTime: false,
       block:false,
-      expression: exports.token2expression(tokens),
+      expObj: exports.token2expression(tokens),
       isInterpolationRegx: true //标识一下是插值
     }
   }
@@ -113,7 +114,7 @@ exports.parseDirective = function(attr) {
     oneTime: false,
     block: dirOptions.block,
     priority: dirOptions.priority,
-    expression: exports.parseExpression(value)
+    expObj: exports.parseExpression(value)
   }
 }
 
@@ -127,8 +128,12 @@ exports.parseDirective = function(attr) {
  *   hello + 1 + "hello" | test
  *
  * @return
+ * {
+ *   exp: _that.applyFilter('_scope.hello + 1 + "hello"',test),
+ *   getter: fn,
+ *   setter: fn
+ * }
  *
- *   _that.applyFilter('_scope.hello + 1 + "hello"',test),
  *
  */
 exports.parseExpression = function(text) {
@@ -140,15 +145,14 @@ exports.parseExpression = function(text) {
 
   if (!dirParsed.expression) return ''
 
-  body = _.trim(expParser.compileExpFns(dirParsed.expression))
-
+  body = dirParsed.expression
   filters = dirParsed.filters || []
 
   if (filters.length > 0) {
     body = '_that.applyFilter(' + body + ',"' + filters.join(',') + '")'
   }
 
-  return body
+  return expParser.compileExpFns(body)
 }
 
 
@@ -166,16 +170,25 @@ TextTemplateParserTypes = {
 exports.parseText = function(text) {
 
   text = text.replace(/\n/g, '')
+  var tokens = []
+  var cachekey = text
+  // try cache
+  var hit = parseTextCache.get(cachekey)
+  if (hit) {
+    return hit
+  }
 
   //匹配不到插值说明是普通的，直接返回
   if (!tagRE.test(text)) {
-    return [{
+    tokens = [{
       type: TextTemplateParserTypes.text,
       value: text
     }]
+    parseTextCache.set(cachekey, tokens)
+
+    return tokens
   }
 
-  var tokens = []
   var lastIndex = tagRE.lastIndex = 0
   var match, index, html, value, first, oneTime
   while (match = tagRE.exec(text)) {
@@ -208,7 +221,9 @@ exports.parseText = function(text) {
     })
   }
 
-  return tokens;
+  parseTextCache.set(cachekey, tokens)
+
+  return tokens
 }
 
 /**
@@ -217,17 +232,22 @@ exports.parseText = function(text) {
  */
 exports.token2expression = function(tokens) {
   var mergedExpression = []
-
+debugger
   _.each(tokens, function(token) {
 
     if (token.type == TextTemplateParserTypes.text) {
       mergedExpression.push('"' + token.value + '"')
     } else {
-      mergedExpression.push('(' + exports.parseExpression(token.value) + ')')
+      mergedExpression.push('(' + exports.parseExpression(token.value).exp + ')')
     }
   })
 
-  return mergedExpression.join('+')
+  var merged = mergedExpression.join('+')
+
+  return {
+    exp: merged,
+    getter: expParser.makeGetter(merged)
+  }
 }
 
 exports.TAG_RE = tagRE

@@ -13,21 +13,21 @@ describe("[pat:parse.js]", function() {
   describe("(parseExpression)",function(){
     it("normal parse expression",function(){
 
-      expect(Parser.parseExpression('hello + 1 + "hello"')).toEqual('_scope.hello+1+"hello"')
+      expect(Parser.parseExpression('hello + 1 + "hello"').exp).toEqual('_scope.hello+1+"hello"')
 
-      expect(Parser.parseExpression('hello.a + {{tt}} + "hello{{}}"')).toEqual('_scope.hello.a+{{_scope.tt}}+"hello{{}}"')
-      expect(Parser.parseExpression('hello.a.slice(test.m) + "hello{{}}" ')).toEqual('_scope.hello.a.slice(_scope.test.m)+"hello{{}}"')
+      expect(Parser.parseExpression('hello.a + {{tt}} + "hello{{}}"').exp).toEqual('_scope.hello.a+{{_scope.tt}}+"hello{{}}"')
+      expect(Parser.parseExpression('hello.a.slice(test.m) + "hello{{}}" ').exp).toEqual('_scope.hello.a.slice(_scope.test.m)+"hello{{}}"')
 
 
     })
     it("parse with filter",function(){
-      expect(Parser.parseExpression('hello | test')).toEqual('_that.applyFilter(_scope.hello,"test")')
+      expect(Parser.parseExpression('hello | test').exp).toEqual('_that.applyFilter(_scope.hello,"test")')
 
       //不规范的filter
-      expect(Parser.parseExpression('hello | {{ttt')).toEqual('_that.applyFilter(_scope.hello,"{{ttt")')
+      expect(Parser.parseExpression('hello | {{ttt').exp).toEqual('_that.applyFilter(_scope.hello,"{{ttt")')
 
       //多个filter
-      expect(Parser.parseExpression('hello | {{ttt | ddd')).toEqual('_that.applyFilter(_scope.hello,"{{ttt,ddd")')
+      expect(Parser.parseExpression('hello | {{ttt | ddd').exp).toEqual('_that.applyFilter(_scope.hello,"{{ttt,ddd")')
 
     })
 
@@ -56,7 +56,7 @@ describe("[pat:parse.js]", function() {
     })
     it("test token to expression",function(){
       var t = Parser.parseText('aaa {{{haha|test}}} wo {{22}}')
-      expect(Parser.token2expression(t)).toEqual('"aaa "+(_that.applyFilter(_scope.haha,"test"))+" wo "+(22)')
+      expect(Parser.token2expression(t).exp).toEqual('"aaa "+(_that.applyFilter(_scope.haha,"test"))+" wo "+(22)')
     })
   })
 
@@ -70,15 +70,17 @@ describe("[pat:parse.js]", function() {
     var attr2 = testDiv.attributes[1]
     var attr3 = testDiv.attributes[2]
     it("test normal parse directive",function(){
+      var parsedt = Parser.parseDirective(attr)
+      parsedt.expObj = null
 
-      expect(Parser.parseDirective(attr)).toEqual({
+      expect(parsedt).toEqual({
         name: 'id',
         value: '{{test}}',
         directive: 'bind',
         args: ['id'],
         oneTime: false,
         block: false,
-        expression: '(_scope.test)',
+        expObj: null,
         isInterpolationRegx: true
       })
 
@@ -86,7 +88,7 @@ describe("[pat:parse.js]", function() {
       expect(parsed.directive).toBe('if')
       expect(parsed.block).toBe(true)
       expect(parsed.args).toEqual(["a"])
-      expect(parsed.expression).toEqual('_scope.a<_scope.b')
+      expect(parsed.expObj.exp).toEqual('_scope.a<_scope.b')
 
     })
 
@@ -97,7 +99,7 @@ describe("[pat:parse.js]", function() {
       expect(parsed2.directive).toBe('bind')
       expect(parsed2.block).toBe(false)
       expect(parsed2.args).toEqual(["t-if"])
-      expect(parsed2.expression).toEqual('(_that.applyFilter(_scope.haha,"test"))')
+      expect(parsed2.expObj.exp).toEqual('(_that.applyFilter(_scope.haha,"test"))')
 
     })
   })

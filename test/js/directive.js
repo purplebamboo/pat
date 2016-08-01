@@ -195,7 +195,6 @@ describe("[pat:directive.js]", function() {
         data:data
       })
 
-
       expect($($(el).children()[0]).attr('id')).toBe('hello')
       expect($($(el).children()[1]).find('.t2').html()).toBe('earth')
       expect($($(el).children()[1]).find('.t2').html().toLowerCase()).toEqual('earth')

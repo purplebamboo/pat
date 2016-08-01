@@ -1,4 +1,7 @@
 var _ = require('../util')
+var Cache = require('../cache')
+var expressionCache = new Cache(1000,500)
+
 
 var allowedKeywords =
   'Math,Date,this,true,false,null,undefined,Infinity,NaN,' +
@@ -91,6 +94,27 @@ function restore (str, i) {
 }
 
 /**
+ * Build a getter function. Requires eval.
+ *
+ * We isolate the try/catch so it doesn't affect the
+ * optimization of the parse function when it is not called.
+ *
+ * @param {String} body
+ * @return {Function|undefined}
+ */
+
+exports.makeGetter = function(body) {
+  try {
+    return new Function('_scope','_that','return ' + body + ';')
+  } catch (e) {
+    process.env.NODE_ENV !== 'production' && _.error(
+      'Invalid expression. ' +
+      'Generated function body: ' + body
+    )
+  }
+}
+
+/**
  * Rewrite an expression, prefixing all path accessors with
  * `scope.` and generate getter/setter functions.
  *
@@ -99,12 +123,20 @@ function restore (str, i) {
  * @return {Function}
  */
 
-exports.compileExpFns =function(exp, needSet) {
+exports.compileExpFns =function(exp) {
   if (improperKeywordsRE.test(exp)) {
     if (process.env.NODE_ENV != 'production') _.error(
       'please avoid using reserved keywords in expression: ' + exp
     )
   }
+  exp = _.trim(exp)
+
+  // try cache
+  var hit = expressionCache.get(exp)
+  if (hit) {
+    return hit
+  }
+
   // reset state
   saved.length = 0
   // save strings and object literal keys
@@ -117,5 +149,13 @@ exports.compileExpFns =function(exp, needSet) {
     .replace(pathReplaceRE, rewrite)
     .replace(restoreRE, restore)
 
-  return body
+  body = _.trim(body.replace(/_scope\._that/g,'_that'))
+
+  var res = {
+    exp: body,
+    getter: exports.makeGetter(body)
+  }
+  expressionCache.set(exp, res)
+
+  return res
 }

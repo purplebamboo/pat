@@ -24,7 +24,7 @@ function _bindDir(describe) {
   watcher = view.__watchers[describe.value]
 
   if (!watcher){
-    watcher = new Watcher(view, describe.expression)
+    watcher = new Watcher(view, describe.expObj)
     view.__watchers[describe.value] = watcher
   }
 
@@ -36,7 +36,6 @@ function _bindDir(describe) {
   dirInstance.__watcher = watcher
   //执行初始化，如果有的话
   dirInstance.initialize && dirInstance.initialize()
-  //todo... 这边获取值可以缓存住,优化
   //第一次取值，会通过get set绑定好数据依赖
   value = watcher.getValue()
   //赋值
@@ -123,7 +122,7 @@ function _compileTextNode(el, view) {
       name:'',
       value:token.value,
       view: view,
-      expression: parseExpression(token.value),
+      expObj: parseExpression(token.value),
       oneTime:oneTime,
       directive: token.html ? 'html' : 'text',
       el: el

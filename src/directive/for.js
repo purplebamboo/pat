@@ -40,7 +40,7 @@ module.exports = {
         this.alias = _.trim(inMatch[1])
       }
       //修改观察者对应的expression
-      this.__watcher.expression = parseExpression(inMatch[2])
+      this.__watcher.expObj = parseExpression(inMatch[2])
     }
 
     if (process.env.NODE_ENV != 'production' && !this.alias) {

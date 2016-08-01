@@ -8,10 +8,10 @@ function wid(){
 }
 
 //观察者
-function Watcher(view, expression, callback) {
+function Watcher(view, expObj, callback) {
   this.__directives = []
   this.__view = view
-  this.expression = expression
+  this.expObj = expObj
   this.callbacks = callback ? [callback] : []
   this.scope = view.$data
   this.last = null
@@ -48,18 +48,18 @@ Watcher.prototype.applyFilter = function(value, filterName) {
 }
 
 Watcher.prototype.getValue = function() {
-  if (!this.expression) return ''
+  if (!this.expObj) return ''
   var value
 
   //取值很容易出错，需要给出错误提示
   try {
     if (!this.__depend) Watcher.currentTarget = this
-    value = new Function('_scope', '_that', 'return ' + this.expression)(this.scope, this)
+    value = this.expObj.getter(this.scope, this)
+    // value = new Function('_scope', '_that', 'return ' + this.expression)(this.scope, this)
     if (!this.__depend) Watcher.currentTarget = null
   } catch (e) {
-
     if (!this.__depend) Watcher.currentTarget = null
-    if (process.env.NODE_ENV != 'production') _.log('error when watcher get the value,please check your expression: "' + this.expression + '"', e)
+    if (process.env.NODE_ENV != 'production') _.log('error when watcher get the value,please check your expression: "' + this.expObj.exp + '"', e)
   }
 
   this.__depend = true

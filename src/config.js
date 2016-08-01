@@ -10,7 +10,7 @@ exports.prefix = 't'
  * 当前版本号
  * @type {String}
  */
-exports.version = '1.2'
+exports.version = '1.3'
 
 
 /**
