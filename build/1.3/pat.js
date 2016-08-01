@@ -60,9 +60,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Queue = __webpack_require__(21)
 	var Directive = __webpack_require__(8)
 	var Parser = __webpack_require__(9)
-	var Dom = __webpack_require__(27)
+	var Dom = __webpack_require__(26)
 	var Data = __webpack_require__(19)
-	var Element = __webpack_require__(26)
+	var arrayData = __webpack_require__(27)
+	var Element = __webpack_require__(25)
 	var Event = __webpack_require__(28)
 	var _ = __webpack_require__(3)
 
@@ -150,6 +151,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  //defineProperties模式下需要进行数据的get set注入
 	  if (this.__dataCheckType == 'defineProperties') {
+	    //改动数组，注入私有方法
+	    arrayData.inject()
 	    //注入get set
 	    this.$data = View.$inject(this.$data,this.__deepinject)
 	    //增加特殊联动依赖
@@ -355,6 +358,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	module.exports = View
+
 
 /***/ },
 /* 1 */
@@ -1379,8 +1383,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  'if':__webpack_require__(16),
 	  'unless':__webpack_require__(17),
 	  'for':__webpack_require__(18),
-	  'text':__webpack_require__(24),
-	  'html':__webpack_require__(25)
+	  'text':__webpack_require__(23),
+	  'html':__webpack_require__(24)
 	}
 	var noop = function(){}
 
@@ -1701,7 +1705,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	exports.token2expression = function(tokens) {
 	  var mergedExpression = []
-	debugger
+
 	  _.each(tokens, function(token) {
 
 	    if (token.type == TextTemplateParserTypes.text) {
@@ -2198,7 +2202,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return
 	    }
 
-	    if (value != null && value !== false) {
+	    if (value) {
 	      this.el.addClass(classname)
 	    }else{
 	      this.el.removeClass(classname)
@@ -2206,6 +2210,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  }
 	}
+
 
 /***/ },
 /* 15 */
@@ -2686,8 +2691,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this._updateOrikeys()
 
 	    _.each(newLists, function(item, key) {
-
-	      name = item[curKey]
+	      name = item && item[curKey] ? item[curKey] : ''
 
 	      if (name && oldViewMap[name] && oldViewMap[name].$data[self.alias] === item) {
 	        newViewMap[name] = oldViewMap[name]
@@ -2718,7 +2722,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
 	        //有点hacky,但是没办法，为了达到最小的更新，需要注入一个唯一的健值。
 	        name = self._generateKey()
-	        item[curKey] = name
+	        if (item && item[curKey]) {
+	         item[curKey] = name
+	        }
 
 	        newViewMap[name] = new self.view.constructor({
 	          el: newNode,
@@ -2963,9 +2969,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Watcher = __webpack_require__(20)
 	var _ = __webpack_require__(3)
 	var Observer = __webpack_require__(22)
-
-	__webpack_require__(23)
-
 
 	var VB_ID = 0
 
@@ -3248,6 +3251,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return data
 	}
 
+
 /***/ },
 /* 20 */
 /***/ function(module, exports, __webpack_require__) {
@@ -3498,90 +3502,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	var _ = __webpack_require__(3)
-	var Data = __webpack_require__(19)
-
-	var arrayMethods = [
-	  'push',
-	  'pop',
-	  'shift',
-	  'unshift',
-	  'splice',
-	  'sort',
-	  'reverse'
-	]
-
-
-	var arrayPrototype = Array.prototype
-
-	_.each(arrayMethods,function(key) {
-
-	  var originMethod = arrayPrototype[key]
-
-	  arrayPrototype[key] = function(){
-	    var i = arguments.length
-	    var args = new Array(i)
-	    while (i--) {
-	      args[i] = arguments[i]
-	    }
-
-	    var result
-
-	    //对于有观察的数组，需要特殊处理
-	    if (this.__ob__) {
-
-	      if (key == 'push' || key == 'unshift') {
-	        args = Data.inject(args)
-	      }
-
-	      if (key == 'splice') {
-	        args = args.slice(0,2).concat(Data.inject(args.slice(2)))
-	      }
-
-	      result = originMethod.apply(this, args)
-
-	      this.__ob__.notify()
-
-	    }else{
-
-	      result = originMethod.apply(this, args)
-
-	    }
-
-	    return result
-	  }
-
-	})
-
-
-	//增加两个方法
-	arrayPrototype.$set = function(index, val) {
-	  if (index >= this.length) {
-	    this.length = index + 1
-	  }
-	  return this.splice(index, 1, val)[0]
-	}
-
-	arrayPrototype.$remove = function(item) {
-	  if (!this.length) return
-	  var index = _.indexOf(this, item)
-	  if (index > -1) {
-	    return this.splice(index, 1)
-	  }
-	}
-
-
-
-
-
-
-
-
-/***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/**
 	 * 这是非常特殊的一个directive，用来处理文本节点的插值
 	 */
@@ -3612,7 +3532,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3621,8 +3541,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	var _ = __webpack_require__(3)
-	var elements = __webpack_require__(26)
-	var Dom = __webpack_require__(27)
+	var elements = __webpack_require__(25)
+	var Dom = __webpack_require__(26)
 
 	module.exports = {
 	  block:true,
@@ -3649,7 +3569,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(3)
@@ -4428,7 +4348,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4437,7 +4357,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3)
 	var parser = __webpack_require__(9)
-	var Element = __webpack_require__(26)
+	var Element = __webpack_require__(25)
 	var Config = __webpack_require__(1)
 
 
@@ -4657,8 +4577,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          textareaInner += child.data
 	        })
-
-	        //textareaInner.replace(new RegExp(delimiters[0]+"\*?",'g'),delimiters[0]+'*')
+	        tmp.close_tag.attrs = tmp.close_tag.attrs || {}
 	        tmp.close_tag.attrs['value'] = textareaInner
 	        //不需要子节点
 	        tmp.close_tag.children = []
@@ -4742,6 +4661,95 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
+
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(3)
+	var Data = __webpack_require__(19)
+
+	var arrayPrototype = Array.prototype
+
+	// 注入数组私有方法
+	exports.inject = function() {
+
+	  if (arrayPrototype.$pat) return
+
+	  var arrayMethods = [
+	    'push',
+	    'pop',
+	    'shift',
+	    'unshift',
+	    'splice',
+	    'sort',
+	    'reverse'
+	  ]
+
+	  _.each(arrayMethods, function(key) {
+
+	    var originMethod = arrayPrototype[key]
+
+	    arrayPrototype[key] = function() {
+	      var i = arguments.length
+	      var args = new Array(i)
+	      while (i--) {
+	        args[i] = arguments[i]
+	      }
+
+	      var result
+
+	      //对于有观察的数组，需要特殊处理
+	      if (this.__ob__) {
+
+	        if (key == 'push' || key == 'unshift') {
+	          args = Data.inject(args)
+	        }
+
+	        if (key == 'splice') {
+	          args = args.slice(0, 2).concat(Data.inject(args.slice(2)))
+	        }
+
+	        result = originMethod.apply(this, args)
+
+	        this.__ob__.notify()
+
+	      } else {
+
+	        result = originMethod.apply(this, args)
+
+	      }
+
+	      return result
+	    }
+
+	  })
+
+
+	  //增加两个方法
+	  arrayPrototype.$set = function(index, val) {
+	    if (index >= this.length) {
+	      this.length = index + 1
+	    }
+	    return this.splice(index, 1, val)[0]
+	  }
+
+	  arrayPrototype.$remove = function(item) {
+	    if (!this.length) return
+	    var index = _.indexOf(this, item)
+	    if (index > -1) {
+	      return this.splice(index, 1)
+	    }
+	  }
+
+
+	  arrayPrototype.$pat = function() {
+	    return true
+	  }
+
+
+	}
 
 
 /***/ },

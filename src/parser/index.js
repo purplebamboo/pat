@@ -232,7 +232,7 @@ exports.parseText = function(text) {
  */
 exports.token2expression = function(tokens) {
   var mergedExpression = []
-debugger
+
   _.each(tokens, function(token) {
 
     if (token.type == TextTemplateParserTypes.text) {

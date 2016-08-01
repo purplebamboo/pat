@@ -24,7 +24,7 @@ module.exports = {
       return
     }
 
-    if (value != null && value !== false) {
+    if (value) {
       this.el.addClass(classname)
     }else{
       this.el.removeClass(classname)

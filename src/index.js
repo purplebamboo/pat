@@ -6,6 +6,7 @@ var Directive = require('./directive/index.js')
 var Parser = require('./parser/index.js')
 var Dom = require('./parser/dom.js')
 var Data = require('./data/index.js')
+var arrayData = require('./data/array.js')
 var Element = require('./elements/index.js')
 var Event = require('./event')
 var _ = require('./util')
@@ -94,6 +95,8 @@ View.prototype._init = function() {
 
   //defineProperties模式下需要进行数据的get set注入
   if (this.__dataCheckType == 'defineProperties') {
+    //改动数组，注入私有方法
+    arrayData.inject()
     //注入get set
     this.$data = View.$inject(this.$data,this.__deepinject)
     //增加特殊联动依赖

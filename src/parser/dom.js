@@ -224,8 +224,7 @@ function getStructure(tags, pointer, pair) {
 
           textareaInner += child.data
         })
-
-        //textareaInner.replace(new RegExp(delimiters[0]+"\*?",'g'),delimiters[0]+'*')
+        tmp.close_tag.attrs = tmp.close_tag.attrs || {}
         tmp.close_tag.attrs['value'] = textareaInner
         //不需要子节点
         tmp.close_tag.children = []

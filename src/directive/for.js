@@ -125,8 +125,7 @@ module.exports = {
     this._updateOrikeys()
 
     _.each(newLists, function(item, key) {
-
-      name = item[curKey]
+      name = item && item[curKey] ? item[curKey] : ''
 
       if (name && oldViewMap[name] && oldViewMap[name].$data[self.alias] === item) {
         newViewMap[name] = oldViewMap[name]
@@ -157,7 +156,9 @@ module.exports = {
         //对于数组我们需要生成私有标识，方便diff。对象直接用key就可以了
         //有点hacky,但是没办法，为了达到最小的更新，需要注入一个唯一的健值。
         name = self._generateKey()
-        item[curKey] = name
+        if (item && item[curKey]) {
+         item[curKey] = name
+        }
 
         newViewMap[name] = new self.view.constructor({
           el: newNode,

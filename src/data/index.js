@@ -2,9 +2,6 @@ var Watcher = require('../watcher/index.js')
 var _ = require('../util')
 var Observer = require('../watcher/observer.js')
 
-require('./array.js')
-
-
 var VB_ID = 0
 
 var defineGetProxy = function(obs,_key) {
