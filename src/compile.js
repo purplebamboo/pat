@@ -8,6 +8,7 @@ var parseText = parser.parseText
 var parseExpression = parser.parseExpression
 var config = require('./config')
 
+var tempDiv = document.createElement("div")
 
 /**
  * 绑定directive，初始化指令
@@ -38,6 +39,12 @@ function _bindDir(describe) {
   dirInstance.initialize && dirInstance.initialize()
   //第一次取值，会通过get set绑定好数据依赖
   value = watcher.getValue()
+  if(describe.directive === 'html'){
+    // 对不规则的html（例如没有成对的标签）进行修正，增强兼容性
+    tempDiv.innerHTML = value
+    value = tempDiv.innerHTML
+    tempDiv.innerHTML = ''
+  }
   //赋值
   watcher.last = value
   //调用bind
