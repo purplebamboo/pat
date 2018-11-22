@@ -53,7 +53,7 @@ function collectTags(structure,template) {
     })
     structure.end++
 
-    if (/<\/\w+/.test(match)) {
+    if (/^<\/\w+/.test(match)) {
       structure[structure.end].isEnd = true
     } else if (attrString !== '') {
       structure[structure.end].attrs = analyzeAttributes(attrString)
