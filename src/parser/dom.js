@@ -23,7 +23,7 @@ TEXT_NODE = 'text'
 
 //http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
 ATTRIBUTE_REG = /(?:[\w-:]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?/g
-HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:[\w-:]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?)+\s*|\s*)\/?\>/g
+HTML_TAG_REG = /<\/?(\w+)((?:\s+(?:[^\s=]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]*))?)+\s*|\s*)\/?\>/g
 
 HTML_COMMENT_REG = /<!--(.|\s)*?-->/g
 
