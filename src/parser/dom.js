@@ -73,9 +73,9 @@ function collectTags(structure,template) {
 //text如果里面有{{}}需要作为单独的节点
 function analyzeText(structure,tempText){
 
-  tempText = tempText.replace(/^[\n\s\t]+/g,'').replace(/[\n\s\t]+$/g,'')
+  var trimmed = tempText.replace(/^[\n\s\t]+/g,'').replace(/[\n\s\t]+$/g,'')
 
-  if (!tempText) return
+  if (!trimmed) return
 
   //找出里面有没有特殊的占位节点
   var tokens = spText(tempText)
